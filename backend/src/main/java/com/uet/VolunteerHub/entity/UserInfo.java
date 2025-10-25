@@ -1,0 +1,38 @@
+package com.uet.VolunteerHub.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.Date;
+import java.util.UUID;
+
+@Data
+@Entity
+@Table(name = "user_info")
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+public class UserInfo {
+
+    @Id
+    @Column(name="account_id", updatable = false, nullable = false)
+    private UUID accountId;
+
+    private String firstName;
+
+    private String lastName;
+
+    private Date dateOfBirth;
+
+    private String country;
+
+    private String city;
+
+    private String address;
+
+    private String organization;
+
+    @OneToOne()
+    @MapsId
+    @JoinColumn(name = "account_id")
+    private Account account;
+}
