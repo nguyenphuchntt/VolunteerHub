@@ -1,0 +1,189 @@
+/* Header Styles - Fixed Navigation */
+.header {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  padding: 15px 0 !important;
+}
+
+.header .container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.header .navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  gap: 40px;
+}
+
+.header .logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #4caf50;
+  cursor: pointer;
+  white-space: nowrap;
+  width: auto;
+}
+
+.header .nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  justify-content: center;
+}
+
+.header .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px 2px 2px;
+  background-color: #f5f5f5;
+  border-radius: 30px;
+  text-decoration: none;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.header .nav-item:hover {
+  background-color: #e8f5e9;
+}
+
+.header .nav-item img {
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  background-color: #ffffff;
+  border-radius: 30px;
+}
+
+.header .nav-item span {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-login {
+  padding: 10px 24px;
+  background-color: transparent;
+  color: #4caf50;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-login:hover {
+  background-color: #4caf50;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.btn-register {
+  padding: 10px 24px;
+  background-color: #4caf50;
+  color: #ffffff;
+  border: 2px solid #4caf50;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-register:hover {
+  background-color: #45a049;
+  border-color: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* Add padding to landing page to prevent content from hiding under fixed header */
+.landing-page {
+  padding-top: 80px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .header .nav-menu {
+    gap: 15px;
+  }
+
+  .nav-actions {
+    gap: 10px;
+  }
+
+  .btn-login,
+  .btn-register {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header .navbar {
+    gap: 20px;
+  }
+
+  .header .nav-menu {
+    display: none; /* Hide menu on mobile - can add hamburger menu later */
+  }
+
+  .header .logo {
+    font-size: 20px;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .btn-login,
+  .btn-register {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .landing-page {
+    padding-top: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 12px 0 !important;
+  }
+
+  .header .logo {
+    font-size: 18px;
+  }
+
+  .btn-login,
+  .btn-register {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .landing-page {
+    padding-top: 60px;
+  }
+}
