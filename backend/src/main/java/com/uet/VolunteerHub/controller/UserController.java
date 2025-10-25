@@ -3,6 +3,8 @@ package com.uet.VolunteerHub.controller;
 import com.uet.VolunteerHub.dto.UserSearchDTO;
 import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
 import com.uet.VolunteerHub.dto.UserProfileUpdateDTO;
+import com.uet.VolunteerHub.enums.AccountStatus;
+import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.service.UserSearchService;
 import com.uet.VolunteerHub.service.UserWriteService;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,14 +36,10 @@ public class UserController {
     @GetMapping("/search")
     public ResponseEntity<Page<UserSearchDTO>> searchUsers(UserSearchCriteriaDTO criteria, @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<UserSearchDTO> userDTOPage = userSearchService.findUsersBySpecification(criteria, pageable);
-        if (userDTOPage.hasContent()) {
-            return ResponseEntity.ok(userDTOPage);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(userDTOPage);
     }
 
-    @PatchMapping("/update/{id}")
+    @PatchMapping("/{id}")
     public ResponseEntity<UserSearchDTO> updateUser(@PathVariable("id") UUID id, @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO) {
         try {
             UserSearchDTO userSearchDTO = userWriteService.updateUser(id, userProfileUpdateDTO);
@@ -51,10 +49,30 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<UserSearchDTO> deleteUser(@PathVariable("id") UUID id) {
         try {
             UserSearchDTO userSearchDTO = userWriteService.deleteUser(id);
+            return ResponseEntity.ok(userSearchDTO);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/role")
+    public ResponseEntity<UserSearchDTO> changeUserRole(@PathVariable("id") UUID id, @Valid @RequestBody UserRole newRole) {
+        try {
+            UserSearchDTO userSearchDTO = userWriteService.changeRole(id, newRole);
+            return ResponseEntity.ok(userSearchDTO);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<UserSearchDTO> changeAccountStatus(@PathVariable("id") UUID id, @Valid @RequestBody AccountStatus newStatus) {
+        try {
+            UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, newStatus);
             return ResponseEntity.ok(userSearchDTO);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();

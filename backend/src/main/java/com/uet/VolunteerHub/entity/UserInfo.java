@@ -1,5 +1,7 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.AccountStatus;
+import com.uet.VolunteerHub.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
