@@ -1,13 +1,10 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.UserDTO;
+import com.uet.VolunteerHub.dto.UserSearchDTO;
 import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.UserInfo;
-import com.uet.VolunteerHub.enums.AccountStatus;
-import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.repository.AccountRepository;
-import com.uet.VolunteerHub.repository.UserInfoRepository;
 import com.uet.VolunteerHub.repository.specification.UserSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
@@ -21,16 +18,16 @@ import java.util.*;
 
 @Log
 @Service
-public class UserDTOService {
+public class UserSearchService {
     private final AccountRepository accountRepository;
 
     @Autowired
-    public UserDTOService(AccountRepository accountRepository) {
+    public UserSearchService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
 
-    private UserDTO mapToUserDTO(Account account, UserInfo userInfo) {
-        return new UserDTO(
+    private UserSearchDTO mapToUserDTO(Account account, UserInfo userInfo) {
+        return new UserSearchDTO(
                 account.getAccountId(),
                 account.getUsername(),
                 account.getEmail(),
@@ -48,7 +45,7 @@ public class UserDTOService {
     }
 
     @Transactional
-    public Optional<UserDTO> findUserById(UUID accountId) {
+    public Optional<UserSearchDTO> findUserById(UUID accountId) {
         Optional<Account> account = accountRepository.findById(accountId);
         if (account.isPresent()) {
             return Optional.of(mapToUserDTO(account.get(), account.get().getUserInfo()));
@@ -58,7 +55,7 @@ public class UserDTOService {
     }
 
     @Transactional
-    public Page<UserDTO> findUsersBySpecification(UserSearchCriteriaDTO searchCriteria, Pageable pageable) {
+    public Page<UserSearchDTO> findUsersBySpecification(UserSearchCriteriaDTO searchCriteria, Pageable pageable) {
         Specification<Account> spec = UserSpecification.userSearchCriteria(searchCriteria);
         Page<Account> accountPage = accountRepository.findAll(spec, pageable);
         if (accountPage.hasContent()) {

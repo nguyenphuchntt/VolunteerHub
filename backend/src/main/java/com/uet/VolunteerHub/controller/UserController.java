@@ -1,8 +1,12 @@
 package com.uet.VolunteerHub.controller;
 
-import com.uet.VolunteerHub.dto.UserDTO;
+import com.uet.VolunteerHub.dto.UserSearchDTO;
 import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
-import com.uet.VolunteerHub.service.UserDTOService;
+import com.uet.VolunteerHub.dto.UserProfileUpdateDTO;
+import com.uet.VolunteerHub.service.UserSearchService;
+import com.uet.VolunteerHub.service.UserWriteService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,27 +15,50 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.UUID;
 
 @Log
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
-    private final UserDTOService userDTOService;
+    private final UserSearchService userSearchService;
+    private final UserWriteService userWriteService;
 
     @Autowired
-    public UserController(UserDTOService userDTOService) {
-        this.userDTOService = userDTOService;
+    public UserController(UserSearchService userSearchService, UserWriteService userWriteService) {
+        this.userSearchService = userSearchService;
+        this.userWriteService = userWriteService;
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<UserDTO>> searchUsers(UserSearchCriteriaDTO criteria, @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<UserDTO> userDTOPage = userDTOService.findUsersBySpecification(criteria, pageable);
+    public ResponseEntity<Page<UserSearchDTO>> searchUsers(UserSearchCriteriaDTO criteria, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<UserSearchDTO> userDTOPage = userSearchService.findUsersBySpecification(criteria, pageable);
         if (userDTOPage.hasContent()) {
             return ResponseEntity.ok(userDTOPage);
         } else {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PatchMapping("/update/{id}")
+    public ResponseEntity<UserSearchDTO> updateUser(@PathVariable("id") UUID id, @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO) {
+        try {
+            UserSearchDTO userSearchDTO = userWriteService.updateUser(id, userProfileUpdateDTO);
+            return ResponseEntity.ok(userSearchDTO);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<UserSearchDTO> deleteUser(@PathVariable("id") UUID id) {
+        try {
+            UserSearchDTO userSearchDTO = userWriteService.deleteUser(id);
+            return ResponseEntity.ok(userSearchDTO);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }
