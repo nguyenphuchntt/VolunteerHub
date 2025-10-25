@@ -54,4 +54,32 @@ public class UserDTOService {
         return Optional.empty();
     }
 
+    @Transactional
+    public Optional<UserDTO> getUserById(UUID accountId) {
+        Optional<Account> account = accountRepository.findById(accountId);
+        if (account.isPresent()) {
+            Optional<UserInfo> userInfo = userInfoRepository.findById(accountId);
+            if (userInfo.isPresent()) {
+                UserDTO userDTO = new UserDTO(
+                        accountId,
+                        account.get().getUsername(),
+                        account.get().getEmail(),
+                        userInfo.get().getFirstName(),
+                        userInfo.get().getLastName(),
+                        userInfo.get().getDateOfBirth(),
+                        userInfo.get().getCountry(),
+                        userInfo.get().getCity(),
+                        userInfo.get().getAddress(),
+                        userInfo.get().getOrganization()
+                );
+                return Optional.of(userDTO);
+            } else {
+                log.warning("UserInfo not found for accountId " + accountId);
+                return Optional.empty();
+            }
+        }
+        log.warning("Account not found for accountId " + accountId);
+        return Optional.empty();
+    }
+
 }
