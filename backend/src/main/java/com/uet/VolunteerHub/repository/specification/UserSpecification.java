@@ -4,9 +4,7 @@ import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.UserInfo;
 import jakarta.persistence.criteria.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -23,12 +23,10 @@ import java.util.*;
 @Service
 public class UserDTOService {
     private final AccountRepository accountRepository;
-    private final UserInfoRepository userInfoRepository;
 
     @Autowired
-    public UserDTOService(AccountRepository accountRepository, UserInfoRepository userInfoRepository) {
+    public UserDTOService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
-        this.userInfoRepository = userInfoRepository;
     }
 
     private UserDTO mapToUserDTO(Account account, UserInfo userInfo) {
@@ -70,7 +68,5 @@ public class UserDTOService {
             return Page.empty(pageable);
         }
     }
-
-
 
 }
