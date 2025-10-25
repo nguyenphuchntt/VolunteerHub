@@ -70,7 +70,7 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<UserSearchDTO> changeAccountStatus(@PathVariable("id") UUID id, @Valid @RequestBody AccountStatus newStatus) {
+    public ResponseEntity<UserSearchDTO> changeAccountStatus(@PathVariable("id") UUID id, @RequestBody AccountStatus newStatus) {
         try {
             UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, newStatus);
             return ResponseEntity.ok(userSearchDTO);
