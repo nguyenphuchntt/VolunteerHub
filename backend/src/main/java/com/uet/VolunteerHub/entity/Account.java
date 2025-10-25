@@ -8,9 +8,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
-import java.util.Date;
 import java.util.UUID;
 
 @Data
@@ -34,11 +35,13 @@ public class Account {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "account_status", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name="account_status", columnDefinition = "account_status", nullable = false)
     private AccountStatus accountStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name="role", columnDefinition = "user_role", nullable = false)
     private UserRole role;
 
     @CreationTimestamp

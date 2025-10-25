@@ -1,7 +1,10 @@
 package com.uet.VolunteerHub.dto;
 
+import com.uet.VolunteerHub.enums.AccountStatus;
+import com.uet.VolunteerHub.enums.UserRole;
 import lombok.*;
 
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.UUID;
 
@@ -17,6 +20,10 @@ public class UserDTO {
 
     private String email;
 
+    private AccountStatus status;
+
+    private UserRole role;
+
     private String firstName;
 
     private String lastName;
@@ -30,5 +37,7 @@ public class UserDTO {
     private String address;
 
     private String organization;
+
+    private OffsetDateTime createdAt;
 
 }

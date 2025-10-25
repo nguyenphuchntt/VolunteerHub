@@ -31,7 +31,7 @@ public class UserInfo {
 
     private String organization;
 
-    @OneToOne()
+    @OneToOne(fetch = FetchType.LAZY)
     @MapsId
     @JoinColumn(name = "account_id")
     private Account account;
