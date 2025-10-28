@@ -29,22 +29,23 @@ public class UserWriteService {
     }
 
     private UserSearchDTO mapToUserDTO(Account account, UserInfo userInfo) {
-        return new UserSearchDTO(
-                account.getAccountId(),
-                account.getUsername(),
-                account.getEmail(),
-                account.getAccountStatus(),
-                account.getRole(),
-                userInfo.getFirstName(),
-                userInfo.getLastName(),
-                userInfo.getDateOfBirth(),
-                userInfo.getCountry(),
-                userInfo.getCity(),
-                userInfo.getAddress(),
-                userInfo.getOrganization(),
-                account.getCreateAt()
-        );
+        return UserSearchDTO.builder()
+                .accountID(account.getAccountId())
+                .username(account.getUsername())
+                .email(account.getEmail())
+                .status(account.getAccountStatus())
+                .role(account.getRole())
+                .createdAt(account.getCreateAt())
+                .firstName(userInfo.getFirstName())
+                .lastName(userInfo.getLastName())
+                .dateOfBirth(userInfo.getDateOfBirth())
+                .country(userInfo.getCountry())
+                .city(userInfo.getCity())
+                .address(userInfo.getAddress())
+                .organization(userInfo.getOrganization())
+                .build();
     }
+
 
     @Transactional
     public UserSearchDTO updateUser(UUID userID, UserProfileUpdateDTO userProfileUpdateDTO) {

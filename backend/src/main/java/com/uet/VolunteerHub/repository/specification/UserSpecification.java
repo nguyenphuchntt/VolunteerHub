@@ -15,6 +15,9 @@ public class UserSpecification {
            List<Predicate> predicates = new ArrayList<>();
            Join<Account, UserInfo> userInfo = root.join("userInfo", JoinType.LEFT);
 
+           if (criteria.getUserId() != null) {
+               predicates.add(criteriaBuilder.equal(userInfo.get("id"), criteria.getUserId()));
+           }
            if(criteria.getUsername() != null) {
                predicates.add(criteriaBuilder.equal(root.get("username"), criteria.getUsername()));
            }

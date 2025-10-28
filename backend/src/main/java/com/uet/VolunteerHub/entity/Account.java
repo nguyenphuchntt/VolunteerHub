@@ -17,6 +17,7 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "account")
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Account {
@@ -52,6 +53,7 @@ public class Account {
     @Email
     private String email;
 
+    @NotNull
     @OneToOne(mappedBy="account", cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     private UserInfo userInfo;
