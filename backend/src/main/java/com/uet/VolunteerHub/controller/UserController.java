@@ -41,42 +41,26 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<UserSearchDTO> updateUser(@PathVariable("id") UUID id, @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO) {
-        try {
-            UserSearchDTO userSearchDTO = userWriteService.updateUser(id, userProfileUpdateDTO);
-            return ResponseEntity.ok(userSearchDTO);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        UserSearchDTO userSearchDTO = userWriteService.updateUser(id, userProfileUpdateDTO);
+        return ResponseEntity.ok(userSearchDTO);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<UserSearchDTO> deleteUser(@PathVariable("id") UUID id) {
-        try {
-            UserSearchDTO userSearchDTO = userWriteService.deleteUser(id);
-            return ResponseEntity.ok(userSearchDTO);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        UserSearchDTO userSearchDTO = userWriteService.deleteUser(id);
+        return ResponseEntity.ok(userSearchDTO);
     }
 
     @PatchMapping("/{id}/role")
     public ResponseEntity<UserSearchDTO> changeUserRole(@PathVariable("id") UUID id, @RequestBody UserRole newRole) {
-        try {
-            UserSearchDTO userSearchDTO = userWriteService.changeRole(id, newRole);
-            return ResponseEntity.ok(userSearchDTO);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        UserSearchDTO userSearchDTO = userWriteService.changeRole(id, newRole);
+        return ResponseEntity.ok(userSearchDTO);
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<UserSearchDTO> changeAccountStatus(@PathVariable("id") UUID id, @RequestBody AccountStatus newStatus) {
-        try {
-            UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, newStatus);
-            return ResponseEntity.ok(userSearchDTO);
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, newStatus);
+        return ResponseEntity.ok(userSearchDTO);
     }
 
 }

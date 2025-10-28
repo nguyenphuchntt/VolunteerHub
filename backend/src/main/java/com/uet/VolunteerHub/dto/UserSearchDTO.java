@@ -11,7 +11,7 @@ import java.util.UUID;
 @Data
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = lombok.AccessLevel.PROTECTED, force = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class UserSearchDTO {
     private UUID accountID;
 

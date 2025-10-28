@@ -29,23 +29,24 @@ public class UserWriteService {
     }
 
     private UserSearchDTO mapToUserDTO(Account account, UserInfo userInfo) {
-        return UserSearchDTO.builder()
+        UserSearchDTO.UserSearchDTOBuilder builder =  UserSearchDTO.builder()
                 .accountID(account.getAccountId())
                 .username(account.getUsername())
                 .email(account.getEmail())
                 .status(account.getAccountStatus())
                 .role(account.getRole())
-                .createdAt(account.getCreateAt())
-                .firstName(userInfo.getFirstName())
-                .lastName(userInfo.getLastName())
-                .dateOfBirth(userInfo.getDateOfBirth())
-                .country(userInfo.getCountry())
-                .city(userInfo.getCity())
-                .address(userInfo.getAddress())
-                .organization(userInfo.getOrganization())
-                .build();
+                .createdAt(account.getCreateAt());
+        if (userInfo != null) {
+            builder.firstName(userInfo.getFirstName())
+                    .lastName(userInfo.getLastName())
+                    .dateOfBirth(userInfo.getDateOfBirth())
+                    .country(userInfo.getCountry())
+                    .city(userInfo.getCity())
+                    .address(userInfo.getAddress())
+                    .organization(userInfo.getOrganization());
+        }
+        return builder.build();
     }
-
 
     @Transactional
     public UserSearchDTO updateUser(UUID userID, UserProfileUpdateDTO userProfileUpdateDTO) {
@@ -55,6 +56,9 @@ public class UserWriteService {
                     return new EntityNotFoundException("Account with ID " + userID + " not found");
                 });
         UserInfo userInfo = account.getUserInfo();
+        if (userInfo == null) {
+            throw new EntityNotFoundException("User with ID " + userID + " not found");
+        }
         if (userProfileUpdateDTO.getFirstName() != null) {
             userInfo.setFirstName(userProfileUpdateDTO.getFirstName());
         }
