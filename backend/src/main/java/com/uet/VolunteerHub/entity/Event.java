@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @Data
 @Entity
+@Table
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Event {

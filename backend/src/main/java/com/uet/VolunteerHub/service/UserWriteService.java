@@ -11,9 +11,11 @@ import com.uet.VolunteerHub.repository.UserInfoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Log
@@ -46,6 +48,10 @@ public class UserWriteService {
                     .organization(userInfo.getOrganization());
         }
         return builder.build();
+    }
+
+    private Pair<Account, UserInfo> getAccountAndUserInfo(UUID userID) {
+
     }
 
     @Transactional
@@ -95,6 +101,9 @@ public class UserWriteService {
                 }
         );
         UserInfo userInfo = account.getUserInfo();
+        if (userInfo == null) {
+            throw new EntityNotFoundException("User with ID " + userID + " not found");
+        }
         accountRepository.delete(account);
         return mapToUserDTO(account, userInfo);
     }
