@@ -1,6 +1,7 @@
 package com.uet.VolunteerHub.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,9 +21,12 @@ public class Post {
     @Column(name = "post_id", updatable = false, nullable = false)
     private Long post_id;
 
-    @Column(name = "event_id")
-    private Long event_id;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private Event event;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_account_id")
     private Account createdByAccount;
@@ -31,6 +35,6 @@ public class Post {
     @Column(name = "create_at", nullable = false, updatable = false)
     private OffsetDateTime createAt;
 
-    @Column(name = "content")
+    @Column(name = "content", nullable = false)
     private String content;
 }

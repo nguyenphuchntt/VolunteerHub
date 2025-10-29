@@ -2,17 +2,18 @@ package com.uet.VolunteerHub.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 
+@Getter
+@Setter
+@EqualsAndHashCode(of = "likeId")
 @Entity
-@Table(name = "likes")
+@Table(name = "like")
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class Likes {
+public class Like {
     @EmbeddedId
     private LikeID likeId;
 
