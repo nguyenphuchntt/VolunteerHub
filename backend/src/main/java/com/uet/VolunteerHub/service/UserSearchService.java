@@ -26,14 +26,15 @@ public class UserSearchService {
         this.accountRepository = accountRepository;
     }
 
-    private UserSearchDTO mapToUserDTO(Account account, UserInfo userInfo) {
-        var builder =  UserSearchDTO.builder()
+    private UserSearchDTO mapToUserSearchDTO(Account account, UserInfo userInfo) {
+        var builder = UserSearchDTO.builder()
                 .accountID(account.getAccountId())
                 .username(account.getUsername())
                 .email(account.getEmail())
                 .status(account.getAccountStatus())
                 .role(account.getRole())
                 .createdAt(account.getCreateAt());
+
         if (userInfo != null) {
             builder.firstName(userInfo.getFirstName())
                     .lastName(userInfo.getLastName())
@@ -49,20 +50,14 @@ public class UserSearchService {
     @Transactional
     public Optional<UserSearchDTO> findUserById(UUID accountId) {
         Optional<Account> account = accountRepository.findById(accountId);
-        if (account.isPresent()) {
-            if (account.get().getUserInfo() != null) {
-                return Optional.of(mapToUserDTO(account.get(), account.get().getUserInfo()));
-            }
-        }
-        log.warning("Account not found for accountId " + accountId);
-        return Optional.empty();
+        return account.map(value -> mapToUserSearchDTO(value, value.getUserInfo()));
     }
 
     @Transactional
     public Page<UserSearchDTO> findUsersBySpecification(UserSearchCriteriaDTO searchCriteria, Pageable pageable) {
-        Specification<Account> spec = UserSpecification.userSearchCriteria(searchCriteria);
+        Specification<Account> spec = UserSpecification.fromCriteria(searchCriteria);
         Page<Account> accountPage = accountRepository.findAll(spec, pageable);
-        return accountPage.map(account -> mapToUserDTO(account, account.getUserInfo()));
+        return accountPage.map(account -> mapToUserSearchDTO(account, account.getUserInfo()));
     }
 
 }
