@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.PostType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -7,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -19,7 +22,12 @@ public class Post {
 
     @Id
     @Column(name = "post_id", updatable = false, nullable = false)
-    private Long post_id;
+    private Long postId;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "post_type", columnDefinition = "post_type", nullable = false)
+    private PostType postType;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

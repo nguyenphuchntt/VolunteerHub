@@ -50,9 +50,9 @@ public class UserWriteService {
         return builder.build();
     }
 
-    private Pair<Account, UserInfo> getAccountAndUserInfo(UUID userID) {
-
-    }
+//    private Pair<Account, UserInfo> getAccountAndUserInfo(UUID userID) {
+//
+//    }
 
     @Transactional
     public UserSearchDTO updateUser(UUID userID, UserProfileUpdateDTO userProfileUpdateDTO) {
