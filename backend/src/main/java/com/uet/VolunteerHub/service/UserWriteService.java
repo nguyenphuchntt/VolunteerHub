@@ -108,7 +108,7 @@ public class UserWriteService {
     }
 
     @Transactional
-    public UserSearchDTO deleteUser(UUID userID) {
+    public void deleteUser(UUID userID) {
         Pair<Account, UserInfo> AccountAndUserInfo = findAccountAndUserInfo(userID);
         Account account = AccountAndUserInfo.getFirst();
         UserInfo userInfo = AccountAndUserInfo.getSecond();
@@ -116,9 +116,6 @@ public class UserWriteService {
         for(Event event : eventList) {
             event.setCreatedBy(null);
         }
-        eventRepository.saveAll(eventList);
-        accountRepository.delete(account);
-        return mapToUserSearchDTO(account, userInfo);
     }
 
     @Transactional

@@ -51,9 +51,9 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<UserSearchDTO> deleteUser(@PathVariable("id") UUID id) {
-        UserSearchDTO userSearchDTO = userWriteService.deleteUser(id);
-        return ResponseEntity.ok(userSearchDTO);
+    public ResponseEntity<Void> deleteUser(@PathVariable("id") UUID id) {
+        userWriteService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/role")
