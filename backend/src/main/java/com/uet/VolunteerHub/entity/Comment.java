@@ -37,6 +37,6 @@ public class Comment {
     private OffsetDateTime createAt;
 
     @NotNull
-    @Column(name = "content")
+    @Column(name = "content", nullable = false)
     private String content;
 }
