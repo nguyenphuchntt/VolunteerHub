@@ -21,6 +21,7 @@ import java.time.OffsetDateTime;
 public class Post {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "post_id", updatable = false, nullable = false)
     private Long postId;
 
@@ -29,7 +30,6 @@ public class Post {
     @Column(name = "post_type", columnDefinition = "post_type", nullable = false)
     private PostType postType;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;

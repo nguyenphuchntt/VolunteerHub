@@ -1,6 +1,7 @@
 package com.uet.VolunteerHub.controller;
 
 import com.uet.VolunteerHub.dto.PostReadDTO;
+import com.uet.VolunteerHub.entity.Post;
 import com.uet.VolunteerHub.service.PostReadService;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,5 +26,22 @@ public class PostController {
     public ResponseEntity<PostReadDTO> searchPostByTitle(@PathVariable("id") Long postId) {
         PostReadDTO result = postReadService.findPostById(postId);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<PostReadDTO>> searchPosts(
+            @RequestParam(required = false) String content,
+            @RequestParam(required = false) String ownerUsername,
+            Pageable pageable) {
+        Page<PostReadDTO> postsPage = postReadService.findPostByContentLike(content, ownerUsername, pageable);
+        return ResponseEntity.ok(postsPage);
+    }
+
+    @GetMapping("/by-account/{username}")
+    public ResponseEntity<Page<PostReadDTO>> getPostsByOwner(
+            @PathVariable String username,
+            Pageable pageable) {
+        Page<PostReadDTO> postsPage = postReadService.findPostByOwner(username, pageable);
+        return ResponseEntity.ok(postsPage);
     }
 }
