@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserSpecification {
-   public static Specification<Account> userSearchCriteria(final UserSearchCriteriaDTO criteria) {
+   public static Specification<Account> fromCriteria(final UserSearchCriteriaDTO criteria) {
        return (root, query, criteriaBuilder) -> {
            List<Predicate> predicates = new ArrayList<>();
            Join<Account, UserInfo> userInfo = root.join("userInfo", JoinType.LEFT);
 
            if (criteria.getUserId() != null) {
-               predicates.add(criteriaBuilder.equal(userInfo.get("id"), criteria.getUserId()));
+               predicates.add(criteriaBuilder.equal(userInfo.get("accountId"), criteria.getUserId()));
            }
            if(criteria.getUsername() != null) {
                predicates.add(criteriaBuilder.equal(root.get("username"), criteria.getUsername()));
@@ -52,6 +52,22 @@ public class UserSpecification {
 
            if(criteria.getCity() != null) {
                predicates.add(criteriaBuilder.equal(userInfo.get("city"), criteria.getCity()));
+           }
+
+           if (criteria.getDateOfBirthFrom() != null) {
+               predicates.add(criteriaBuilder.greaterThanOrEqualTo(userInfo.get("dateOfBirth"), criteria.getDateOfBirthFrom()));
+           }
+
+           if (criteria.getDateOfBirthTo() != null) {
+               predicates.add(criteriaBuilder.lessThanOrEqualTo(userInfo.get("dateOfBirth"), criteria.getDateOfBirthTo()));
+           }
+
+           if (criteria.getCreateAtFrom() != null) {
+               predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createAt"), criteria.getCreateAtFrom()));
+           }
+
+           if (criteria.getCreateAtTo() != null) {
+               predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("createAt"), criteria.getCreateAtTo()));
            }
 
            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

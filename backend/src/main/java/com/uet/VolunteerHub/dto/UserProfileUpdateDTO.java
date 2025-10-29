@@ -13,7 +13,6 @@ import java.util.Date;
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED, force = true)
 public class UserProfileUpdateDTO {
 
-    @NotNull
     @Email
     private String email;
 

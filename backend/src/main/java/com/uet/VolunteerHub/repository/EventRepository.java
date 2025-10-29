@@ -1,6 +1,7 @@
 package com.uet.VolunteerHub.repository;
 
-import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.entity.Event;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,19 +10,21 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpecificationExecutor<Account> {
+public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
 
     @Override
-    @EntityGraph(attributePaths = {"userInfo"})
-    Page<Account> findAll(Specification<Account> spec, Pageable pageable);
+    @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
+    Page<Event> findAll(Specification<Event> spec, Pageable pageable);
 
     @Override
-    @EntityGraph(attributePaths = {"userInfo"})
-    Optional<Account> findById(UUID accountId);
+    @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
+    Optional<Event> findById(Long eventId);
 
-    boolean existsByEmail(String email);
+    List<Event> findAllByCreatedBy_AccountId(UUID accountID);
+
 }

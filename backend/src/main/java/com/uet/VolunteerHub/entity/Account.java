@@ -53,9 +53,7 @@ public class Account {
     @Email
     private String email;
 
-    @NotNull
-    @OneToOne(mappedBy="account", cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
+    @OneToOne(mappedBy="account", cascade = CascadeType.ALL, optional = false)
     private UserInfo userInfo;
 
 }

@@ -7,7 +7,6 @@ import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.service.UserSearchService;
 import com.uet.VolunteerHub.service.UserWriteService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +34,14 @@ public class UserController {
 
     @GetMapping("/search")
     public ResponseEntity<Page<UserSearchDTO>> searchUsers(UserSearchCriteriaDTO criteria, @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<UserSearchDTO> userDTOPage = userSearchService.findUsersBySpecification(criteria, pageable);
-        return ResponseEntity.ok(userDTOPage);
+        Page<UserSearchDTO> userSearchDTOPage = userSearchService.findUsersBySpecification(criteria, pageable);
+        return ResponseEntity.ok(userSearchDTOPage);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserSearchDTO> searchUserById(@PathVariable("id") UUID id) {
+        return userSearchService.findUserById(id)
+                .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{id}")

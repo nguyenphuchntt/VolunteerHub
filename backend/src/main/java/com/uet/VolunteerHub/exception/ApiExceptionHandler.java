@@ -20,4 +20,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         String bodyOfResponse = ex.getMessage();
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalArgumentException.class)
+    ResponseEntity<Object> handleIllegalArgumentException(RuntimeException ex, WebRequest request) {
+        String bodyOfResponse = ex.getMessage();
+        return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
 }
