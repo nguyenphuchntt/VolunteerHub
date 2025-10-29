@@ -13,7 +13,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Embeddable
-public class LikeID implements Serializable {
+public class LikeId implements Serializable {
 
     @Column(name = "post_id", nullable = false, updatable = false)
     private Long postId;

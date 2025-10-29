@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
 public class Like {
     @EmbeddedId
-    private LikeID likeId;
+    private LikeId likeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("postId")

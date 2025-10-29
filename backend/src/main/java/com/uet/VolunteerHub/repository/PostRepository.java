@@ -12,6 +12,6 @@ import java.util.Optional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
 
-//    Page<Post> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+    //    Page<Post> findByTitleContainingIgnoreCase(String title, Pageable pageable);
     Optional<Post> findByPostId(Long postId);
 }
