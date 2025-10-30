@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import jakarta.persistence.*;
@@ -39,8 +40,8 @@ public class EventUser {
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "role", columnDefinition = "user_role", nullable = false)
-    private UserRole role;
+    @Column(name = "event_user_role", columnDefinition = "event_user_role", nullable = false)
+    private EventUserRole role;
 
     @Column(name = "start_at")
     private OffsetDateTime startAt;

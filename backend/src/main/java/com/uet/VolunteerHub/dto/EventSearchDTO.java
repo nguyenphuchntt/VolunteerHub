@@ -21,8 +21,4 @@ public class EventSearchDTO {
     private EventStatus status;
     private Integer attendeeCount;
     private UUID accountId;
-    private String username;
-    private String firstName;
-    private String lastName;
-    private String email;
 }

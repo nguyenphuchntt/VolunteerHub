@@ -3,6 +3,7 @@ package com.uet.VolunteerHub.repository.specification;
 import com.uet.VolunteerHub.dto.EventSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
+import com.uet.VolunteerHub.entity.UserInfo;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -16,6 +17,7 @@ public class EventSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             Join<Event, Account> account = root.join("createdBy", JoinType.LEFT);
+            Join<Account, UserInfo> userInfo = account.join("userInfo", JoinType.LEFT);
 
             if (criteria.getAccountId() != null) {
                 predicates.add(criteriaBuilder.equal(account.get("accountId"), criteria.getAccountId()));
@@ -63,6 +65,18 @@ public class EventSpecification {
 
             if (criteria.getStatus() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("status"), criteria.getStatus()));
+            }
+
+            if (criteria.getUsername() != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(account.get("username")), "%" + criteria.getUsername().toLowerCase() + "%"));
+            }
+
+            if (criteria.getFirstName() != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("firstName")), "%" + criteria.getFirstName().toLowerCase() + "%"));
+            }
+
+            if (criteria.getLastName() != null) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("lastName")), "%" + criteria.getLastName().toLowerCase() + "%"));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
