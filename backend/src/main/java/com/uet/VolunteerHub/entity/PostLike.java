@@ -12,7 +12,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "post_like")
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@NoArgsConstructor
 public class PostLike {
     @EmbeddedId
     private LikeId likeId;
