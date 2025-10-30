@@ -1,0 +1,74 @@
+/* Input Component Styles */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.input-field {
+  flex: 1;
+  padding: 9px 24px;
+  border: 1px solid var(--green-400);
+  border-radius: 6px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--black-800);
+  background-color: var(--white-900);
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: var(--green-900);
+}
+
+.input-field::placeholder {
+  color: var(--black-400);
+}
+
+/* Textarea specific */
+textarea.input-field {
+  resize: vertical;
+  min-height: 44px;
+}
+
+/* Input with icon */
+.input-wrapper.has-icon {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-wrapper.has-icon .input-field {
+  padding-left: 52px;
+}
+
+.input-icon svg,
+.input-icon img {
+  width: 20px;
+  height: 20px;
+  color: var(--black-500);
+}
+
+/* Borderless input (for write post) */
+.input-borderless .input-field {
+  border: none;
+  border-bottom: 1px solid var(--white-400);
+  border-radius: 0;
+  padding: 18px 2px;
+}
+
+.input-borderless .input-field:focus {
+  border-bottom-color: var(--green-400);
+}

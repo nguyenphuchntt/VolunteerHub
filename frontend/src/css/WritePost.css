@@ -1,0 +1,58 @@
+/* Write Post Component */
+.write-post {
+  padding: 21px 28px;
+}
+
+.write-post-input {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.write-post-textarea {
+  flex: 1;
+}
+
+.write-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.add-media-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.75;
+  color: var(--black-800);
+  padding: 8px;
+  transition: color 0.3s ease;
+}
+
+.add-media-btn:hover {
+  color: var(--black-900);
+}
+
+.add-media-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .write-post {
+    padding: 16px;
+  }
+
+  .add-media-btn span {
+    display: none;
+  }
+}

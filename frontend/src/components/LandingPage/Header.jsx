@@ -1,7 +1,18 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "../../css/Header.css";
 
 const Header = () => {
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    navigate("/signin");
+  };
+
+  const handleRegister = () => {
+    navigate("/signup");
+  };
+
   return (
     <header className="header">
       <div className="container">
@@ -22,8 +33,12 @@ const Header = () => {
             </a>
           </div>
           <div className="nav-actions">
-            <button className="btn-login">Đăng Nhập</button>
-            <button className="btn-register">Đăng Ký</button>
+            <button className="btn-login" onClick={handleLogin}>
+              Đăng Nhập
+            </button>
+            <button className="btn-register" onClick={handleRegister}>
+              Đăng Ký
+            </button>
           </div>
         </nav>
       </div>

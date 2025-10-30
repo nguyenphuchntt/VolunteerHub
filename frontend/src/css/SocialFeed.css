@@ -1,0 +1,146 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* Design System - Color Variables */
+:root {
+  /* Neutral Colors */
+  --white-100: #fafbff;
+  --white-200: #f1f4f9;
+  --white-300: #ecf0f5;
+  --white-400: #e2e8f0;
+  --white-900: #ffffff;
+
+  /* Black/Text Colors */
+  --black-300: #838b98;
+  --black-400: #707988;
+  --black-500: #5d6778;
+  --black-600: #4b5669;
+  --black-800: #27364b;
+  --black-900: #0c1024;
+
+  /* Semantic Green */
+  --green-200: #bfd6c2;
+  --green-300: #96ba9c;
+  --green-400: #81ad89;
+  --green-900: #036b30;
+}
+
+/* Typography */
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--white-100);
+  color: var(--black-800);
+  margin: 0;
+  padding: 0;
+}
+
+.heading-h5-medium {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.21;
+}
+
+.heading-h6-medium {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.21;
+}
+
+.body-regular {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.75;
+}
+
+.body-medium {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.75;
+}
+
+.label-regular {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.21;
+  letter-spacing: -0.4%;
+}
+
+.label-medium {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.21;
+  letter-spacing: -0.4%;
+}
+
+/* Layout */
+.social-feed-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.social-feed-main {
+  display: flex;
+  gap: 32px;
+  padding: 48px 92px;
+  flex: 1;
+}
+
+.feed-left-sidebar {
+  width: 290px;
+  flex-shrink: 0;
+}
+
+.feed-center-content {
+  flex: 1;
+  max-width: 582px;
+}
+
+.feed-right-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+/* Card Styles */
+.feed-card {
+  background: var(--white-900);
+  border: 1px solid var(--green-300);
+  border-radius: 8px;
+  margin-bottom: 32px;
+}
+
+/* Posts Feed */
+.posts-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 1280px) {
+  .feed-right-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 968px) {
+  .social-feed-main {
+    padding: 24px;
+    flex-direction: column;
+  }
+
+  .feed-left-sidebar {
+    width: 100%;
+  }
+
+  .feed-center-content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .social-feed-main {
+    padding: 16px;
+  }
+}
