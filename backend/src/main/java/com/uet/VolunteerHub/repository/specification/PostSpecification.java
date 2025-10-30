@@ -30,4 +30,16 @@ public class PostSpecification {
             );
         };
     }
+
+    public Specification<Post> isInEvent(Long eventId) {
+        return (root, query, criteriaBuilder) -> {
+            if (eventId == null) {
+                return null;
+            }
+            return criteriaBuilder.equal(
+                    root.get("event").get("eventId"),
+                    eventId
+            );
+        };
+    }
 }

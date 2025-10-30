@@ -64,4 +64,13 @@ public class PostWriteService {
         post.setEvent(newEvent);
         return postMapper.toPostReadDTO(postRepository.save(post));
     }
+
+    @Transactional
+    public boolean deletePost(Long postId) {
+        if (postRepository.existsById(postId)) {
+            postRepository.deleteById(postId);
+            return true;
+        }
+        return false;
+    }
 }
