@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.mapper;
 
+import com.uet.VolunteerHub.dto.CommentCreateDTO;
 import com.uet.VolunteerHub.dto.CommentReadDTO;
 import com.uet.VolunteerHub.entity.Comment;
 import org.mapstruct.Mapper;
@@ -18,11 +19,11 @@ public interface CommentMapper {
     @Mapping(source = "createdByAccount.userInfo.lastName", target = "ownerLastName")
     CommentReadDTO toCommentReadDTO(Comment comment);
 
-//    @Mapping(source = "postId", target = "post.postId")
-//    @Mapping(source = "createdByAccountId", target = "createdByAccount.accountId")
-//    @Mapping(source = "parentCommentId", target = "parentComment.commentId")
-//    @Mapping(target = "commentId", ignore = true)
-//    @Mapping(target = "createAt", ignore = true)
-//    @Mapping(target = "replies", ignore = true)
-//    Comment toCommentEntity(CommentReadDTO commentReadDTO);
+    @Mapping(target = "commentId", ignore = true)
+    @Mapping(target = "createAt", ignore = true)
+    @Mapping(target = "post", ignore = true) // Service sẽ set
+    @Mapping(target = "createdByAccount", ignore = true) // Service sẽ set
+    @Mapping(target = "parentComment", ignore = true) // Service sẽ set
+    @Mapping(target = "replies", ignore = true)
+    Comment toCommentEntity(CommentCreateDTO dto);
 }
