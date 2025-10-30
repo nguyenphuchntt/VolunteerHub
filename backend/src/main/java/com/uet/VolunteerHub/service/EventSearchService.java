@@ -40,13 +40,7 @@ public class EventSearchService {
                 .category(event.getCategory())
                 .location(event.getLocation());
         if (account != null) {
-            builder.accountId(account.getAccountId())
-                    .username(account.getUsername())
-                    .email(account.getEmail());
-        }
-        if (userInfo != null) {
-            builder.firstName(userInfo.getFirstName())
-                    .lastName(userInfo.getLastName());
+            builder.accountId(account.getAccountId());
         }
         return builder.build();
     }

@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import jakarta.persistence.*;
@@ -11,7 +12,10 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = {"accountId", "eventId"})
+@ToString(exclude = {"account", "event"})
 @Entity
 @IdClass(EventUserId.class)
 @Table(name = "event_user")
@@ -39,8 +43,8 @@ public class EventUser {
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "role", columnDefinition = "user_role", nullable = false)
-    private UserRole role;
+    @Column(name = "event_user_role", columnDefinition = "event_user_role", nullable = false)
+    private EventUserRole role;
 
     @Column(name = "start_at")
     private OffsetDateTime startAt;

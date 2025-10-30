@@ -20,4 +20,7 @@ public class EventSearchCriteriaDTO {
     private String location;
     private EventStatus status;
     private UUID accountId;
+    private String username;
+    private String firstName;
+    private String lastName;
 }
