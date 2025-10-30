@@ -89,6 +89,14 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<PostReadDTO> updatePostStatus(
+            @PathVariable Long id,
+            @RequestBody @Valid PostStatusUpdateDTO dto) {
+        PostReadDTO updatedPost = postWriteService.updatePostStatus(id, dto);
+        return ResponseEntity.ok(updatedPost);
+    }
+
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
         boolean isDeleted = postWriteService.deletePost(postId);

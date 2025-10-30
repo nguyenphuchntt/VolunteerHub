@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.PostStatus;
 import com.uet.VolunteerHub.enums.PostType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -53,4 +54,10 @@ public class Post {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<PostLike> likes;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "post_status")
+    private PostStatus postStatus;
 }

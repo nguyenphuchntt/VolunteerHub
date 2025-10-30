@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.dto;
 
+import com.uet.VolunteerHub.enums.PostStatus;
 import com.uet.VolunteerHub.enums.PostType;
 import lombok.*;
 
@@ -14,6 +15,7 @@ public class PostReadDTO {
     private String content;
     private OffsetDateTime createAt;
     private PostType postType;
+    private PostStatus postStatus;
     private String eventTitle;
     private String ownerUsername;
     private String ownerFirstName;

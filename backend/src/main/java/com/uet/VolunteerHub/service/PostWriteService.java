@@ -4,6 +4,7 @@ import com.uet.VolunteerHub.dto.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.Post;
+import com.uet.VolunteerHub.enums.PostStatus;
 import com.uet.VolunteerHub.enums.PostType;
 import com.uet.VolunteerHub.mapper.PostMapper;
 import com.uet.VolunteerHub.repository.AccountRepository;
@@ -13,6 +14,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Log
 @AllArgsConstructor
@@ -66,11 +69,23 @@ public class PostWriteService {
     }
 
     @Transactional
+    public PostReadDTO updatePostStatus(Long postId, PostStatusUpdateDTO dto) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+        post.setPostStatus(dto.getPostStatus());
+        Post savedPost = postRepository.save(post);
+        return postMapper.toPostReadDTO(savedPost);
+    }
+
+    @Transactional
     public boolean deletePost(Long postId) {
-        if (postRepository.existsById(postId)) {
-            postRepository.deleteById(postId);
-            return true;
+        Optional<Post> optionalPost = postRepository.findById(postId);
+        if (optionalPost.isEmpty()) {
+            return false;
         }
-        return false;
+        Post post = optionalPost.get();
+        post.setPostStatus(PostStatus.DELETED);
+        postRepository.save(post);
+        return true;
     }
 }
