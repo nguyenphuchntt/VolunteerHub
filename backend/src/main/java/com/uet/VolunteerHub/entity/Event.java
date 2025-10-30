@@ -9,7 +9,10 @@
 
     import java.time.OffsetDateTime;
 
-    @Data
+    @Getter
+    @Setter
+    @EqualsAndHashCode(of = "eventId")
+    @ToString(exclude = "createdBy")
     @Entity
     @Table(name = "event")
     @Builder

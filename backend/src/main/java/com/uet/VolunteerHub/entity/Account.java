@@ -14,7 +14,10 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = "accountId")
+@ToString(exclude = "userInfo")
 @Entity
 @Table(name = "account")
 @Builder

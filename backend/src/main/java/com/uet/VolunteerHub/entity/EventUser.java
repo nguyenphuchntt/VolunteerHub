@@ -12,7 +12,10 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = {"accountId", "eventId"})
+@ToString(exclude = {"account", "event"})
 @Entity
 @IdClass(EventUserId.class)
 @Table(name = "event_user")

@@ -9,7 +9,10 @@
     import java.util.Date;
     import java.util.UUID;
 
-    @Data
+    @Getter
+    @Setter
+    @EqualsAndHashCode(of = "accountId")
+    @ToString(exclude = "account")
     @Entity
     @Table(name = "user_info")
     @Builder
