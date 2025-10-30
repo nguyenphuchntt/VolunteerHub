@@ -18,7 +18,6 @@ public class PostReadDTO {
     private String ownerUsername;
     private String ownerFirstName;
     private String ownerLastName;
-
 }
 
 

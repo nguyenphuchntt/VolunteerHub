@@ -3,17 +3,18 @@ package com.uet.VolunteerHub.entity;
 import com.uet.VolunteerHub.enums.PostType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = "postId")
 @Entity
 @Table(name = "post")
 @AllArgsConstructor
@@ -44,5 +45,12 @@ public class Post {
     private OffsetDateTime createAt;
 
     @Column(name = "content", nullable = false)
+    @Size(min = 1, max = 700, message = "Post content should has 1 to 700 characters")
     private String content;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<Comment> comments;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<PostLike> likes;
 }

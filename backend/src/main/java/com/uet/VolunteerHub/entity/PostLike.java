@@ -10,10 +10,10 @@ import java.time.OffsetDateTime;
 @Setter
 @EqualsAndHashCode(of = "likeId")
 @Entity
-@Table(name = "like")
+@Table(name = "post_like")
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class Like {
+public class PostLike {
     @EmbeddedId
     private LikeId likeId;
 

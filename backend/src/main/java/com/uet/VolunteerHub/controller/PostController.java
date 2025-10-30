@@ -28,7 +28,7 @@ public class PostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostReadDTO> searchPostByTitle(@PathVariable("id") Long postId) {
+    public ResponseEntity<PostReadDTO> searchPostById(@PathVariable("id") Long postId) {
         PostReadDTO result = postReadService.findPostById(postId);
         return ResponseEntity.ok(result);
     }
@@ -37,9 +37,18 @@ public class PostController {
     public ResponseEntity<Page<PostReadDTO>> searchPosts(
             @RequestParam(required = false) String content,
             @RequestParam(required = false) String ownerUsername,
+            @RequestParam(required = false) Long eventId,
             Pageable pageable) {
-        Page<PostReadDTO> postsPage = postReadService.findPostByContentLike(content, ownerUsername, pageable);
+        Page<PostReadDTO> postsPage = postReadService.searchPost(content, ownerUsername, eventId, pageable);
         return ResponseEntity.ok(postsPage);
+    }
+
+    @GetMapping("/by-event/{eventId}")
+    public ResponseEntity<Page<PostReadDTO>> getPostByEvent(
+            @PathVariable Long eventId,
+            Pageable pageable) {
+        Page<PostReadDTO> posts = postReadService.findPostByEvent(eventId, pageable);
+        return ResponseEntity.ok(posts);
     }
 
     @GetMapping("/by-account/{username}")
@@ -78,5 +87,15 @@ public class PostController {
             @RequestBody @Valid PostEventUpdateDTO dto) {
         PostReadDTO updatedPost = postWriteService.updatePostEvent(id, dto);
         return ResponseEntity.ok(updatedPost);
+    }
+
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
+        boolean isDeleted = postWriteService.deletePost(postId);
+        if (isDeleted) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

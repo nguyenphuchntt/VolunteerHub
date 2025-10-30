@@ -37,10 +37,11 @@ public class PostReadService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PostReadDTO> findPostByContentLike(String content, String ownerUsername, Pageable pageable) {
+    public Page<PostReadDTO> searchPost(String content, String ownerUsername, Long eventId, Pageable pageable) {
         Specification<Post> spec = Specification
                 .where(postSpecification.contentLike(content)
-                        .and(postSpecification.hasOwner(ownerUsername)));
+                        .and(postSpecification.hasOwner(ownerUsername))
+                        .and(postSpecification.isInEvent(eventId)));
         Page<Post> posts = postRepository.findAll(spec, pageable);
         return posts.map(postMapper::toPostReadDTO);
     }
@@ -50,6 +51,12 @@ public class PostReadService {
         Specification<Post> spec = Specification
                 .where(postSpecification.hasOwner(ownerUsername));
         Page<Post> posts = postRepository.findAll(spec, pageable);
+        return posts.map(postMapper::toPostReadDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostReadDTO> findPostByEvent(Long eventId, Pageable pageable) {
+        Page<Post> posts = postRepository.findByEvent_EventId(eventId, pageable);
         return posts.map(postMapper::toPostReadDTO);
     }
 }
