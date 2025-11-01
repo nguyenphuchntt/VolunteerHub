@@ -6,6 +6,7 @@ import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.Post;
 import com.uet.VolunteerHub.enums.PostStatus;
 import com.uet.VolunteerHub.enums.PostType;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.mapper.PostMapper;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
@@ -28,17 +29,17 @@ public class PostWriteService {
 
     private Post findPostById(Long postId) {
         return postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
     }
 
     @Transactional
     public PostReadDTO createPost(PostCreateDTO dto) {
         Post post = postMapper.toPostEntity(dto);
         Event event = eventRepository.findById(dto.getEventId())
-                .orElseThrow(() -> new RuntimeException("Error: Event not found with id " + dto.getEventId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Error: Event not found with id " + dto.getEventId()));
 
         Account account = accountRepository.findById(dto.getCreateByAccountId())
-                .orElseThrow(() -> new RuntimeException("Error: Account not found with id " + dto.getCreateByAccountId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Error: Account not found with id " + dto.getCreateByAccountId()));
         post.setEvent(event);
         post.setCreatedByAccount(account);
         Post savedPost = postRepository.save(post);
@@ -63,7 +64,7 @@ public class PostWriteService {
     public PostReadDTO updatePostEvent(Long postId, PostEventUpdateDTO dto) {
         Post post = findPostById(postId);
         Event newEvent = eventRepository.findById(dto.getEventId())
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + dto.getEventId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + dto.getEventId()));
         post.setEvent(newEvent);
         return postMapper.toPostReadDTO(postRepository.save(post));
     }
@@ -71,7 +72,7 @@ public class PostWriteService {
     @Transactional
     public PostReadDTO updatePostStatus(Long postId, PostStatusUpdateDTO dto) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("Post not found with id: " + postId));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
         post.setPostStatus(dto.getPostStatus());
         Post savedPost = postRepository.save(post);
         return postMapper.toPostReadDTO(savedPost);

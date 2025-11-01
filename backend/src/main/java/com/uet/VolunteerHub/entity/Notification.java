@@ -15,7 +15,7 @@ import java.time.OffsetDateTime;
 @Setter
 @EqualsAndHashCode(of = "notificationId")
 @Table(name = "notification")
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@NoArgsConstructor
 @AllArgsConstructor
 public class Notification {
 

@@ -6,6 +6,7 @@ import com.uet.VolunteerHub.dto.CommentUpdateContentDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Comment;
 import com.uet.VolunteerHub.entity.Post;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.mapper.CommentMapper;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.CommentRepository;
@@ -57,14 +58,14 @@ public class CommentService {
     public CommentReadDTO createComment(CommentCreateDTO dto) {
         Comment comment = commentMapper.toCommentEntity(dto);
         Post post = postRepository.findById(dto.getPostId())
-                .orElseThrow(() -> new RuntimeException("Post not found with id: " + dto.getPostId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + dto.getPostId()));
         Account account = accountRepository.findById(dto.getCreatedByAccountId())
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + dto.getCreatedByAccountId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + dto.getCreatedByAccountId()));
         comment.setPost(post);
         comment.setCreatedByAccount(account);
         if (dto.getParentCommentId() != null) {
             Comment parentComment = commentRepository.findById(dto.getParentCommentId())
-                    .orElseThrow(() -> new RuntimeException("Parent comment not found with id: " + dto.getParentCommentId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent comment not found with id: " + dto.getParentCommentId()));
             comment.setParentComment(parentComment);
         }
         Comment savedComment = commentRepository.save(comment);
@@ -74,7 +75,7 @@ public class CommentService {
     @Transactional
     public CommentReadDTO updateCommentContent(Long commentId, CommentUpdateContentDTO dto) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new RuntimeException("Comment not found with id: " + commentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Comment not found with id: " + commentId));
         comment.setContent(dto.getContent());
         Comment savedComment = commentRepository.save(comment);
         return commentMapper.toCommentReadDTO(savedComment);

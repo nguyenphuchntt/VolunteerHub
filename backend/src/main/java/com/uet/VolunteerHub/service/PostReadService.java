@@ -2,6 +2,7 @@ package com.uet.VolunteerHub.service;
 
 import com.uet.VolunteerHub.dto.PostReadDTO;
 import com.uet.VolunteerHub.entity.Post;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.mapper.PostMapper;
 import com.uet.VolunteerHub.repository.PostRepository;
 import com.uet.VolunteerHub.repository.specification.PostSpecification;
@@ -30,7 +31,7 @@ public class PostReadService {
     public PostReadDTO findPostById(Long postId) {
         Optional<Post> postOptional = postRepository.findByPostId(postId);
         if (postOptional.isEmpty()) {
-            throw new RuntimeException("Not found post by ID: " + postId);
+            throw new ResourceNotFoundException("Not found post by ID: " + postId);
         }
         Post post = postOptional.get();
         return postMapper.toPostReadDTO(post);
