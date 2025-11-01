@@ -1,16 +1,21 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.PostStatus;
+import com.uet.VolunteerHub.enums.PostType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = "postId")
 @Entity
 @Table(name = "post")
 @AllArgsConstructor
@@ -18,10 +23,15 @@ import java.time.OffsetDateTime;
 public class Post {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id", updatable = false, nullable = false)
-    private Long post_id;
+    private Long postId;
 
-    @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "post_type", columnDefinition = "post_type", nullable = false)
+    private PostType postType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
@@ -36,5 +46,18 @@ public class Post {
     private OffsetDateTime createAt;
 
     @Column(name = "content", nullable = false)
+    @Size(min = 1, max = 700, message = "Post content should has 1 to 700 characters")
     private String content;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<Comment> comments;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<PostLike> likes;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "post_status")
+    private PostStatus postStatus;
 }

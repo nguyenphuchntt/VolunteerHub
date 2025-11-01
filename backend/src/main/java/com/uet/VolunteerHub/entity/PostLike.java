@@ -10,12 +10,12 @@ import java.time.OffsetDateTime;
 @Setter
 @EqualsAndHashCode(of = "likeId")
 @Entity
-@Table(name = "like")
+@Table(name = "post_like")
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class Like {
+@NoArgsConstructor
+public class PostLike {
     @EmbeddedId
-    private LikeID likeId;
+    private LikeId likeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("postId")
