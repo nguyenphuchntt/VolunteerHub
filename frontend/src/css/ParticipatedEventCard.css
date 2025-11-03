@@ -1,0 +1,79 @@
+
+.participated-event-card {
+  display: flex;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.participated-event-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.participated-event-image {
+  flex-shrink: 0;
+  width: 200px;
+  height: 100%;
+}
+
+.participated-event-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.participated-event-info {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+}
+
+.participated-event-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 8px;
+}
+
+.participated-event-description {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.participated-event-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
+.participated-event-details .detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.participated-event-details .detail-item svg {
+  flex-shrink: 0;
+}
+
+.participated-event-role {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.participated-event-role .role-label {
+  font-weight: 600;
+  color: #88b28b;
+}

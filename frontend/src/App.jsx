@@ -14,7 +14,7 @@ function App() {
         <Route path="/signin" element={<Auth />} />
         <Route path="/events" element={<EventFeed />} />
         <Route path="/events/:eventId" element={<EventDetail />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profiles/:username" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

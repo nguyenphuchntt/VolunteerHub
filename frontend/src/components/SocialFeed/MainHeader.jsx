@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Input from "./Input";
 import Avatar from "./Avatar";
-import { mockUser } from "../../data/mockData";
+import { mockUsers } from "../../data/mockData";
 import "../../css/FeedHeader.css";
 
-const MainHeader = ({ user = mockUser, searchQuery = "", onSearchChange }) => {
+const MainHeader = ({ user = mockUsers[0], searchQuery = "", onSearchChange }) => {
   const navigate = useNavigate();
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -43,7 +43,7 @@ const MainHeader = ({ user = mockUser, searchQuery = "", onSearchChange }) => {
   };
 
   const handleProfileClick = () => {
-    navigate("/profile");
+    navigate(`/profiles/${user.username}`);
     setIsDropdownOpen(false);
   };
 

@@ -5,7 +5,7 @@ import MainHeader from "../components/SocialFeed/MainHeader";
 import WritePost from "../components/SocialFeed/WritePost";
 import PostCard from "../components/SocialFeed/PostCard";
 import { mockEvents, getEventPosts } from "../data/mockEvents";
-import { mockUser } from "../data/mockData";
+import { mockUsers } from "../data/mockData";
 import "../css/EventDetail.css";
 
 const EventDetail = () => {
@@ -41,7 +41,7 @@ const EventDetail = () => {
   const handleComment = (postId, commentText) => {
     const newComment = {
       id: Date.now(),
-      author: mockUser,
+      author: mockUsers[0],
       content: commentText,
       timestamp: "Just now",
       isAuthor: true,
@@ -91,7 +91,7 @@ const EventDetail = () => {
               <div className="feed-tab">
                 <div className="feed-content">
                   {/* Write Post Section */}
-                  <WritePost currentUser={mockUser} />
+                  <WritePost currentUser={mockUsers[0]} />
 
                   {/* Posts Feed */}
                   <div className="posts-feed">

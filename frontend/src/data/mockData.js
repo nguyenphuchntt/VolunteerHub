@@ -1,13 +1,34 @@
 // Mock data for Social Feed
 
-export const mockUser = {
-  id: 1,
-  name: "Robert Fox",
-  bio: "Software Engineer",
-  avatar: "https://i.pravatar.cc/150?img=12",
-  coverImage:
-    "https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=100&fit=crop",
-};
+export const mockUsers = [
+  {
+    id: 1,
+    name: "Robert Fox",
+    username: "robert-fox",
+    bio: "Software Engineer",
+    avatar: "https://i.pravatar.cc/150?img=12",
+    coverImage:
+      "https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=100&fit=crop",
+  },
+  {
+    id: 2,
+    name: "Bessie Cooper",
+    username: "bessie-cooper",
+    bio: "Digital Marketer",
+    avatar: "https://i.pravatar.cc/150?img=1",
+    coverImage:
+      "https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=400&h=100&fit=crop",
+  },
+  {
+    id: 5,
+    name: "Jacob Jones",
+    username: "jacob-jones",
+    bio: "Sales Manager",
+    avatar: "https://i.pravatar.cc/150?img=7",
+    coverImage:
+      "https://images.unsplash.com/photo-1557683304-679a1e9c45e2?w=400&h=100&fit=crop",
+  },
+];
 
 export const mockPosts = [
   {

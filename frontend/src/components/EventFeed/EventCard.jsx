@@ -26,8 +26,8 @@ const EventCard = ({ event }) => {
   };
 
   const getParticipantText = () => {
-    const { count, limit } = event.participants;
-    return limit ? `${count}/${limit} joined` : `${count} joined`;
+    const count = event.participants.length;
+    return `${count} joined`;
   };
 
   const CalendarIcon = () => (
@@ -149,18 +149,18 @@ const EventCard = ({ event }) => {
         <div className="event-card-footer">
           <div className="event-participants">
             <div className="participants-avatars">
-              {event.participants.avatars.slice(0, 3).map((avatar, index) => (
+              {event.participants.slice(0, 3).map((participant, index) => (
                 <img
-                  key={index}
-                  src={avatar}
+                  key={participant.user.id}
+                  src={participant.user.avatar}
                   alt={`Participant ${index + 1}`}
                   className="participant-avatar"
                   style={{ zIndex: 3 - index }}
                 />
               ))}
-              {event.participants.count > 3 && (
+              {event.participants.length > 3 && (
                 <div className="participants-more">
-                  +{event.participants.count - 3}
+                  +{event.participants.length - 3}
                 </div>
               )}
             </div>
@@ -198,11 +198,16 @@ EventCard.propTypes = {
       avatar: PropTypes.string.isRequired,
       type: PropTypes.string,
     }).isRequired,
-    participants: PropTypes.shape({
-      count: PropTypes.number.isRequired,
-      limit: PropTypes.number,
-      avatars: PropTypes.arrayOf(PropTypes.string).isRequired,
-    }).isRequired,
+    participants: PropTypes.arrayOf(
+      PropTypes.shape({
+        user: PropTypes.shape({
+          id: PropTypes.number.isRequired,
+          name: PropTypes.string.isRequired,
+          avatar: PropTypes.string.isRequired,
+        }).isRequired,
+        role: PropTypes.string.isRequired,
+      })
+    ).isRequired,
   }).isRequired,
 };
 

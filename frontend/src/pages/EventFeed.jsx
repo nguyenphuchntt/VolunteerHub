@@ -49,7 +49,7 @@ const EventFeed = () => {
         case "popular":
           return b.stats.shares - a.stats.shares;
         case "participants":
-          return b.participants.count - a.participants.count;
+          return b.participants.length - a.participants.length;
         default:
           return 0;
       }
