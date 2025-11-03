@@ -133,9 +133,7 @@ const EventDetail = () => {
                       <div className="detail-row">
                         <span className="detail-label">Participants:</span>
                         <span className="detail-value">
-                          {event.participants.count}
-                          {event.participants.limit &&
-                            ` / ${event.participants.limit}`}
+                          {event.participants.length}
                         </span>
                       </div>
                     </div>
@@ -189,12 +187,12 @@ const EventDetail = () => {
             {/* Participants Tab */}
             {activeTab === "participants" && (
               <div className="participants-tab">
-                <h2>Participants ({event.participants.count})</h2>
+                <h2>Participants ({event.participants.length})</h2>
                 <div className="participants-grid">
-                  {event.participants.avatars.map((avatar, index) => (
-                    <div key={index} className="participant-card">
-                      <img src={avatar} alt={`Participant ${index + 1}`} />
-                      <span>Volunteer {index + 1}</span>
+                  {event.participants.map((participant) => (
+                    <div key={participant.user.id} className="participant-card">
+                      <img src={participant.user.avatar} alt={participant.user.name} />
+                      <span>{participant.user.name}</span>
                     </div>
                   ))}
                 </div>

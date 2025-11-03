@@ -114,6 +114,102 @@ export const mockEvents = [
       shares: 67,
     },
   },
+  {
+    id: 4,
+    title: "Senior Care Visit",
+    description:
+      "Spend quality time with seniors at the care home. Bring joy through conversation, games, and activities.",
+    fullDescription:
+      "Brighten the day of our senior community members by volunteering at our local care home. Activities include casual conversations, board games, reading sessions, and helping with light activities. Your presence and companionship mean the world to our seniors who may not receive regular visitors. This is a heartwarming experience that benefits both volunteers and residents alike.",
+    coverImage:
+      "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?w=800&h=400&fit=crop",
+    date: "2025-11-08",
+    time: "02:00 PM",
+    endTime: "04:00 PM",
+    location: "Sunrise Senior Living, Boston",
+    status: "completed",
+    category: "Health & Wellness",
+    tags: ["seniors", "care", "companionship", "community"],
+    host: {
+      id: 13,
+      name: "Hearts Together",
+      avatar: "https://i.pravatar.cc/150?img=23",
+      type: "organization",
+    },
+    participants: [
+      {
+        user: {
+          id: 1,
+          name: "Robert Fox",
+          avatar: "https://i.pravatar.cc/150?img=12",
+        },
+        role: "Companion",
+      },
+    ],
+    stats: {
+      interested: 18,
+      going: 24,
+      shares: 8,
+    },
+  },
+  {
+    id: 5,
+    title: "Youth Tutoring Program",
+    description:
+      "Tutor underprivileged students in math and science. Make education accessible to all!",
+    fullDescription:
+      "Share your knowledge and passion for learning by tutoring students from underserved communities. We need volunteers skilled in mathematics, science, and English to help students grades 6-12 with homework, test preparation, and building confidence in their academic abilities. Sessions are held twice a week, and you can commit to tutoring one or multiple students based on your availability.",
+    coverImage:
+      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&h=400&fit=crop",
+    date: "2025-11-12",
+    time: "04:00 PM",
+    endTime: "06:00 PM",
+    location: "Lincoln Public Library, Chicago",
+    status: "upcoming",
+    category: "Education",
+    tags: ["education", "tutoring", "youth", "learning"],
+    host: {
+      id: 14,
+      name: "Knowledge Bridge",
+      avatar: "https://i.pravatar.cc/150?img=24",
+      type: "organization",
+    },
+    participants: [],
+    stats: {
+      interested: 32,
+      going: 45,
+      shares: 15,
+    },
+  },
+  {
+    id: 6,
+    title: "Animal Shelter Support",
+    description:
+      "Help care for rescue animals. Walking, feeding, and lots of cuddles needed!",
+    fullDescription:
+      "Our animal shelter is looking for compassionate volunteers to help care for rescue dogs and cats awaiting their forever homes. Activities include walking dogs, socializing cats, cleaning kennels, preparing food, and assisting with adoption events. This is perfect for animal lovers who want to make a difference in the lives of abandoned and rescued pets. All training will be provided on-site.",
+    coverImage:
+      "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=800&h=400&fit=crop",
+    date: "2025-11-06",
+    time: "10:00 AM",
+    endTime: "01:00 PM",
+    location: "Paws & Claws Shelter, Austin",
+    status: "completed",
+    category: "Animal Welfare",
+    tags: ["animals", "rescue", "shelter", "pets"],
+    host: {
+      id: 15,
+      name: "Rescue Paws",
+      avatar: "https://i.pravatar.cc/150?img=25",
+      type: "organization",
+    },
+    participants: [],
+    stats: {
+      interested: 112,
+      going: 67,
+      shares: 34,
+    },
+  },
 ];
 
 // Event categories for filtering
