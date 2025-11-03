@@ -1,6 +1,10 @@
 /* Write Post Component */
 .write-post {
   padding: 21px 28px;
+  background: var(--white-900);
+  border: 1px solid var(--green-300);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-2xl);
 }
 
 .write-post-input {
@@ -10,8 +14,13 @@
   margin-bottom: 16px;
 }
 
+.write-post-input .avatar {
+  padding-top: 4px;
+}
+
 .write-post-textarea {
   flex: 1;
+  padding-top: 2px; /* Align with avatar top */
 }
 
 .write-post-actions {

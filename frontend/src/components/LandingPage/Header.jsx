@@ -13,13 +13,17 @@ const Header = () => {
     navigate("/signup");
   };
 
+  const handleEventsClick = () => {
+    navigate("/events");
+  };
+
   return (
     <header className="header">
       <div className="container">
         <nav className="navbar">
           <div className="logo">VolunteerHub</div>
           <div className="nav-menu">
-            <a href="#projects" className="nav-item">
+            <a href="#" onClick={handleEventsClick} className="nav-item">
               <img src="/images/nav-icon-1.svg" alt="" />
               <span>Sự Kiện</span>
             </a>

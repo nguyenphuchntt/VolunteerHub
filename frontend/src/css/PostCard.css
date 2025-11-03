@@ -1,6 +1,18 @@
 /* Post Card Component */
 .post-card {
-  padding: 24px 0 32px;
+  padding: 21px 28px;
+
+  background: var(--white-900);
+  border: 1px solid var(--green-300);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-2xl);
+}
+
+/* Posts Feed */
+.posts-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 /* Post Header */
@@ -195,10 +207,6 @@
 
 /* Responsive */
 @media (max-width: 576px) {
-  .post-card {
-    padding: 16px 0 24px;
-  }
-
   .post-header,
   .post-content,
   .post-actions,

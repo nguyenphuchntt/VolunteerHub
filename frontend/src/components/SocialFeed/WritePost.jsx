@@ -5,7 +5,7 @@ import Input from "./Input";
 import Button from "./Button";
 import "../../css/WritePost.css";
 
-const WritePost = ({ user, onPost }) => {
+const WritePost = ({ currentUser, onPost }) => {
   const [postContent, setPostContent] = useState("");
 
   const handlePost = () => {
@@ -41,9 +41,10 @@ const WritePost = ({ user, onPost }) => {
     <div className="write-post feed-card">
       <div className="write-post-input">
         <Avatar
-          src={user?.avatar || "/images/google-icon.png"}
-          alt={user?.name}
+          src={currentUser?.avatar || "/images/google-icon.png"}
+          alt={currentUser?.name}
           size="x-small"
+          // style={{ paddingTop: "20px" }}
         />
         <div className="write-post-textarea input-borderless">
           <Input
@@ -75,7 +76,7 @@ const WritePost = ({ user, onPost }) => {
 };
 
 WritePost.propTypes = {
-  user: PropTypes.shape({
+  currentUser: PropTypes.shape({
     name: PropTypes.string,
     avatar: PropTypes.string,
   }),

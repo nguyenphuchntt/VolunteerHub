@@ -1,10 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
-import Login from "./pages/Login";
 import Profile from "./pages/Profile";
-import Home from "./pages/Home";
-import SocialFeed from "./pages/SocialFeed";
+import EventFeed from "./pages/EventFeed";
+import EventDetail from "./pages/EventDetail";
 
 function App() {
   return (
@@ -13,9 +12,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<Auth />} />
         <Route path="/signin" element={<Auth />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/feed" element={<SocialFeed />} />
+        <Route path="/events" element={<EventFeed />} />
+        <Route path="/events/:eventId" element={<EventDetail />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
