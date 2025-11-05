@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.repository.specification;
 
-import com.uet.VolunteerHub.dto.EventUserSearchCriteriaDTO;
+import com.uet.VolunteerHub.dto.EventUser.EventUserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.EventUser;

@@ -1,14 +1,12 @@
 package com.uet.VolunteerHub.controller;
 
 import com.uet.VolunteerHub.dto.Account.*;
-import com.uet.VolunteerHub.service.UserSearchService;
 import com.uet.VolunteerHub.service.UserWriteService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -59,7 +57,7 @@ public class AdminUserController {
     }
 
     @PatchMapping("/{id}/update-details")
-    public ResponseEntity<UserSearchDTO>  changeUserDetails(@PathVariable("id") UUID id,
+    public ResponseEntity<UserSearchDTO> changeUserDetails(@PathVariable("id") UUID id,
                                                             @RequestBody @Valid UserProfileUpdateDTO userProfileUpdateDTO) {
         UserSearchDTO userSearchDTO = userWriteService.updateUserDetails(id, userProfileUpdateDTO);
         return ResponseEntity.ok(userSearchDTO);

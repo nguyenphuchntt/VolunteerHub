@@ -3,11 +3,13 @@ package com.uet.VolunteerHub.service;
 import com.uet.VolunteerHub.dto.Account.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
+import com.uet.VolunteerHub.entity.EventUser;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
+import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.UserInfoRepository;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.exception.ResourceAlreadyExistsException;
@@ -26,17 +28,17 @@ import java.util.UUID;
 @Service
 public class UserWriteService {
     private final AccountRepository accountRepository;
-    private final UserInfoRepository userInfoRepository;
     private final EventRepository eventRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EventUserRepository eventUserRepository;
 
     @Autowired
-    public UserWriteService(AccountRepository accountRepository, UserInfoRepository userInfoRepository,
-                            EventRepository eventRepository, PasswordEncoder passwordEncoder) {
+    public UserWriteService(AccountRepository accountRepository, EventRepository eventRepository,
+                            PasswordEncoder passwordEncoder, EventUserRepository eventUserRepository) {
         this.accountRepository = accountRepository;
-        this.userInfoRepository = userInfoRepository;
         this.eventRepository = eventRepository;
         this.passwordEncoder = passwordEncoder;
+        this.eventUserRepository = eventUserRepository;
     }
 
     private UserSearchDTO mapToUserSearchDTO(Account account, UserInfo userInfo) {
@@ -114,11 +116,6 @@ public class UserWriteService {
         if (!passwordEncoder.matches(accountPasswordDTO.getPassword(), account.getPassword())) {
             throw new IllegalArgumentException("Password does not match");
         }
-        List<Event> eventList = eventRepository.findAllByCreatedBy_AccountId(account.getAccountId());
-        for (Event event : eventList) {
-            event.setCreatedBy(null);
-        }
-        eventRepository.saveAll(eventList);
         accountRepository.delete(account);
     }
 
@@ -126,11 +123,6 @@ public class UserWriteService {
     public void deleteAccountById(UUID accountId) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with ID: " + accountId + " not found"));
-        List<Event> eventList = eventRepository.findAllByCreatedBy_AccountId(account.getAccountId());
-        for (Event event : eventList) {
-            event.setCreatedBy(null);
-        }
-        eventRepository.saveAll(eventList);
         accountRepository.delete(account);
     }
 

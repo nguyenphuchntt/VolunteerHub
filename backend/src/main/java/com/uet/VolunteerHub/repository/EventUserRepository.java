@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,5 +37,13 @@ public interface EventUserRepository extends JpaRepository<EventUser, EventUserI
 
     @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})
     Page<EventUser> findByStatus(EventUserStatus status, Pageable pageable);
+
+    void deleteByAccountIdAndEventId(UUID accountID, Long eventId);
+
+    @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})
+    List<EventUser> findByAccountId(UUID accountID);
+
+    @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})
+    List<EventUser> findByEventId(Long eventId);
 
 }

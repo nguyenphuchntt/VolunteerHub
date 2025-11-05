@@ -5,6 +5,8 @@
     import lombok.*;
     import org.hibernate.annotations.CreationTimestamp;
     import org.hibernate.annotations.JdbcTypeCode;
+    import org.hibernate.annotations.OnDelete;
+    import org.hibernate.annotations.OnDeleteAction;
     import org.hibernate.type.SqlTypes;
 
     import java.time.OffsetDateTime;
@@ -52,9 +54,10 @@
         private EventStatus status;
 
         @Column(name = "attendee_count")
-        private Integer attendeeCount;
+        private int attendeeCount;
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "created_by_account_id")
+        @OnDelete(action = OnDeleteAction.SET_NULL)
         private Account createdBy;
     }

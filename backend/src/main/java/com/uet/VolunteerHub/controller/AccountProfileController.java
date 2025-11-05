@@ -4,16 +4,11 @@ import com.uet.VolunteerHub.dto.Account.AccountPasswordChangeDTO;
 import com.uet.VolunteerHub.dto.Account.AccountPasswordDTO;
 import com.uet.VolunteerHub.dto.Account.UserProfileUpdateDTO;
 import com.uet.VolunteerHub.dto.Account.UserSearchDTO;
-import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
-import com.uet.VolunteerHub.service.EventSearchService;
 import com.uet.VolunteerHub.service.UserSearchService;
 import com.uet.VolunteerHub.service.UserWriteService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,20 +16,17 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/me")
+@RequestMapping("/api/me/profile")
 @PreAuthorize("isAuthenticated()")
-public class ProfileController {
+public class AccountProfileController {
 
     private final UserSearchService userSearchService;
     private final UserWriteService userWriteService;
-    private final EventSearchService eventSearchService;
 
     @Autowired
-    public ProfileController(UserSearchService userSearchService, UserWriteService userWriteService,
-                             EventSearchService eventSearchService) {
+    public AccountProfileController(UserSearchService userSearchService, UserWriteService userWriteService) {
         this.userSearchService = userSearchService;
         this.userWriteService = userWriteService;
-        this.eventSearchService = eventSearchService;
     }
 
     @GetMapping
