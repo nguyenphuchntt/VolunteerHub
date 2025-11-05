@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.EventUser;
 
 import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;

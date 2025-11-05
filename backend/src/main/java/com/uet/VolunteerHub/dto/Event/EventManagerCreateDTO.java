@@ -1,17 +1,22 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Event;
 
-import com.uet.VolunteerHub.enums.EventStatus;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
-public class EventCreateDTO {
+public class EventManagerCreateDTO {
+    @NotBlank(message = "Title must not be blank")
     private String title;
+
     private OffsetDateTime startAt;
+
     private OffsetDateTime endAt;
     private String category;
     private String location;
     private String description;
+
+    private int attendeeCount;
 }
+

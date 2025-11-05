@@ -24,4 +24,12 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
     Optional<Account> findById(UUID accountId);
 
     boolean existsByEmail(String email);
+
+    @EntityGraph(attributePaths = {"userInfo"})
+    Optional<Account> findByUsername(String username);
+
+    boolean existsByUsername(String username);
+
+    @EntityGraph(attributePaths = {"userInfo"})
+    Optional<Account> findByUsernameOrEmail(String username, String email);
 }

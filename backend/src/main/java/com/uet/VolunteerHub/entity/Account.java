@@ -10,8 +10,14 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.security.core.CredentialsContainer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -23,7 +29,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class Account {
+public class Account implements UserDetails, CredentialsContainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -58,5 +64,20 @@ public class Account {
 
     @OneToOne(mappedBy="account", cascade = CascadeType.ALL, optional = false)
     private UserInfo userInfo;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.toString()));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return accountStatus == AccountStatus.ACTIVE;
+    }
+
+    @Override
+    public void eraseCredentials() {
+        this.password = null;
+    }
 
 }

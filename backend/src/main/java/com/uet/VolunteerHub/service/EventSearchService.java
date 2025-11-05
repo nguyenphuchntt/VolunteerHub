@@ -1,7 +1,7 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.EventSearchCriteriaDTO;
-import com.uet.VolunteerHub.dto.EventSearchDTO;
+import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
+import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Log
 @Service
@@ -64,6 +65,17 @@ public class EventSearchService {
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
         });
+    }
+
+    @Transactional
+    public Page<EventSearchDTO> findEventsByAccountId(UUID accountId, Pageable pageable) {
+        Page<Event> eventPage = eventRepository.findAllByCreatedBy_AccountId(accountId, pageable);
+        return eventPage.map( event -> {
+            Account account = event.getCreatedBy();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            return mapToEventSearchDTO(event, account, userInfo);
+        });
+
     }
 
 }

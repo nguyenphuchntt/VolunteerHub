@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Account;
 
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;

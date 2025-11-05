@@ -1,12 +1,12 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.EventUserSearchCriteriaDTO;
-import com.uet.VolunteerHub.dto.EventUserSearchDTO;
+import com.uet.VolunteerHub.dto.EventUser.EventUserSearchCriteriaDTO;
+import com.uet.VolunteerHub.dto.EventUser.EventUserSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.EventUser;
-import com.uet.VolunteerHub.entity.EventUserId;
 import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.specification.EventUserSpecification;
 import jakarta.transaction.Transactional;
@@ -58,14 +58,14 @@ public class EventUserSearchService {
     }
 
     @Transactional
-    public Optional<EventUserSearchDTO> findByAccountIdAndEventId(UUID accountId, Long eventId) {
+    public EventUserSearchDTO findByAccountIdAndEventId(UUID accountId, Long eventId) {
         Optional<EventUser> eventUser = eventUserRepository.findByAccountIdAndEventId(accountId, eventId);
         return eventUser.map(value -> {
             Account account = value.getAccount();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = value.getEvent();
             return mapToEventUserSearchDTO(value, account, userInfo, event);
-        });
+        }).orElseThrow( () -> new ResourceNotFoundException("Event " + eventId + " not found for account " + accountId));
     }
 
     @Transactional

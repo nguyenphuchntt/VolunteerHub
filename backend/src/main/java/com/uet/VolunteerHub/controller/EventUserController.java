@@ -1,93 +1,86 @@
 package com.uet.VolunteerHub.controller;
 
-import com.uet.VolunteerHub.dto.EventUserCreateDTO;
-import com.uet.VolunteerHub.dto.EventUserSearchCriteriaDTO;
-import com.uet.VolunteerHub.dto.EventUserSearchDTO;
-import com.uet.VolunteerHub.dto.EventUserUpdateDTO;
+import com.uet.VolunteerHub.dto.EventUser.*;
+import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.EventUserSearchService;
 import com.uet.VolunteerHub.service.EventUserWriteService;
 import jakarta.validation.Valid;
-import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
 import java.util.UUID;
 
-@Log
+
 @RestController
 @RequestMapping("/api/event-users")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 public class EventUserController {
-
-    private final EventUserSearchService eventUserSearchService;
     private final EventUserWriteService eventUserWriteService;
+    private final EventUserSearchService eventUserSearchService;
 
     @Autowired
-    public EventUserController(EventUserSearchService eventUserSearchService, 
-                               EventUserWriteService eventUserWriteService) {
-        this.eventUserSearchService = eventUserSearchService;
+    public EventUserController(EventUserWriteService eventUserWriteService, EventUserSearchService eventUserSearchService) {
         this.eventUserWriteService = eventUserWriteService;
+        this.eventUserSearchService = eventUserSearchService;
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsers(
-            EventUserSearchCriteriaDTO criteria, 
-            @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<EventUserSearchDTO> eventUserPage = eventUserSearchService.findEventUsersBySpecification(criteria, pageable);
-        return ResponseEntity.ok(eventUserPage);
+    public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsers(EventUserSearchCriteriaDTO criteria,
+                                                                     @PageableDefault(size = 10, page = 0) Pageable pageable) {
+        return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
     }
 
-    @GetMapping("/account/{accountId}")
-    public ResponseEntity<Page<EventUserSearchDTO>> getEventUsersByAccountId(
-            @PathVariable UUID accountId,
-            @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<EventUserSearchDTO> eventUserPage = eventUserSearchService.findByAccountId(accountId, pageable);
-        return ResponseEntity.ok(eventUserPage);
+    @GetMapping("/{accountId}")
+    public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByAccountId(@PathVariable UUID accountId,
+                                                                                @PageableDefault(size = 10, page = 0) Pageable pageable) {
+        return ResponseEntity.ok(eventUserSearchService.findByAccountId(accountId, pageable));
     }
 
-    @GetMapping("/event/{eventId}")
-    public ResponseEntity<Page<EventUserSearchDTO>> getEventUsersByEventId(
-            @PathVariable Long eventId,
-            @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<EventUserSearchDTO> eventUserPage = eventUserSearchService.findByEventId(eventId, pageable);
-        return ResponseEntity.ok(eventUserPage);
+    @GetMapping("/{eventId}")
+    public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByEventId(@PathVariable Long eventId,
+                                                                              @PageableDefault(size = 10, page = 0) Pageable pageable) {
+        return ResponseEntity.ok(eventUserSearchService.findByEventId(eventId, pageable));
     }
 
-    @GetMapping("/{accountId}/{eventId}")
-    public ResponseEntity<EventUserSearchDTO> getEventUserById(
-            @PathVariable UUID accountId, 
-            @PathVariable Long eventId) {
-        Optional<EventUserSearchDTO> eventUserOptional = eventUserSearchService.findByAccountIdAndEventId(accountId, eventId);
-        return eventUserOptional.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/{eventId}/{accountId}")
+    public ResponseEntity<EventUserSearchDTO> searchEventUsersByAccountIdAndEventId(@PathVariable UUID accountId,
+                                                                                    @PathVariable Long eventId) {
+        return ResponseEntity.ok(eventUserSearchService.findByAccountIdAndEventId(accountId, eventId));
     }
 
-    @PostMapping
-    public ResponseEntity<EventUserSearchDTO> createEventUser(@RequestBody @Valid EventUserCreateDTO createDTO) {
-        EventUserSearchDTO eventUserSearchDTO = eventUserWriteService.createEventUser(createDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(eventUserSearchDTO);
+    @PostMapping("/{eventId}/{accountId}/create")
+    public ResponseEntity<EventUserSearchDTO> createEventUser(@PathVariable UUID accountId,
+                                                              @PathVariable Long eventId,
+                                                              @RequestBody @Valid EventUserCreateDTO createDTO) {
+        return ResponseEntity.ok(eventUserWriteService.createEventUser(accountId, eventId, createDTO));
     }
 
-    @PatchMapping("/{accountId}/{eventId}")
-    public ResponseEntity<EventUserSearchDTO> updateEventUser(
-            @PathVariable UUID accountId, 
-            @PathVariable Long eventId, 
-            @RequestBody @Valid EventUserUpdateDTO updateDTO) {
-        EventUserSearchDTO eventUserSearchDTO = eventUserWriteService.updateEventUser(accountId, eventId, updateDTO);
-        return ResponseEntity.ok(eventUserSearchDTO);
-    }
-
-    @DeleteMapping("/{accountId}/{eventId}")
-    public ResponseEntity<Void> deleteEventUser(
-            @PathVariable UUID accountId, 
-            @PathVariable Long eventId) {
+    @DeleteMapping("/{eventId}/{accountId}/delete")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventUserSecurityService(eventId))")
+    public ResponseEntity<Void> deleteEventUser(@PathVariable Long eventId, @PathVariable UUID accountId) {
         eventUserWriteService.deleteEventUser(accountId, eventId);
         return ResponseEntity.noContent().build();
     }
-}
 
+    @PatchMapping("/{eventId}/{accountId}/update-role")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventUserSecurityService(eventId))")
+    public ResponseEntity<EventUserSearchDTO> updateEventUserRole(@PathVariable Long eventId,
+                                                                  @PathVariable UUID accountId,
+                                                                  @RequestBody EventUserRoleUpdateDTO updateDTO) {
+        return ResponseEntity.ok(eventUserWriteService.updateRole(accountId, eventId, updateDTO));
+    }
+
+    @PatchMapping("/{eventId}/{accountId}/update-status")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventUserSecurityService(eventId))")
+    public ResponseEntity<EventUserSearchDTO> updateEventUserStatus(@PathVariable Long eventId,
+                                                                    @PathVariable UUID accountId,
+                                                                    @RequestBody EventUserStatusUpdateDTO updateDTO) {
+        return ResponseEntity.ok(eventUserWriteService.updateStatus(accountId, eventId, updateDTO));
+    }
+}

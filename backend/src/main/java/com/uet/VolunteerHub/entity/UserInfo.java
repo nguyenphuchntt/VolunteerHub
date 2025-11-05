@@ -17,7 +17,7 @@
     @Table(name = "user_info")
     @Builder
     @AllArgsConstructor
-    @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+    @NoArgsConstructor(access = AccessLevel.PUBLIC, force = true)
     public class UserInfo {
 
         @Id

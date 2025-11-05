@@ -1,34 +1,29 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.EventCreateDTO;
-import com.uet.VolunteerHub.dto.EventSearchDTO;
-import com.uet.VolunteerHub.dto.EventUpdateDTO;
+import com.uet.VolunteerHub.dto.Event.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.time.OffsetDateTime;
 
 @Service
 public class EventWriteService {
     private final EventRepository eventRepository;
-    private final AccountRepository accountRepository;
-
 
     @Autowired
     public EventWriteService(EventRepository eventRepository, AccountRepository accountRepository) {
         this.eventRepository = eventRepository;
-        this.accountRepository = accountRepository;
     }
 
-    private EventSearchDTO mapToEventSearchDTO (Event event, Account account, UserInfo userInfo) {
+    private EventSearchDTO mapToEventSearchDTO(Event event, Account account) {
         var builder = EventSearchDTO.builder()
                 .eventId(event.getEventId())
                 .title(event.getTitle())
@@ -48,23 +43,129 @@ public class EventWriteService {
 
     private Event findEvent(Long eventId) {
         return eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event with id: " + eventId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
     }
 
     @Transactional
-    public EventSearchDTO updateEvent(Long eventId, EventUpdateDTO eventUpdateDTO) {
+    public void deleteEvent(Long eventId) {
         Event event = findEvent(eventId);
-        if (eventUpdateDTO.getTitle() != null) {
-            event.setTitle(eventUpdateDTO.getTitle());
+        eventRepository.delete(event);
+    }
+
+    @Transactional
+    public EventSearchDTO registerEvent(Account account, EventManagerCreateDTO eventManagerCreateDTO) {
+        if (eventManagerCreateDTO.getStartAt() != null && eventManagerCreateDTO.getEndAt() != null) {
+            if (eventManagerCreateDTO.getStartAt().isAfter(eventManagerCreateDTO.getEndAt())) {
+                throw new IllegalArgumentException("Start and end time must be greater than or equal to end time.");
+            }
         }
+        if (eventManagerCreateDTO.getAttendeeCount() < 0) {
+            throw new IllegalArgumentException("Attendee count must be greater than or equal to 0.");
+        }
+        var builder = Event.builder();
+        builder.createdBy(account)
+                .title(eventManagerCreateDTO.getTitle());
+        if (eventManagerCreateDTO.getDescription() != null) {
+            builder.description(eventManagerCreateDTO.getDescription());
+        }
+        if (eventManagerCreateDTO.getStartAt() != null) {
+            builder.startAt(eventManagerCreateDTO.getStartAt());
+        } else {
+            builder.startAt(OffsetDateTime.now());
+        }
+        if (eventManagerCreateDTO.getEndAt() != null) {
+            builder.endAt(eventManagerCreateDTO.getEndAt());
+        } else {
+            builder.endAt(OffsetDateTime.now());
+        }
+        if (eventManagerCreateDTO.getCategory() != null) {
+            builder.category(eventManagerCreateDTO.getCategory());
+        }
+        if (eventManagerCreateDTO.getLocation() != null) {
+            builder.location(eventManagerCreateDTO.getLocation());
+        }
+        if (eventManagerCreateDTO.getAttendeeCount() != 0) {
+            builder.attendeeCount(eventManagerCreateDTO.getAttendeeCount());
+        }
+        builder.status(EventStatus.PENDING);
+        Event event = builder.build();
+        eventRepository.save(event);
+        return mapToEventSearchDTO(event, account);
+    }
+
+    @Transactional
+    public EventSearchDTO createEvent(Account account, EventAdminCreateDTO eventAdminCreateDTO) {
+        if (eventAdminCreateDTO.getStartAt() != null && eventAdminCreateDTO.getEndAt() != null) {
+            if (eventAdminCreateDTO.getStartAt().isAfter(eventAdminCreateDTO.getEndAt())) {
+                throw new IllegalArgumentException("Start and end time must be greater than or equal to end time.");
+            }
+        }
+        if (eventAdminCreateDTO.getAttendeeCount() < 0) {
+            throw new IllegalArgumentException("Attendee count must be greater than or equal to 0.");
+        }
+        var builder = Event.builder();
+        builder.createdBy(account)
+                .title(eventAdminCreateDTO.getTitle());
+        if (eventAdminCreateDTO.getDescription() != null) {
+            builder.description(eventAdminCreateDTO.getDescription());
+        }
+        if (eventAdminCreateDTO.getStartAt() != null) {
+            builder.startAt(eventAdminCreateDTO.getStartAt());
+        } else {
+            builder.startAt(OffsetDateTime.now());
+        }
+        if (eventAdminCreateDTO.getEndAt() != null) {
+            builder.endAt(eventAdminCreateDTO.getEndAt());
+        } else {
+            builder.endAt(OffsetDateTime.now());
+        }
+        if (eventAdminCreateDTO.getCategory() != null) {
+            builder.category(eventAdminCreateDTO.getCategory());
+        }
+        if (eventAdminCreateDTO.getLocation() != null) {
+            builder.location(eventAdminCreateDTO.getLocation());
+        }
+        if (eventAdminCreateDTO.getAttendeeCount() != 0) {
+            builder.attendeeCount(eventAdminCreateDTO.getAttendeeCount());
+        }
+        if (eventAdminCreateDTO.getStatus() != null) {
+            builder.status(eventAdminCreateDTO.getStatus());
+        } else {
+            builder.status(EventStatus.PENDING);
+        }
+        Event event = builder.build();
+        eventRepository.save(event);
+        return mapToEventSearchDTO(event, account);
+    }
+
+    @Transactional
+    public EventSearchDTO updateEventStatus(Long eventId, EventStatusUpdateDTO eventStatusUpdateDTO) {
+        Event event = findEvent(eventId);
+        if (eventStatusUpdateDTO.getStatus() != null) {
+            event.setStatus(eventStatusUpdateDTO.getStatus());
+        } else {
+            event.setStatus(EventStatus.PENDING);
+        }
+        eventRepository.save(event);
+        return mapToEventSearchDTO(event, event.getCreatedBy());
+    }
+
+    @Transactional
+    public EventSearchDTO updateEventDetails(Long eventId, EventUpdateDTO eventUpdateDTO) {
+        if (eventUpdateDTO.getStartAt() != null && eventUpdateDTO.getEndAt() != null) {
+            if (eventUpdateDTO.getStartAt().isAfter(eventUpdateDTO.getEndAt())) {
+                throw new IllegalArgumentException("Start and end time must be greater than or equal to end time.");
+            }
+        }
+        if (eventUpdateDTO.getAttendeeCount() < 0) {
+            throw new IllegalArgumentException("Attendee count must be greater than or equal to 0.");
+        }
+        Event event = findEvent(eventId);
         if (eventUpdateDTO.getDescription() != null) {
             event.setDescription(eventUpdateDTO.getDescription());
         }
-        if (eventUpdateDTO.getStatus() != null) {
-            event.setStatus(eventUpdateDTO.getStatus());
-        }
-        if (eventUpdateDTO.getAttendeeCount() != null) {
-            event.setAttendeeCount(eventUpdateDTO.getAttendeeCount());
+        if (eventUpdateDTO.getStartAt() != null) {
+            event.setStartAt(eventUpdateDTO.getStartAt());
         }
         if (eventUpdateDTO.getEndAt() != null) {
             event.setEndAt(eventUpdateDTO.getEndAt());
@@ -75,44 +176,16 @@ public class EventWriteService {
         if (eventUpdateDTO.getLocation() != null) {
             event.setLocation(eventUpdateDTO.getLocation());
         }
-        if (eventUpdateDTO.getStartAt() != null) {
-            event.setStartAt(eventUpdateDTO.getStartAt());
+        if (eventUpdateDTO.getAttendeeCount() != 0) {
+            event.setAttendeeCount(eventUpdateDTO.getAttendeeCount());
         }
-
+        if (eventUpdateDTO.getTitle() != null) {
+            event.setTitle(eventUpdateDTO.getTitle());
+        }
         eventRepository.save(event);
-        Account account = event.getCreatedBy();
-        UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
-
-        return mapToEventSearchDTO(event, account, userInfo);
+        return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 
-    @Transactional
-    public EventSearchDTO deleteEvent(Long eventId) {
-        Event event = findEvent(eventId);
-        eventRepository.delete(event);
-        Account account = event.getCreatedBy();
-        UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
-        return mapToEventSearchDTO(event, account, userInfo);
-    }
 
-    @Transactional
-    public EventSearchDTO createEvent(EventCreateDTO eventCreateDTO, UUID accountId) {
-        Account account = accountRepository.findById(accountId).orElseThrow(
-                () -> new EntityNotFoundException("Account with id: " + accountId + " not found"));
-        Event event = new Event();
-        event.setTitle(eventCreateDTO.getTitle());
-        event.setDescription(eventCreateDTO.getDescription());
-        event.setEndAt(eventCreateDTO.getEndAt());
-        event.setCategory(eventCreateDTO.getCategory());
-        event.setLocation(eventCreateDTO.getLocation());
-        event.setStartAt(eventCreateDTO.getStartAt());
-
-        event.setCreatedBy(account);
-        event.setStatus(EventStatus.SCHEDULED);
-        event.setAttendeeCount(0);
-
-        eventRepository.save(event);
-        return mapToEventSearchDTO(event, account, account.getUserInfo());
-    }
 
 }
