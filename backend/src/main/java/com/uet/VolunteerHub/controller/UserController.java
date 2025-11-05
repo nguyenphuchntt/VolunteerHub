@@ -1,10 +1,6 @@
 package com.uet.VolunteerHub.controller;
 
-import com.uet.VolunteerHub.dto.UserSearchDTO;
-import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
-import com.uet.VolunteerHub.dto.UserProfileUpdateDTO;
-import com.uet.VolunteerHub.enums.AccountStatus;
-import com.uet.VolunteerHub.enums.UserRole;
+import com.uet.VolunteerHub.dto.Account.*;
 import com.uet.VolunteerHub.service.UserSearchService;
 import com.uet.VolunteerHub.service.UserWriteService;
 import jakarta.validation.Valid;
@@ -13,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -33,7 +31,8 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<UserSearchDTO>> searchUsers(UserSearchCriteriaDTO criteria, @PageableDefault(page = 0, size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UserSearchDTO>> searchUsers(UserSearchCriteriaDTO criteria,
+                                                           @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<UserSearchDTO> userSearchDTOPage = userSearchService.findUsersBySpecification(criteria, pageable);
         return ResponseEntity.ok(userSearchDTOPage);
     }
@@ -44,28 +43,10 @@ public class UserController {
                 .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<UserSearchDTO> updateUser(@PathVariable("id") UUID id, @Valid @RequestBody UserProfileUpdateDTO userProfileUpdateDTO) {
-        UserSearchDTO userSearchDTO = userWriteService.updateUser(id, userProfileUpdateDTO);
-        return ResponseEntity.ok(userSearchDTO);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable("id") UUID id) {
-        userWriteService.deleteUser(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping("/{id}/role")
-    public ResponseEntity<UserSearchDTO> changeUserRole(@PathVariable("id") UUID id, @RequestBody UserRole newRole) {
-        UserSearchDTO userSearchDTO = userWriteService.changeRole(id, newRole);
-        return ResponseEntity.ok(userSearchDTO);
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<UserSearchDTO> changeAccountStatus(@PathVariable("id") UUID id, @RequestBody AccountStatus newStatus) {
-        UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, newStatus);
-        return ResponseEntity.ok(userSearchDTO);
+    @PostMapping("/register")
+    public ResponseEntity<UserSearchDTO> registerAccount(@Valid @RequestBody AccountUserRegisterDTO accountUserRegisterDTO) {
+        UserSearchDTO userSearchDTO = userWriteService.registerAccount(accountUserRegisterDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userSearchDTO);
     }
 
 }

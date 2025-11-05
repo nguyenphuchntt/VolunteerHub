@@ -1,15 +1,15 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.EventCreateDTO;
-import com.uet.VolunteerHub.dto.EventSearchDTO;
-import com.uet.VolunteerHub.dto.EventUpdateDTO;
+import com.uet.VolunteerHub.dto.Event.EventCreateDTO;
+import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
+import com.uet.VolunteerHub.dto.Event.EventUpdateDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,7 @@ public class EventWriteService {
 
     private Event findEvent(Long eventId) {
         return eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event with id: " + eventId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
     }
 
     @Transactional
@@ -98,7 +98,7 @@ public class EventWriteService {
     @Transactional
     public EventSearchDTO createEvent(EventCreateDTO eventCreateDTO, UUID accountId) {
         Account account = accountRepository.findById(accountId).orElseThrow(
-                () -> new EntityNotFoundException("Account with id: " + accountId + " not found"));
+                () -> new ResourceNotFoundException("Account with id: " + accountId + " not found"));
         Event event = new Event();
         event.setTitle(eventCreateDTO.getTitle());
         event.setDescription(eventCreateDTO.getDescription());

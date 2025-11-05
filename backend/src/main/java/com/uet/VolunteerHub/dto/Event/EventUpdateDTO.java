@@ -1,18 +1,15 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Event;
 
 import com.uet.VolunteerHub.enums.EventStatus;
 import lombok.Builder;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
-public class EventSearchDTO {
-    private Long eventId;
+public class EventUpdateDTO {
     private String title;
-    private OffsetDateTime createAt;
     private OffsetDateTime startAt;
     private OffsetDateTime endAt;
     private String category;
@@ -20,5 +17,4 @@ public class EventSearchDTO {
     private String description;
     private EventStatus status;
     private Integer attendeeCount;
-    private UUID accountId;
 }

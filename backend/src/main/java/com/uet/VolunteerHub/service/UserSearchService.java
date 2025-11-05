@@ -1,7 +1,7 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.UserSearchDTO;
-import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
+import com.uet.VolunteerHub.dto.Account.UserSearchDTO;
+import com.uet.VolunteerHub.dto.Account.UserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.repository.AccountRepository;

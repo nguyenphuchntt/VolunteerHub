@@ -1,10 +1,8 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Event;
 
-import com.uet.VolunteerHub.enums.EventStatus;
 import lombok.Data;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 public class EventCreateDTO {

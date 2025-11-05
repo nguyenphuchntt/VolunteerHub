@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.repository.specification;
 
-import com.uet.VolunteerHub.dto.UserSearchCriteriaDTO;
+import com.uet.VolunteerHub.dto.Account.UserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.UserInfo;
 import jakarta.persistence.criteria.*;

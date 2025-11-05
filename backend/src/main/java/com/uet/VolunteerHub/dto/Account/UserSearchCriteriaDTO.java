@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Account;
 
 import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.UserRole;

@@ -13,7 +13,8 @@ import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.EventUserRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.uet.VolunteerHub.exception.ResourceNotFoundException;
+import com.uet.VolunteerHub.exception.ResourceAlreadyExistsException;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,23 +71,23 @@ public class EventUserWriteService {
         eventUserId.setAccountId(accountId);
         eventUserId.setEventId(eventId);
         return eventUserRepository.findById(eventUserId)
-                .orElseThrow(() -> new EntityNotFoundException("EventUser with accountId: " + accountId + " and eventId: " + eventId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("EventUser with accountId: " + accountId + " and eventId: " + eventId + " not found"));
     }
 
     @Transactional
     public EventUserSearchDTO createEventUser(EventUserCreateDTO createDTO) {
         Event event = eventRepository.findById(createDTO.getEventId())
-                .orElseThrow(() -> new EntityNotFoundException("Event with id: " + createDTO.getEventId() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + createDTO.getEventId() + " not found"));
 
         Account account = accountRepository.findById(createDTO.getAccountId())
-                .orElseThrow(() -> new EntityNotFoundException("Account with id: " + createDTO.getAccountId() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Account with id: " + createDTO.getAccountId() + " not found"));
 
         EventUserId eventUserId = new EventUserId();
         eventUserId.setAccountId(createDTO.getAccountId());
         eventUserId.setEventId(createDTO.getEventId());
         
         if (eventUserRepository.existsById(eventUserId)) {
-            throw new IllegalArgumentException("EventUser with accountId: " + createDTO.getAccountId() + " and eventId: " + createDTO.getEventId() + " already exists");
+            throw new ResourceAlreadyExistsException("EventUser with accountId: " + createDTO.getAccountId() + " and eventId: " + createDTO.getEventId() + " already exists");
         }
 
         OffsetDateTime startAt = createDTO.getStartAt() != null ? createDTO.getStartAt() : event.getStartAt();
