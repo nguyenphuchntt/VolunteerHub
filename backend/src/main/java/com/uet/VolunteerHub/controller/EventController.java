@@ -50,7 +50,7 @@ public class EventController {
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{accountId}")
+    @GetMapping("/accounts/{accountId}")
     public ResponseEntity<Page<EventSearchDTO>> getEventsByAccountId(@PathVariable UUID accountId,
                                                                      @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsByAccountId(accountId, pageable);
@@ -88,14 +88,14 @@ public class EventController {
     }
 
     @DeleteMapping("/{eventId}/delete")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isManagerOfEvent(#eventId))")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isCreatorOfEvent(#eventId))")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
         eventWriteService.deleteEvent(eventId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{eventId}/update")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isManagerOfEvent(#eventId))")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') and @eventSecurityService.isCreatorOfEvent(#eventId)")
     public ResponseEntity<EventSearchDTO> updateEventDetails(@PathVariable Long eventId,
                                                              @RequestBody @Valid EventUpdateDTO eventUpdateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.updateEventDetails(eventId, eventUpdateDTO);
