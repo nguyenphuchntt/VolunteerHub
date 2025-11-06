@@ -22,7 +22,7 @@
     @NoArgsConstructor(access = AccessLevel.PUBLIC, force = true)
     public class Event {
         @Id
-        @GeneratedValue(strategy = GenerationType.AUTO)
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "event_id", updatable = false, nullable = false)
         private Long eventId;
 

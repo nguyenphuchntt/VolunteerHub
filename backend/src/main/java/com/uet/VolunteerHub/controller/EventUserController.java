@@ -74,8 +74,8 @@ public class EventUserController {
 
     @PatchMapping("/{eventId}/{accountId}/update-role")
     @PreAuthorize("(hasRole('ADMIN')) or " +
-    "(@eventUserSecurityService.isManager(#eventId)) and " +
-    "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId))")
+    "((@eventUserSecurityService.isManager(#eventId)) and " +
+    "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId)))")
     public ResponseEntity<EventUserSearchDTO> updateEventUserRole(@PathVariable Long eventId,
                                                                   @PathVariable UUID accountId,
                                                                   @RequestBody EventUserRoleUpdateDTO updateDTO) {
