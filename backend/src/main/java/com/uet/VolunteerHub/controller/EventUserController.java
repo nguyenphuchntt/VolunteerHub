@@ -36,7 +36,7 @@ public class EventUserController {
         return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
     }
 
-    @GetMapping("/{accountId}")
+    @GetMapping("/account/{accountId}")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByAccountId(@PathVariable UUID accountId,
                                                                                 @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findByAccountId(accountId, pageable));
@@ -55,6 +55,8 @@ public class EventUserController {
     }
 
     @PostMapping("/{eventId}/{accountId}/create")
+    @PreAuthorize("(hasRole('ADMIN')) or " +
+        "(@eventUserSecurityService.isManager(#eventId))")
     public ResponseEntity<EventUserSearchDTO> createEventUser(@PathVariable UUID accountId,
                                                               @PathVariable Long eventId,
                                                               @RequestBody @Valid EventUserCreateDTO createDTO) {
@@ -62,14 +64,18 @@ public class EventUserController {
     }
 
     @DeleteMapping("/{eventId}/{accountId}/delete")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventUserSecurityService(eventId))")
+    @PreAuthorize("(hasRole('ADMIN')) or " +
+        "(@eventUserSecurityService.isManager(#eventId) and " +
+        "(authentication.principal.accountId.equals(#accountId) or not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId)))")
     public ResponseEntity<Void> deleteEventUser(@PathVariable Long eventId, @PathVariable UUID accountId) {
         eventUserWriteService.deleteEventUser(accountId, eventId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{eventId}/{accountId}/update-role")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventUserSecurityService(eventId))")
+    @PreAuthorize("(hasRole('ADMIN')) or " +
+    "(@eventUserSecurityService.isManager(#eventId)) and " +
+    "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId))")
     public ResponseEntity<EventUserSearchDTO> updateEventUserRole(@PathVariable Long eventId,
                                                                   @PathVariable UUID accountId,
                                                                   @RequestBody EventUserRoleUpdateDTO updateDTO) {
@@ -77,7 +83,10 @@ public class EventUserController {
     }
 
     @PatchMapping("/{eventId}/{accountId}/update-status")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventUserSecurityService(eventId))")
+    @PreAuthorize("hasRole('ADMIN') or " +
+    "(@eventUserSecurityService.isManager(#eventId)) and " +
+    "(not authentication.principal.accountId.equals(#accountId)) and " +
+    "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId))")
     public ResponseEntity<EventUserSearchDTO> updateEventUserStatus(@PathVariable Long eventId,
                                                                     @PathVariable UUID accountId,
                                                                     @RequestBody EventUserStatusUpdateDTO updateDTO) {
