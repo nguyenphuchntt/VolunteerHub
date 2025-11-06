@@ -19,11 +19,11 @@ public class EventSecurityService {
         this.eventRepository = eventRepository;
     }
 
-    public boolean isManagerOfEvent(Long eventId) {
+    public boolean isCreaterOfEvent(Long eventId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Account account)) return false;
         if (eventId == null) return false;
-        Optional<Event> eventOptional = eventRepository.findByEventIdAndCreatedBy_AccountId(eventId, account.getAccountId());
-        return eventOptional.isPresent();
+        Optional<Event> eventOptional = eventRepository.findById(eventId);
+        return eventOptional.map(event -> event.getCreatedBy().getAccountId().equals(account.getAccountId())).orElse(false);
     }
 }

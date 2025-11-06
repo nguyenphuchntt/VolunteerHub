@@ -88,14 +88,14 @@ public class EventController {
     }
 
     @DeleteMapping("/{eventId}/delete")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isManagerOfEvent(#eventId))")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isCreaterOfEvent(#eventId))")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
         eventWriteService.deleteEvent(eventId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{eventId}/update")
-    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isManagerOfEvent(#eventId))")
+    @PreAuthorize("hasRole('MANAGER') and @eventSecurityService.isCreaterOfEvent(#eventId)")
     public ResponseEntity<EventSearchDTO> updateEventDetails(@PathVariable Long eventId,
                                                              @RequestBody @Valid EventUpdateDTO eventUpdateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.updateEventDetails(eventId, eventUpdateDTO);
