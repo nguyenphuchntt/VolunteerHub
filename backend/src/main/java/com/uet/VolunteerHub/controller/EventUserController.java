@@ -36,7 +36,7 @@ public class EventUserController {
         return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
     }
 
-    @GetMapping("/account/{accountId}")
+    @GetMapping("/accounts/{accountId}")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByAccountId(@PathVariable UUID accountId,
                                                                                 @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findByAccountId(accountId, pageable));
