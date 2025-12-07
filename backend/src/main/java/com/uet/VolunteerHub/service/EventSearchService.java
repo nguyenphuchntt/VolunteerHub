@@ -5,6 +5,7 @@ import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.repository.EventLikeRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
 import jakarta.transaction.Transactional;
@@ -39,7 +40,8 @@ public class EventSearchService {
                 .startAt(event.getStartAt())
                 .endAt(event.getEndAt())
                 .category(event.getCategory())
-                .location(event.getLocation());
+                .location(event.getLocation())
+                .likeCount(event.getLikeCount());
         if (account != null) {
             builder.accountId(account.getAccountId());
         }

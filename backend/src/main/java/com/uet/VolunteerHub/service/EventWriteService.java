@@ -34,7 +34,8 @@ public class EventWriteService {
                 .startAt(event.getStartAt())
                 .endAt(event.getEndAt())
                 .category(event.getCategory())
-                .location(event.getLocation());
+                .location(event.getLocation())
+                .likeCount(event.getLikeCount());
         if (account != null) {
             builder.accountId(account.getAccountId());
         }
@@ -87,6 +88,7 @@ public class EventWriteService {
         if (eventManagerCreateDTO.getAttendeeCount() != 0) {
             builder.attendeeCount(eventManagerCreateDTO.getAttendeeCount());
         }
+        builder.likeCount(0);
         builder.status(EventStatus.PENDING);
         Event event = builder.build();
         eventRepository.save(event);
@@ -133,6 +135,7 @@ public class EventWriteService {
         } else {
             builder.status(EventStatus.PENDING);
         }
+        builder.likeCount(0);
         Event event = builder.build();
         eventRepository.save(event);
         return mapToEventSearchDTO(event, account);
@@ -185,6 +188,7 @@ public class EventWriteService {
         eventRepository.save(event);
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
+
 
 
 

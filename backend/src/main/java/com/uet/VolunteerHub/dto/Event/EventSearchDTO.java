@@ -20,5 +20,6 @@ public class EventSearchDTO {
     private String description;
     private EventStatus status;
     private Integer attendeeCount;
+    private Integer likeCount;
     private UUID accountId;
 }

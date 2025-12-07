@@ -1,12 +1,11 @@
 package com.uet.VolunteerHub.exception;
 
 
-import com.uet.VolunteerHub.exception.ResourceNotFoundException;
-import com.uet.VolunteerHub.exception.ResourceAlreadyExistsException;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -37,12 +36,17 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
-
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(ExpiredJwtException.class)
     ResponseEntity<Object> handleExpiredJwtException(ExpiredJwtException ex, WebRequest request) {
         String bodyOfResponse = ex.getMessage();
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(BadCredentialsException.class)
+    ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex, "Wrong login details", new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
     }
 
 

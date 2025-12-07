@@ -61,4 +61,5 @@ public class AccountEventController {
                                             @PathVariable Long eventId, @RequestBody EventUserUpdateDTO eventUserUpdateDTO) {
         return ResponseEntity.ok(eventUserWriteService.updateEventUser(account, eventId, eventUserUpdateDTO));
     }
+
 }

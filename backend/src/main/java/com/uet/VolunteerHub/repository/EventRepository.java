@@ -32,5 +32,4 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
 
     Optional<Event> findByEventIdAndCreatedBy_AccountId(Long eventId, UUID accountId);
 
-
 }

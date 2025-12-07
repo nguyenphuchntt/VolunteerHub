@@ -4,6 +4,7 @@ import com.uet.VolunteerHub.dto.Event.*;
 import com.uet.VolunteerHub.dto.EventUser.EventUserRegisterDTO;
 import com.uet.VolunteerHub.dto.EventUser.EventUserSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.service.EventLikeService;
 import com.uet.VolunteerHub.service.EventSearchService;
 import com.uet.VolunteerHub.service.EventUserWriteService;
 import com.uet.VolunteerHub.service.EventWriteService;
@@ -28,13 +29,15 @@ public class EventController {
     private final EventSearchService eventSearchService;
     private final EventWriteService eventWriteService;
     private final EventUserWriteService eventUserWriteService;
+    private final EventLikeService eventLikeService;
 
     @Autowired
     public EventController(EventSearchService eventSearchService, EventWriteService eventWriteService,
-                           EventUserWriteService eventUserWriteService) {
+                           EventUserWriteService eventUserWriteService, EventLikeService eventLikeService) {
         this.eventSearchService = eventSearchService;
         this.eventWriteService = eventWriteService;
         this.eventUserWriteService = eventUserWriteService;
+        this.eventLikeService = eventLikeService;
     }
 
     @GetMapping("search")
@@ -62,7 +65,7 @@ public class EventController {
     public ResponseEntity<EventSearchDTO> registerEvent(@AuthenticationPrincipal Account account,
                                                         @RequestBody @Valid EventManagerCreateDTO eventManagerCreateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.registerEvent(account, eventManagerCreateDTO);
-        EventUserRegisterDTO eventUserRegisterDTO = new EventUserRegisterDTO(eventSearchDTO.getEventId(),
+        EventUserRegisterDTO eventUserRegisterDTO = new EventUserRegisterDTO(
                 eventSearchDTO.getStartAt(), eventSearchDTO.getEndAt());
         eventUserWriteService.registerEventUser(account,eventSearchDTO.getEventId(), eventUserRegisterDTO);
         return ResponseEntity.ok(eventSearchDTO);
@@ -73,7 +76,7 @@ public class EventController {
     public ResponseEntity<EventSearchDTO> createEvent(@AuthenticationPrincipal Account account,
                                                       @RequestBody @Valid EventAdminCreateDTO eventAdminCreateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.createEvent(account, eventAdminCreateDTO);
-        EventUserRegisterDTO eventUserRegisterDTO = new EventUserRegisterDTO(eventSearchDTO.getEventId(),
+        EventUserRegisterDTO eventUserRegisterDTO = new EventUserRegisterDTO(
                 eventSearchDTO.getStartAt(), eventSearchDTO.getEndAt());
         eventUserWriteService.registerEventUser(account, eventSearchDTO.getEventId(), eventUserRegisterDTO);
         return ResponseEntity.ok(eventSearchDTO);
@@ -100,6 +103,13 @@ public class EventController {
                                                              @RequestBody @Valid EventUpdateDTO eventUpdateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.updateEventDetails(eventId, eventUpdateDTO);
         return ResponseEntity.ok(eventSearchDTO);
+    }
+
+    @PostMapping("/{eventId}/like")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<EventLikeDTO> likeEvent(@AuthenticationPrincipal Account account, @PathVariable Long eventId) {
+        Optional<EventLikeDTO> eventLikeDTO = eventLikeService.toggleLikeEvent(account, eventId);
+        return eventLikeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
 }

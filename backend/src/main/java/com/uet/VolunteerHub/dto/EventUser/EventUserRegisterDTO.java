@@ -12,7 +12,6 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EventUserRegisterDTO {
-    private Long eventId;
     private OffsetDateTime startAt;
     private OffsetDateTime endAt;
 }
