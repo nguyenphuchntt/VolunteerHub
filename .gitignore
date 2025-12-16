@@ -55,5 +55,7 @@ build/
 
 ### VS Code ###
 .vscode/
-
 .env
+
+.github/
+.agent/

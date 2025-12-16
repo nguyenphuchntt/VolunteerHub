@@ -1,0 +1,12 @@
+package com.uet.VolunteerHub.dto.EventUser;
+
+import lombok.Data;
+
+import java.time.OffsetDateTime;
+
+@Data
+public class EventUserUpdateDTO {
+    private OffsetDateTime startAt;
+    private OffsetDateTime endAt;
+}
+
