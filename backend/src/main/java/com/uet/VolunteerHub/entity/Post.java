@@ -7,8 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -28,8 +26,7 @@ public class Post {
     private Long postId;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "post_type", columnDefinition = "post_type", nullable = false)
+    @Column(name = "post_type", nullable = false)
     private PostType postType;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -57,7 +54,6 @@ public class Post {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", columnDefinition = "post_status")
+    @Column(name = "status")
     private PostStatus postStatus;
 }

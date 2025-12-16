@@ -10,7 +10,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventLikeId implements Serializable {
-    private long eventId;
+public class AccountMediaId implements Serializable {
     private UUID accountId;
+    private UUID mediaId;
 }

@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -35,8 +33,7 @@ public class Notification {
     private Account receiverAccount;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "type", columnDefinition = "notification_type", nullable = false)
+    @Column(name = "type", nullable = false)
     private NotificationType notificationType;
 
     @Column(name = "content", nullable = false)

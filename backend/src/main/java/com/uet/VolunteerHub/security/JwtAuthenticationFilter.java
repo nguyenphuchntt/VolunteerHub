@@ -41,16 +41,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/")
+                || path.startsWith("/api/users/");
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
             if (jwt != null) {
                 UUID accountId = UUID.fromString(jwtTokenProvider.parseJwtToken(jwt).getSubject());
                 Account account = accountRepository.findById(accountId)
                         .orElseThrow(() -> new EntityNotFoundException("Account with ID: " + accountId + " not found"));
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(account, null, account.getAuthorities());
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(account,
+                        null, account.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

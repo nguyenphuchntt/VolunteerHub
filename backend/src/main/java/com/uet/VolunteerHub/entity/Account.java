@@ -8,8 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+
 import org.springframework.security.core.CredentialsContainer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -33,7 +32,7 @@ public class Account implements UserDetails, CredentialsContainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name="account_id", updatable = false, nullable = false)
+    @Column(name = "account_id", updatable = false, nullable = false)
     private UUID accountId;
 
     @NotNull
@@ -45,13 +44,11 @@ public class Account implements UserDetails, CredentialsContainer {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name="account_status", columnDefinition = "account_status", nullable = false)
+    @Column(name = "account_status", nullable = false)
     private AccountStatus accountStatus;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name="role", columnDefinition = "user_role", nullable = false)
+    @Column(name = "role", nullable = false)
     private UserRole role;
 
     @CreationTimestamp
@@ -62,7 +59,7 @@ public class Account implements UserDetails, CredentialsContainer {
     @Email
     private String email;
 
-    @OneToOne(mappedBy="account", cascade = CascadeType.ALL, optional = false)
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, optional = false)
     private UserInfo userInfo;
 
     @Override

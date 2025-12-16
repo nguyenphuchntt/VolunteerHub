@@ -4,10 +4,8 @@ import com.uet.VolunteerHub.enums.EventStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 
@@ -49,8 +47,7 @@ public class Event {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", columnDefinition = "event_status", nullable = false)
+    @Column(name = "status", nullable = false)
     private EventStatus status;
 
     @Column(name = "attendee_count")

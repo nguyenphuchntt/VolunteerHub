@@ -7,18 +7,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"accountId", "eventId"})
-@ToString(exclude = {"account", "event"})
+@EqualsAndHashCode(of = { "accountId", "eventId" })
+@ToString(exclude = { "account", "event" })
 @Entity
 @IdClass(EventUserId.class)
 @Table(name = "event_user")
@@ -40,13 +38,11 @@ public class EventUser {
     private OffsetDateTime registeredAt;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "status", columnDefinition = "event_user_status", nullable = false)
+    @Column(name = "status", nullable = false)
     private EventUserStatus status;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "event_user_role", columnDefinition = "event_user_role", nullable = false)
+    @Column(name = "event_user_role", nullable = false)
     private EventUserRole role;
 
     @Column(name = "start_at")
