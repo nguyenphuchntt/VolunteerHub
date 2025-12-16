@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { EventFilter, EventCard } from "../components/EventFeed";
-import MainHeader from "../components/SocialFeed/MainHeader";
+import { ThreeColumnLayout } from "../components/common";
 import { mockEvents } from "../data/mockEvents";
-import { Box, Container, Typography, Button, Grid } from "@mui/material";
+import { mockUsers } from "../data/mockData";
+import { Box, Typography, Button, Grid } from "@mui/material";
 import { SearchOff } from "@mui/icons-material";
 
 const EventFeed = () => {
@@ -10,6 +11,9 @@ const EventFeed = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("date-asc");
+
+  // For demo: use first mock user as authenticated user
+  const user = mockUsers[0];
 
   // Filter and sort events
   const filteredEvents = useMemo(() => {
@@ -66,10 +70,25 @@ const EventFeed = () => {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", backgroundColor: "#f5f7fa" }}>
-      <MainHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
+    <ThreeColumnLayout
+      user={user}
+      role="volunteer"
+      showRightSidebar={true}
+      showSearch={true}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+    >
+      <Box sx={{ borderBottom: "1px solid", borderColor: "grey.200" }}>
+        <Typography
+          variant="h6"
+          fontWeight={700}
+          sx={{ p: 2, position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 10 }}
+        >
+          Khám phá
+        </Typography>
+      </Box>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ p: 2 }}>
         {/* Filter Section */}
         <EventFilter
           selectedCategory={selectedCategory}
@@ -91,35 +110,32 @@ const EventFeed = () => {
             mb: 3,
           }}
         >
-          <Typography variant="h5" fontWeight={600}>
-            {filteredEvents.length} Event
-            {filteredEvents.length !== 1 ? "s" : ""} Found
+          <Typography variant="body1" fontWeight={600}>
+            {filteredEvents.length} sự kiện tìm thấy
           </Typography>
           {(selectedCategory !== "all" ||
             selectedStatus !== "all" ||
             searchQuery) && (
             <Button
               variant="text"
+              size="small"
               onClick={handleClearFilters}
               sx={{
                 color: "primary.main",
                 fontWeight: 500,
-                "&:hover": {
-                  backgroundColor: "primary.light",
-                  color: "#fff",
-                },
+                textTransform: "none",
               }}
             >
-              Clear Filters
+              Xóa bộ lọc
             </Button>
           )}
         </Box>
 
         {/* Events Grid */}
         {filteredEvents.length > 0 ? (
-          <Grid container spacing={3}>
+          <Grid container spacing={2}>
             {filteredEvents.map((event) => (
-              <Grid item xs={12} sm={6} md={4} key={event.id}>
+              <Grid item xs={12} sm={6} key={event.id}>
                 <EventCard event={event} />
               </Grid>
             ))}
@@ -129,37 +145,29 @@ const EventFeed = () => {
             sx={{
               textAlign: "center",
               py: 8,
-              backgroundColor: "#fff",
+              backgroundColor: "grey.50",
               borderRadius: "16px",
-              border: "1px solid",
-              borderColor: "grey.200",
             }}
           >
             <SearchOff sx={{ fontSize: 64, color: "grey.400", mb: 2 }} />
             <Typography variant="h6" fontWeight={600} gutterBottom>
-              No events found
+              Không tìm thấy sự kiện
             </Typography>
             <Typography color="text.secondary" sx={{ mb: 3 }}>
-              Try adjusting your filters or search query to find more events.
+              Hãy điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.
             </Typography>
             <Button
               variant="contained"
               onClick={handleClearFilters}
-              sx={{
-                backgroundColor: "primary.main",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                },
-              }}
+              sx={{ borderRadius: "9999px", textTransform: "none" }}
             >
-              Reset Filters
+              Xóa bộ lọc
             </Button>
           </Box>
         )}
-      </Container>
-    </Box>
+      </Box>
+    </ThreeColumnLayout>
   );
 };
 
 export default EventFeed;
-

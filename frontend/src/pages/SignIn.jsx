@@ -1,312 +1,877 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Paper,
   Typography,
-  TextField,
   Button,
-  Divider,
+  Dialog,
+  DialogContent,
+  TextField,
   IconButton,
-  Menu,
-  MenuItem,
+  Divider,
+  InputAdornment,
 } from "@mui/material";
-import { KeyboardArrowDown, Google } from "@mui/icons-material";
+import { Close, Google, Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
+import { keyframes } from "@mui/system";
+
+// Animations
+const fadeIn = keyframes`
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+`;
+
+const slideUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const float = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+`;
 
 const SignIn = () => {
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [signUpOpen, setSignUpOpen] = useState(false);
+  const [signInStep, setSignInStep] = useState(1); // 1: username, 2: password
+  const [showPassword, setShowPassword] = useState(false);
+  
+  const [signInData, setSignInData] = useState({
+    username: "",
+    password: "",
+  });
+
+  const [signUpData, setSignUpData] = useState({
+    fullName: "",
     email: "",
     password: "",
   });
-  const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // Handle Sign In
+  const handleSignInOpen = () => {
+    setSignInOpen(true);
+    setSignInStep(1);
+    setSignInData({ username: "", password: "" });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: Implement signin logic
-    console.log("Sign in data:", formData);
+  const handleSignInClose = () => {
+    setSignInOpen(false);
+    setSignInStep(1);
   };
 
-  const handleGoogleSignIn = () => {
-    // TODO: Implement Google Sign In
-    console.log("Google Sign In");
+  const handleSignInNext = () => {
+    if (signInStep === 1 && signInData.username) {
+      // TODO: Verify if username exists via API
+      setSignInStep(2);
+    } else if (signInStep === 2 && signInData.password) {
+      // TODO: Implement actual sign in logic
+      console.log("Sign in:", signInData);
+      handleSignInClose();
+      navigate("/events");
+    }
+  };
+
+  // Handle Sign Up
+  const handleSignUpOpen = () => {
+    setSignUpOpen(true);
+  };
+
+  const handleSignUpClose = () => {
+    setSignUpOpen(false);
+    setSignUpData({ fullName: "", email: "", password: "" });
+  };
+
+  const handleSignUpSubmit = () => {
+    // TODO: Implement actual sign up logic
+    console.log("Sign up:", signUpData);
+    handleSignUpClose();
+    navigate("/events");
+  };
+
+  const handleGoogleAuth = () => {
+    console.log("Google Auth");
+  };
+
+  // Light green theme colors
+  const colors = {
+    primary: "#43a047",
+    primaryLight: "#66bb6a",
+    primaryDark: "#2e7d32",
+    bg: "#f0f9f1",
+    bgGradient: "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 30%, #a5d6a7 60%, #81c784 100%)",
+    text: "#1b5e20",
+    textSecondary: "#558b2f",
+    white: "#ffffff",
+    border: "#a5d6a7",
+  };
+
+  // Common button styles
+  const outlinedButtonSx = {
+    width: "100%",
+    maxWidth: 300,
+    height: 48,
+    borderRadius: "50px",
+    border: `2px solid ${colors.primary}`,
+    color: colors.primary,
+    fontWeight: 600,
+    fontSize: 15,
+    textTransform: "none",
+    backgroundColor: "transparent",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      backgroundColor: colors.primary,
+      color: colors.white,
+      border: `2px solid ${colors.primary}`,
+      transform: "translateY(-2px)",
+      boxShadow: "0 8px 20px rgba(67, 160, 71, 0.3)",
+    },
+  };
+
+  const filledButtonSx = {
+    width: "100%",
+    maxWidth: 300,
+    height: 48,
+    borderRadius: "50px",
+    backgroundColor: colors.white,
+    color: "#333",
+    fontWeight: 600,
+    fontSize: 15,
+    textTransform: "none",
+    border: "1px solid #e0e0e0",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      backgroundColor: "#f5f5f5",
+      transform: "translateY(-2px)",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+    },
+  };
+
+  const greenFilledButtonSx = {
+    width: "100%",
+    maxWidth: 300,
+    height: 48,
+    borderRadius: "50px",
+    background: `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`,
+    color: colors.white,
+    fontWeight: 700,
+    fontSize: 15,
+    textTransform: "none",
+    transition: "all 0.3s ease",
+    boxShadow: "0 6px 20px rgba(67, 160, 71, 0.35)",
+    "&:hover": {
+      background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
+      transform: "translateY(-2px)",
+      boxShadow: "0 10px 28px rgba(67, 160, 71, 0.4)",
+    },
   };
 
   return (
     <Box
       sx={{
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
         minHeight: "100vh",
-        padding: { xs: 2, md: 5 },
-        background: "linear-gradient(199deg, rgba(139, 178, 139, 1) 0%, rgba(136, 178, 139, 1) 100%)",
-        fontFamily: "'Poppins', sans-serif",
+        background: colors.bgGradient,
+        fontFamily: "'Outfit', 'Segoe UI', sans-serif",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
-      <Paper
-        elevation={0}
+      {/* Back to Home Button */}
+      <Button
+        startIcon={<ArrowBack />}
+        onClick={() => navigate("/")}
         sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          maxWidth: 1152,
-          width: "100%",
-          minHeight: { xs: "auto", md: 700 },
-          borderRadius: "30px",
-          overflow: "hidden",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
+          position: "absolute",
+          top: { xs: 16, md: 24 },
+          left: { xs: 16, md: 32 },
+          zIndex: 10,
+          color: colors.text,
+          fontWeight: 600,
+          fontSize: 14,
+          textTransform: "none",
+          backgroundColor: "rgba(255, 255, 255, 0.7)",
+          backdropFilter: "blur(8px)",
+          borderRadius: "50px",
+          padding: "8px 20px",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            transform: "translateX(-4px)",
+          },
         }}
       >
-        {/* Left Section */}
+        Về trang chủ
+      </Button>
+      {/* Floating decorative elements */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: "8%",
+          left: "8%",
+          width: 100,
+          height: 100,
+          borderRadius: "50%",
+          background: "rgba(255, 255, 255, 0.4)",
+          animation: `${float} 6s ease-in-out infinite`,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: "12%",
+          right: "5%",
+          width: 150,
+          height: 150,
+          borderRadius: "50%",
+          background: "rgba(255, 255, 255, 0.3)",
+          animation: `${float} 8s ease-in-out infinite 1s`,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          top: "45%",
+          left: "3%",
+          width: 60,
+          height: 60,
+          borderRadius: "50%",
+          background: "rgba(255, 255, 255, 0.5)",
+          animation: `${float} 5s ease-in-out infinite 0.5s`,
+        }}
+      />
+
+      {/* Left Section - Logo */}
+      <Box
+        sx={{
+          flex: 1,
+          display: { xs: "none", md: "flex" },
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+        }}
+      >
+        {/* Green glow behind logo */}
         <Box
           sx={{
-            flex: { xs: "0 0 auto", md: 1 },
-            maxWidth: { xs: "100%", md: 412 },
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            padding: { xs: 4, md: "0 60px" },
-            background: "linear-gradient(199deg, rgba(139, 178, 139, 0.95) 0%, rgba(136, 178, 139, 0.95) 100%)",
+            position: "absolute",
+            width: 450,
+            height: 450,
+            background: "radial-gradient(circle, rgba(255, 255, 255, 0.5) 0%, transparent 70%)",
+            borderRadius: "50%",
+          }}
+        />
+        <Box
+          component="img"
+          src="/images/logo.png"
+          alt="VolunteerHub Logo"
+          sx={{
+            width: { md: 280, lg: 350 },
+            height: "auto",
+            position: "relative",
+            zIndex: 1,
+            filter: "drop-shadow(0 20px 40px rgba(67, 160, 71, 0.2))",
+          }}
+        />
+      </Box>
+
+      {/* Right Section - Content */}
+      <Box
+        sx={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: { xs: 4, md: 6 },
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: 400,
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontFamily: "'Nunito', sans-serif",
-              fontWeight: 600,
-              fontSize: { xs: 28, md: 34 },
-              lineHeight: 1.176,
-              color: "#fdf6ec",
-              mb: 2.5,
-            }}
+        {/* Logo for mobile */}
+        <Box
+          component="img"
+          src="/images/logo.png"
+          alt="VolunteerHub Logo"
+          sx={{
+            display: { xs: "block", md: "none" },
+            width: 80,
+            height: "auto",
+            mb: 4,
+          }}
+        />
+
+        <Typography
+          variant="h1"
+          sx={{
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 800,
+            fontSize: { xs: 40, md: 52, lg: 60 },
+            color: colors.text,
+            lineHeight: 1.1,
+            mb: 3,
+            letterSpacing: "-2px",
+          }}
+        >
+          Đang diễn ra
+        </Typography>
+
+        <Typography
+          variant="h2"
+          sx={{
+            fontFamily: "'Outfit', sans-serif",
+            fontWeight: 600,
+            fontSize: { xs: 22, md: 28 },
+            color: colors.textSecondary,
+            mb: 4,
+          }}
+        >
+          Tham gia ngay hôm nay.
+        </Typography>
+
+        {/* Auth buttons */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<Google />}
+            onClick={handleGoogleAuth}
+            sx={filledButtonSx}
           >
-            Kết Nối & Lan Tỏa Yêu Thương
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: "'Nunito', sans-serif",
-              fontWeight: 400,
-              fontSize: 16,
-              lineHeight: 1.563,
-              color: "#fdf6ec",
-            }}
-          >
-            Mỗi hành động nhỏ – góp phần tạo nên thay đổi lớn.
-          </Typography>
+            Đăng ký với Google
+          </Button>
         </Box>
 
-        {/* Right Section */}
-        <Box
+        <Divider sx={{ maxWidth: 300, my: 2 }}>
+          <Typography sx={{ color: colors.textSecondary, fontSize: 14, fontWeight: 500 }}>hoặc</Typography>
+        </Divider>
+
+        <Button
+          variant="contained"
+          onClick={handleSignUpOpen}
+          sx={greenFilledButtonSx}
+        >
+          Tạo tài khoản
+        </Button>
+
+        <Typography
           sx={{
-            flex: 1,
-            backgroundColor: "rgba(255, 255, 255, 0.98)",
-            padding: { xs: "40px 30px", md: "22px 60px" },
-            display: "flex",
-            flexDirection: "column",
-            position: "relative",
+            fontSize: 12,
+            color: colors.textSecondary,
+            maxWidth: 300,
+            mt: 1.5,
+            lineHeight: 1.5,
           }}
         >
-          {/* Language Selector */}
-          <Box
+          Khi đăng ký, bạn đồng ý với{" "}
+          <Typography component="span" sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500 }}>
+            Điều khoản Dịch vụ
+          </Typography>{" "}
+          và{" "}
+          <Typography component="span" sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500 }}>
+            Chính sách Quyền riêng tư
+          </Typography>
+          .
+        </Typography>
+
+        <Box sx={{ mt: 6 }}>
+          <Typography sx={{ fontWeight: 600, fontSize: 18, color: colors.text, mb: 2.5 }}>
+            Đã có tài khoản?
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={handleSignInOpen}
+            sx={outlinedButtonSx}
+          >
+            Đăng nhập
+          </Button>
+        </Box>
+        </Box>
+      </Box>
+
+      {/* Sign In Modal */}
+      <Dialog
+        open={signInOpen}
+        onClose={handleSignInClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: colors.white,
+            borderRadius: "24px",
+            maxWidth: 500,
+            minHeight: 420,
+            animation: `${fadeIn} 0.25s ease-out`,
+            boxShadow: "0 25px 60px rgba(67, 160, 71, 0.2)",
+          },
+        }}
+        BackdropProps={{
+          sx: {
+            backgroundColor: "rgba(46, 125, 50, 0.15)",
+            backdropFilter: "blur(4px)",
+          },
+        }}
+      >
+        <Box sx={{ position: "relative", p: 2.5 }}>
+          <IconButton
+            onClick={handleSignInClose}
             sx={{
               position: "absolute",
-              top: 22,
-              right: { xs: 30, md: 60 },
-              display: "flex",
-              alignItems: "center",
-              cursor: "pointer",
+              left: 12,
+              top: 12,
+              color: colors.textSecondary,
+              "&:hover": { backgroundColor: "rgba(67, 160, 71, 0.1)" },
             }}
-            onClick={(e) => setAnchorEl(e.currentTarget)}
           >
-            <Typography sx={{ fontSize: 12, color: "#a1a1a1" }}>
-              English (UK)
-            </Typography>
-            <KeyboardArrowDown sx={{ fontSize: 16, color: "#989898" }} />
+            <Close />
+          </IconButton>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Box
+              component="img"
+              src="/images/logo.png"
+              alt="VolunteerHub Logo"
+              sx={{ width: 48, height: "auto" }}
+            />
           </Box>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={() => setAnchorEl(null)}
-          >
-            <MenuItem onClick={() => setAnchorEl(null)}>English (UK)</MenuItem>
-            <MenuItem onClick={() => setAnchorEl(null)}>Tiếng Việt</MenuItem>
-          </Menu>
+        </Box>
 
-          {/* Form Container */}
-          <Box
+        <DialogContent sx={{ px: { xs: 4, md: 8 }, pb: 5, pt: 1 }}>
+          <Typography
+            variant="h5"
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              maxWidth: 464,
-              margin: "auto",
-              width: "100%",
+              fontWeight: 700,
+              fontSize: 28,
+              color: colors.text,
+              mb: 4,
+              textAlign: "center",
             }}
           >
-            <Typography
-              variant="h5"
-              sx={{
-                fontWeight: 600,
-                fontSize: 28,
-                color: "#525252",
-                mb: 5,
-              }}
-            >
-              Welcome Back
-            </Typography>
+            Đăng nhập vào VolunteerHub
+          </Typography>
 
-            {/* Google Button */}
-            <Button
+          {signInStep === 1 ? (
+            <Box sx={{ animation: `${slideUp} 0.3s ease-out` }}>
+              <Button
+                variant="contained"
+                startIcon={<Google />}
+                onClick={handleGoogleAuth}
+                sx={{ ...filledButtonSx, maxWidth: "100%", mb: 3 }}
+              >
+                Đăng nhập với Google
+              </Button>
+
+              <Divider sx={{ my: 2.5 }}>
+                <Typography sx={{ color: colors.textSecondary, fontSize: 14 }}>hoặc</Typography>
+              </Divider>
+
+              <TextField
+                fullWidth
+                label="Email hoặc tên người dùng"
+                value={signInData.username}
+                onChange={(e) => setSignInData({ ...signInData, username: e.target.value })}
+                variant="outlined"
+                sx={{
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    backgroundColor: "#f8fdf8",
+                    "& fieldset": { borderColor: colors.border },
+                    "&:hover fieldset": { borderColor: colors.primary },
+                    "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                  },
+                  "& .MuiInputLabel-root": { color: colors.textSecondary },
+                  "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+                }}
+              />
+
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={!signInData.username}
+                onClick={handleSignInNext}
+                sx={{
+                  height: 48,
+                  borderRadius: "50px",
+                  background: signInData.username 
+                    ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
+                    : "#e0e0e0",
+                  color: signInData.username ? colors.white : "#9e9e9e",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  textTransform: "none",
+                  mb: 2,
+                  boxShadow: signInData.username ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
+                  "&:hover": {
+                    background: signInData.username 
+                      ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
+                      : "#e0e0e0",
+                  },
+                  "&.Mui-disabled": {
+                    background: "#e0e0e0",
+                    color: "#9e9e9e",
+                  },
+                }}
+              >
+                Tiếp theo
+              </Button>
+
+              <Button
+                variant="outlined"
+                fullWidth
+                sx={{
+                  height: 48,
+                  borderRadius: "50px",
+                  border: `2px solid ${colors.border}`,
+                  color: colors.textSecondary,
+                  fontWeight: 600,
+                  fontSize: 15,
+                  textTransform: "none",
+                  "&:hover": {
+                    backgroundColor: "rgba(67, 160, 71, 0.08)",
+                    border: `2px solid ${colors.primary}`,
+                    color: colors.primary,
+                  },
+                }}
+              >
+                Quên mật khẩu?
+              </Button>
+            </Box>
+          ) : (
+            <Box sx={{ animation: `${slideUp} 0.3s ease-out` }}>
+              {/* Show username as readonly */}
+              <TextField
+                fullWidth
+                label="Email hoặc tên người dùng"
+                value={signInData.username}
+                variant="outlined"
+                disabled
+                sx={{
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    backgroundColor: "#f5f5f5",
+                    "& fieldset": { borderColor: "#e0e0e0" },
+                  },
+                  "& .MuiInputLabel-root": { color: "#9e9e9e" },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                type={showPassword ? "text" : "password"}
+                label="Mật khẩu"
+                value={signInData.password}
+                onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                variant="outlined"
+                autoFocus
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        sx={{ color: colors.textSecondary }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    backgroundColor: "#f8fdf8",
+                    "& fieldset": { borderColor: colors.border },
+                    "&:hover fieldset": { borderColor: colors.primary },
+                    "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                  },
+                  "& .MuiInputLabel-root": { color: colors.textSecondary },
+                  "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+                }}
+              />
+
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={!signInData.password}
+                onClick={handleSignInNext}
+                sx={{
+                  height: 48,
+                  borderRadius: "50px",
+                  background: signInData.password 
+                    ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
+                    : "#e0e0e0",
+                  color: signInData.password ? colors.white : "#9e9e9e",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  textTransform: "none",
+                  mb: 2,
+                  boxShadow: signInData.password ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
+                  "&:hover": {
+                    background: signInData.password 
+                      ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
+                      : "#e0e0e0",
+                  },
+                  "&.Mui-disabled": {
+                    background: "#e0e0e0",
+                    color: "#9e9e9e",
+                  },
+                }}
+              >
+                Đăng nhập
+              </Button>
+
+              <Typography
+                sx={{
+                  textAlign: "center",
+                  color: colors.textSecondary,
+                  fontSize: 14,
+                }}
+              >
+                Quên mật khẩu?{" "}
+                <Typography
+                  component="span"
+                  sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500, "&:hover": { textDecoration: "underline" } }}
+                >
+                  Đặt lại
+                </Typography>
+              </Typography>
+            </Box>
+          )}
+
+          <Typography
+            sx={{
+              textAlign: "center",
+              color: colors.textSecondary,
+              fontSize: 14,
+              mt: 4,
+            }}
+          >
+            Chưa có tài khoản?{" "}
+            <Typography
+              component="span"
+              onClick={() => {
+                handleSignInClose();
+                handleSignUpOpen();
+              }}
+              sx={{ color: colors.primary, cursor: "pointer", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
+            >
+              Đăng ký
+            </Typography>
+          </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sign Up Modal */}
+      <Dialog
+        open={signUpOpen}
+        onClose={handleSignUpClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: colors.white,
+            borderRadius: "24px",
+            maxWidth: 500,
+            minHeight: 500,
+            animation: `${fadeIn} 0.25s ease-out`,
+            boxShadow: "0 25px 60px rgba(67, 160, 71, 0.2)",
+          },
+        }}
+        BackdropProps={{
+          sx: {
+            backgroundColor: "rgba(46, 125, 50, 0.15)",
+            backdropFilter: "blur(4px)",
+          },
+        }}
+      >
+        <Box sx={{ position: "relative", p: 2.5 }}>
+          <IconButton
+            onClick={handleSignUpClose}
+            sx={{
+              position: "absolute",
+              left: 12,
+              top: 12,
+              color: colors.textSecondary,
+              "&:hover": { backgroundColor: "rgba(67, 160, 71, 0.1)" },
+            }}
+          >
+            <Close />
+          </IconButton>
+          <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Box
+              component="img"
+              src="/images/logo.png"
+              alt="VolunteerHub Logo"
+              sx={{ width: 48, height: "auto" }}
+            />
+          </Box>
+        </Box>
+
+        <DialogContent sx={{ px: { xs: 4, md: 8 }, pb: 5, pt: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              fontSize: 28,
+              color: colors.text,
+              mb: 4,
+              textAlign: "center",
+            }}
+          >
+            Tạo tài khoản của bạn
+          </Typography>
+
+          <Box sx={{ animation: `${slideUp} 0.3s ease-out` }}>
+            <TextField
+              fullWidth
+              label="Họ và Tên"
+              value={signUpData.fullName}
+              onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
               variant="outlined"
-              onClick={handleGoogleSignIn}
-              startIcon={<Google />}
               sx={{
-                width: 220,
-                height: 40,
-                borderColor: "#e8e8e8",
-                color: "#a1a1a1",
-                fontWeight: 600,
-                fontSize: 12,
+                mb: 2.5,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "#f8fdf8",
+                  "& fieldset": { borderColor: colors.border },
+                  "&:hover fieldset": { borderColor: colors.primary },
+                  "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                },
+                "& .MuiInputLabel-root": { color: colors.textSecondary },
+                "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+              }}
+            />
+
+            <TextField
+              fullWidth
+              type="email"
+              label="Email"
+              value={signUpData.email}
+              onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+              variant="outlined"
+              sx={{
+                mb: 2.5,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "#f8fdf8",
+                  "& fieldset": { borderColor: colors.border },
+                  "&:hover fieldset": { borderColor: colors.primary },
+                  "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                },
+                "& .MuiInputLabel-root": { color: colors.textSecondary },
+                "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+              }}
+            />
+
+            <TextField
+              fullWidth
+              type={showPassword ? "text" : "password"}
+              label="Mật khẩu"
+              value={signUpData.password}
+              onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+              variant="outlined"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      sx={{ color: colors.textSecondary }}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                mb: 3,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "#f8fdf8",
+                  "& fieldset": { borderColor: colors.border },
+                  "&:hover fieldset": { borderColor: colors.primary },
+                  "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                },
+                "& .MuiInputLabel-root": { color: colors.textSecondary },
+                "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+              }}
+            />
+
+            <Button
+              variant="contained"
+              fullWidth
+              disabled={!signUpData.fullName || !signUpData.email || !signUpData.password}
+              onClick={handleSignUpSubmit}
+              sx={{
+                height: 48,
+                borderRadius: "50px",
+                background: (signUpData.fullName && signUpData.email && signUpData.password) 
+                  ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
+                  : "#e0e0e0",
+                color: (signUpData.fullName && signUpData.email && signUpData.password) ? colors.white : "#9e9e9e",
+                fontWeight: 700,
+                fontSize: 15,
                 textTransform: "none",
-                margin: "0 auto",
+                mb: 3,
+                boxShadow: (signUpData.fullName && signUpData.email && signUpData.password) 
+                  ? "0 6px 20px rgba(67, 160, 71, 0.35)" 
+                  : "none",
                 "&:hover": {
-                  backgroundColor: "#f8f8f8",
-                  borderColor: "#d0d0d0",
+                  background: (signUpData.fullName && signUpData.email && signUpData.password) 
+                    ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
+                    : "#e0e0e0",
+                },
+                "&.Mui-disabled": {
+                  background: "#e0e0e0",
+                  color: "#9e9e9e",
                 },
               }}
             >
-              Continue with Google
+              Đăng ký
             </Button>
-
-            <Divider sx={{ my: 3, color: "#a1a1a1", fontSize: 14 }}>
-              - OR -
-            </Divider>
-
-            {/* Form */}
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              <TextField
-                type="email"
-                name="email"
-                label="Email Address"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                fullWidth
-                variant="standard"
-                sx={{
-                  "& .MuiInput-underline:before": {
-                    borderBottomColor: "#e8e8e8",
-                  },
-                  "& .MuiInput-underline:hover:before": {
-                    borderBottomColor: "#88b28b",
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "#a1a1a1",
-                    fontWeight: 500,
-                    fontSize: 14,
-                  },
-                }}
-              />
-
-              <TextField
-                type="password"
-                name="password"
-                label="Password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                fullWidth
-                variant="standard"
-                sx={{
-                  "& .MuiInput-underline:before": {
-                    borderBottomColor: "#e8e8e8",
-                  },
-                  "& .MuiInput-underline:hover:before": {
-                    borderBottomColor: "#88b28b",
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "#a1a1a1",
-                    fontWeight: 500,
-                    fontSize: 14,
-                  },
-                }}
-              />
-
-              <Box sx={{ textAlign: "right", mt: -1 }}>
-                <Typography
-                  component={Link}
-                  to="/forgot-password"
-                  sx={{
-                    fontSize: 12,
-                    color: "#a1a1a1",
-                    textDecoration: "none",
-                    "&:hover": {
-                      color: "#88b28b",
-                    },
-                  }}
-                >
-                  Forgot Password?
-                </Typography>
-              </Box>
-
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                sx={{
-                  height: 40,
-                  backgroundColor: "#88b28b",
-                  fontWeight: 600,
-                  fontSize: 16,
-                  textTransform: "none",
-                  mt: 1,
-                  "&:hover": {
-                    backgroundColor: "#7aa07d",
-                    boxShadow: "0 4px 8px rgba(136, 178, 139, 0.3)",
-                  },
-                }}
-              >
-                Sign In
-              </Button>
-            </Box>
-
-            <Typography
-              sx={{
-                fontSize: 14,
-                color: "#a1a1a1",
-                mt: 3,
-                textAlign: "center",
-              }}
-            >
-              Don't have an account?{" "}
-              <Typography
-                component={Link}
-                to="/signup"
-                sx={{
-                  color: "#88b28b",
-                  fontWeight: 500,
-                  textDecoration: "none",
-                  "&:hover": {
-                    color: "#7aa07d",
-                    textDecoration: "underline",
-                  },
-                }}
-              >
-                Create Account
-              </Typography>
-            </Typography>
           </Box>
-        </Box>
-      </Paper>
+
+          <Divider sx={{ my: 2.5 }}>
+            <Typography sx={{ color: colors.textSecondary, fontSize: 14 }}>hoặc</Typography>
+          </Divider>
+
+          <Button
+            variant="contained"
+            fullWidth
+            startIcon={<Google />}
+            onClick={handleGoogleAuth}
+            sx={{ ...filledButtonSx, maxWidth: "100%" }}
+          >
+            Đăng ký với Google
+          </Button>
+
+          <Typography
+            sx={{
+              textAlign: "center",
+              color: colors.textSecondary,
+              fontSize: 14,
+              mt: 4,
+            }}
+          >
+            Đã có tài khoản?{" "}
+            <Typography
+              component="span"
+              onClick={() => {
+                handleSignUpClose();
+                handleSignInOpen();
+              }}
+              sx={{ color: colors.primary, cursor: "pointer", fontWeight: 600, "&:hover": { textDecoration: "underline" } }}
+            >
+              Đăng nhập
+            </Typography>
+          </Typography>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };
 
 export default SignIn;
-
