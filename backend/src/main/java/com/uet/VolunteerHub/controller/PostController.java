@@ -1,7 +1,10 @@
 package com.uet.VolunteerHub.controller;
 
 import com.uet.VolunteerHub.dto.*;
-import com.uet.VolunteerHub.entity.Post;
+import com.uet.VolunteerHub.dto.Post.CommentCountResponse;
+import com.uet.VolunteerHub.dto.Post.LikeCountResponse;
+import com.uet.VolunteerHub.service.CommentService;
+import com.uet.VolunteerHub.service.PostLikeService;
 import com.uet.VolunteerHub.service.PostReadService;
 import com.uet.VolunteerHub.service.PostWriteService;
 import jakarta.validation.Valid;
@@ -9,10 +12,12 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Log
 @RestController
@@ -20,11 +25,15 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
     private final PostReadService postReadService;
     private final PostWriteService postWriteService;
+    private final PostLikeService postLikeService;
+    private final CommentService commentService;
 
     @Autowired
-    public PostController(PostReadService postReadService, PostWriteService postWriteService) {
+    public PostController(PostReadService postReadService, PostWriteService postWriteService, PostLikeService postLikeService, CommentService commentService) {
         this.postReadService = postReadService;
         this.postWriteService = postWriteService;
+        this.postLikeService = postLikeService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/{id}")
@@ -59,12 +68,45 @@ public class PostController {
         return ResponseEntity.ok(postsPage);
     }
 
+    @GetMapping("{id}/like-count")
+    public ResponseEntity<LikeCountResponse> getPostLikeCount(
+            @PathVariable("id") Long postId) {
+        return ResponseEntity.ok(LikeCountResponse.builder()
+                        .count(postLikeService.countPostLikeByPost(postId))
+                .build());
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("{id}/toggle-like")
+    public ResponseEntity<Map<String, Boolean>> toggleLike(@RequestBody @Valid PostLikeDTO dto) {
+        boolean isNowLiked = postLikeService.toggleLikePost(dto);
+        return ResponseEntity.ok(Map.of("isLiked", isNowLiked));
+    }
+
+    @GetMapping("{id}/comments")
+    public ResponseEntity<Page<CommentReadDTO>> getCommentsByPost(
+            @PathVariable("id") Long postId,
+            Pageable pageable) {
+        Page<CommentReadDTO> comments = commentService.findAllByPost(postId, pageable);
+        return ResponseEntity.ok(comments);
+    }
+
+    @GetMapping("{id}/comments/count")
+    public ResponseEntity<CommentCountResponse> getCommentCount(
+            @PathVariable("id") Long postId) {
+        return ResponseEntity.ok(CommentCountResponse.builder()
+                .count(commentService.countCommentsByPost(postId))
+                .build());
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canCreatePost(#postCreateDTO.eventId)")
     @PostMapping
     public ResponseEntity<PostReadDTO> createPost(@RequestBody @Valid PostCreateDTO postCreateDTO) {
         PostReadDTO newPost = postWriteService.createPost(postCreateDTO);
         return new ResponseEntity<>(newPost, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/content")
     public ResponseEntity<PostReadDTO> updatePostContent(
             @PathVariable Long id,
@@ -73,6 +115,7 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/type")
     public ResponseEntity<PostReadDTO> updatePostType(
             @PathVariable Long id,
@@ -81,6 +124,7 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/event")
     public ResponseEntity<PostReadDTO> updatePostEvent(
             @PathVariable Long id,
@@ -89,6 +133,7 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<PostReadDTO> updatePostStatus(
             @PathVariable Long id,
@@ -97,6 +142,7 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#postId)")
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(@PathVariable Long postId) {
         boolean isDeleted = postWriteService.deletePost(postId);
