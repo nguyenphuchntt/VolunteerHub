@@ -1,8 +1,27 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import PropTypes from "prop-types";
-import Avatar from "./Avatar";
 import Comment from "./Comment";
-import "../../css/PostCard.css";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardActions,
+  CardMedia,
+  Avatar,
+  Typography,
+  IconButton,
+  Button,
+  Box,
+  Divider,
+  TextField,
+  Collapse,
+} from "@mui/material";
+import {
+  FavoriteBorder,
+  Favorite,
+  ChatBubbleOutline,
+  MoreHoriz,
+} from "@mui/icons-material";
 
 const PostCard = ({ post, onLike, onComment }) => {
   const [showComments, setShowComments] = useState(post.comments.length > 0);
@@ -15,120 +34,123 @@ const PostCard = ({ post, onLike, onComment }) => {
     }
   };
 
-  const LikeIcon = ({ filled }) => (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill={filled ? "currentColor" : "none"}
-    >
-      <path
-        d="M17.37 3.66C16.96 3.25 16.48 2.92 15.94 2.68C15.41 2.44 14.84 2.32 14.26 2.32C13.68 2.32 13.11 2.44 12.58 2.68C12.04 2.92 11.56 3.25 11.15 3.66L10 4.81L8.85 3.66C8.03 2.84 6.92 2.38 5.74 2.38C4.56 2.38 3.45 2.84 2.63 3.66C1.81 4.48 1.35 5.59 1.35 6.77C1.35 7.95 1.81 9.06 2.63 9.88L3.78 11.03L10 17.25L16.22 11.03L17.37 9.88C17.78 9.47 18.11 8.99 18.35 8.45C18.59 7.92 18.71 7.35 18.71 6.77C18.71 6.19 18.59 5.62 18.35 5.08C18.11 4.55 17.78 4.07 17.37 3.66Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
-  const CommentIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M17.5 12.5C17.5 13 17.31 13.46 16.98 13.79C16.65 14.12 16.21 14.31 15.75 14.31H5.83L2.5 17.64V4.31C2.5 3.85 2.69 3.41 3.02 3.08C3.35 2.75 3.79 2.56 4.25 2.56H15.75C16.21 2.56 16.65 2.75 16.98 3.08C17.31 3.41 17.5 3.85 17.5 4.31V12.5Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
-  const MoreIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-      <circle cx="15" cy="10" r="1.5" fill="currentColor" />
-      <circle cx="5" cy="10" r="1.5" fill="currentColor" />
-    </svg>
-  );
-
   return (
-    <div className="post-card feed-card">
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: "16px",
+        border: "1px solid",
+        borderColor: "grey.200",
+        mb: 2,
+      }}
+    >
       {/* Post Header */}
-      <div className="post-header">
-        <div className="post-author">
-          <Avatar
-            src={post.author.avatar}
-            alt={post.author.name}
-            size="default"
-          />
-          <div className="post-author-info">
-            <h4 className="post-author-name">{post.author.name}</h4>
-            <p className="post-author-bio">{post.author.bio}</p>
-          </div>
-        </div>
-        <div className="post-meta">
-          <button className="post-more-btn">
-            <MoreIcon />
-          </button>
-          <span className="post-timestamp">{post.timestamp}</span>
-        </div>
-      </div>
+      <CardHeader
+        avatar={
+          <Avatar src={post.author.avatar} alt={post.author.name} />
+        }
+        action={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IconButton size="small">
+              <MoreHoriz />
+            </IconButton>
+          </Box>
+        }
+        title={
+          <Typography variant="subtitle2" fontWeight={600}>
+            {post.author.name}
+          </Typography>
+        }
+        subheader={
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              {post.author.bio}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              {post.timestamp}
+            </Typography>
+          </Box>
+        }
+        sx={{ pb: 1 }}
+      />
 
-      <div className="post-divider" />
+      <Divider />
 
       {/* Post Content */}
-      <div className="post-content">
-        <p className="post-text">{post.content}</p>
-        {post.media && (
-          <div className="post-media">
-            <img src={post.media} alt="Post media" />
-          </div>
-        )}
-      </div>
+      <CardContent sx={{ py: 2 }}>
+        <Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+          {post.content}
+        </Typography>
+      </CardContent>
+
+      {/* Post Media */}
+      {post.media && (
+        <CardMedia
+          component="img"
+          image={post.media}
+          alt="Post media"
+          sx={{ maxHeight: 400, objectFit: "cover" }}
+        />
+      )}
 
       {/* Post Actions */}
-      <div className="post-actions">
-        <button
-          className="post-action-btn"
+      <CardActions sx={{ px: 2, py: 1, justifyContent: "flex-start", gap: 1 }}>
+        <Button
+          size="small"
+          startIcon={<ChatBubbleOutline />}
           onClick={() => setShowComments(!showComments)}
+          sx={{
+            color: "text.secondary",
+            textTransform: "none",
+            "&:hover": { backgroundColor: "grey.100" },
+          }}
         >
-          <CommentIcon />
-          <span>Comment</span>
-        </button>
-        <button
-          className={`post-action-btn ${post.isLiked ? "liked" : ""}`}
+          Comment
+        </Button>
+        <IconButton
+          size="small"
           onClick={() => onLike(post.id)}
+          sx={{
+            color: post.isLiked ? "error.main" : "text.secondary",
+          }}
         >
-          <LikeIcon filled={post.isLiked} />
-        </button>
-      </div>
+          {post.isLiked ? <Favorite /> : <FavoriteBorder />}
+        </IconButton>
+      </CardActions>
 
       {/* Comments Section */}
-      {showComments && (
-        <div className="post-comments">
-          <div className="comments-list">
-            {post.comments.map((comment) => (
-              <Comment key={comment.id} comment={comment} />
-            ))}
-          </div>
+      <Collapse in={showComments}>
+        <Divider />
+        <Box sx={{ p: 2 }}>
+          {/* Comments List */}
+          {post.comments.map((comment) => (
+            <Comment key={comment.id} comment={comment} />
+          ))}
 
           {/* Write Comment */}
-          <div className="write-comment">
-            <Avatar src="https://i.pravatar.cc/150?img=12" size="small" />
-            <div className="write-comment-input">
-              <input
-                type="text"
-                placeholder="Share your thoughts here..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleComment()}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+          <Box sx={{ display: "flex", gap: 1.5, mt: 2 }}>
+            <Avatar
+              src="https://i.pravatar.cc/150?img=12"
+              sx={{ width: 32, height: 32 }}
+            />
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Share your thoughts here..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              onKeyPress={(e) => e.key === "Enter" && handleComment()}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "20px",
+                  backgroundColor: "grey.50",
+                },
+              }}
+            />
+          </Box>
+        </Box>
+      </Collapse>
+    </Card>
   );
 };
 
@@ -152,3 +174,4 @@ PostCard.propTypes = {
 };
 
 export default PostCard;
+

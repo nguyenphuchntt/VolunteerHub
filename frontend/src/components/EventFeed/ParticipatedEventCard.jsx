@@ -1,76 +1,89 @@
-
-import React from "react";
 import PropTypes from "prop-types";
-import "../../css/ParticipatedEventCard.css";
+import { Card, CardMedia, Box, Typography, Chip } from "@mui/material";
+import { LocationOn, AccessTime } from "@mui/icons-material";
 
 const ParticipatedEventCard = ({ event, role }) => {
-  const LocationIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path
-        d="M14 6.66667C14 11.3333 8 15.3333 8 15.3333C8 15.3333 2 11.3333 2 6.66667C2 5.07536 2.63214 3.54926 3.75736 2.42404C4.88258 1.29882 6.40869 0.666672 8 0.666672C9.59131 0.666672 11.1174 1.29882 12.2426 2.42404C13.3679 3.54926 14 5.07536 14 6.66667Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 8.66667C9.10457 8.66667 10 7.77124 10 6.66667C10 5.5621 9.10457 4.66667 8 4.66667C6.89543 4.66667 6 5.5621 6 6.66667C6 7.77124 6.89543 8.66667 8 8.66667Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
-  const ClockIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path
-        d="M8 14.6667C11.6819 14.6667 14.6667 11.6819 14.6667 8C14.6667 4.3181 11.6819 1.33333 8 1.33333C4.3181 1.33333 1.33333 4.3181 1.33333 8C1.33333 11.6819 4.3181 14.6667 8 14.6667Z"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 4V8L10.6667 9.33333"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
   return (
-    <div className="participated-event-card">
-      <div className="participated-event-image">
-        <img src={event.coverImage} alt={event.title} />
-      </div>
-      <div className="participated-event-info">
-        <div>
-          <h3 className="participated-event-title">{event.title}</h3>
-          <p className="participated-event-description">{event.description}</p>
-        </div>
-        <div>
-          <div className="participated-event-details">
-            <div className="detail-item">
-              <LocationIcon />
-              <span>{event.location}</span>
-            </div>
-            <div className="detail-item">
-              <ClockIcon />
-              <span>
+    <Card
+      elevation={0}
+      sx={{
+        display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
+        borderRadius: "16px",
+        border: "1px solid",
+        borderColor: "grey.200",
+        overflow: "hidden",
+        transition: "all 0.3s ease",
+        "&:hover": {
+          boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+        },
+      }}
+    >
+      <CardMedia
+        component="img"
+        image={event.coverImage}
+        alt={event.title}
+        sx={{
+          width: { xs: "100%", sm: 180 },
+          height: { xs: 140, sm: "auto" },
+          objectFit: "cover",
+        }}
+      />
+      <Box sx={{ flex: 1, p: 2, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <Box>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+            {event.title}
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mb: 1.5,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {event.description}
+          </Typography>
+        </Box>
+
+        <Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <LocationOn sx={{ fontSize: 16, color: "text.secondary" }} />
+              <Typography variant="caption" color="text.secondary">
+                {event.location}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <AccessTime sx={{ fontSize: 16, color: "text.secondary" }} />
+              <Typography variant="caption" color="text.secondary">
                 {event.time} - {event.endTime}
-              </span>
-            </div>
-          </div>
-          <div className="participated-event-role">
-            Role: <span className="role-label">{role}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Role:
+            </Typography>
+            <Chip
+              label={role}
+              size="small"
+              sx={{
+                height: 22,
+                fontSize: "11px",
+                backgroundColor: "primary.light",
+                color: "#fff",
+                fontWeight: 600,
+              }}
+            />
+          </Box>
+        </Box>
+      </Box>
+    </Card>
   );
 };
 
@@ -80,3 +93,4 @@ ParticipatedEventCard.propTypes = {
 };
 
 export default ParticipatedEventCard;
+

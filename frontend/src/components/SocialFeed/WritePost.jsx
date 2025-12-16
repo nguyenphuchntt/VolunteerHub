@@ -1,9 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import PropTypes from "prop-types";
-import Avatar from "./Avatar";
-import Input from "./Input";
-import Button from "./Button";
-import "../../css/WritePost.css";
+import {
+  Card,
+  Box,
+  Avatar,
+  TextField,
+  Button,
+  IconButton,
+  Typography,
+} from "@mui/material";
+import { Image } from "@mui/icons-material";
 
 const WritePost = ({ currentUser, onPost }) => {
   const [postContent, setPostContent] = useState("");
@@ -15,63 +21,77 @@ const WritePost = ({ currentUser, onPost }) => {
     }
   };
 
-  const MediaIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <rect
-        x="2.5"
-        y="2.5"
-        width="15"
-        height="15"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <circle cx="7.5" cy="7.5" r="1.5" fill="currentColor" />
-      <path
-        d="M17.5 13.33L13.33 9.17L5.83 16.67"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
   return (
-    <div className="write-post feed-card">
-      <div className="write-post-input">
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: "16px",
+        border: "1px solid",
+        borderColor: "grey.200",
+        p: 2,
+        mb: 2,
+      }}
+    >
+      {/* Input Area */}
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <Avatar
           src={currentUser?.avatar || "/images/google-icon.png"}
           alt={currentUser?.name}
-          size="x-small"
-          // style={{ paddingTop: "20px" }}
+          sx={{ width: 40, height: 40 }}
         />
-        <div className="write-post-textarea input-borderless">
-          <Input
-            multiline
-            rows={2}
-            placeholder="What's on your mind?"
-            value={postContent}
-            onChange={(e) => setPostContent(e.target.value)}
-          />
-        </div>
-      </div>
+        <TextField
+          fullWidth
+          multiline
+          rows={2}
+          placeholder="What's on your mind?"
+          value={postContent}
+          onChange={(e) => setPostContent(e.target.value)}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "12px",
+              backgroundColor: "grey.50",
+              "& fieldset": {
+                borderColor: "transparent",
+              },
+              "&:hover fieldset": {
+                borderColor: "grey.300",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "primary.main",
+              },
+            },
+          }}
+        />
+      </Box>
 
-      <div className="write-post-actions">
-        <button className="add-media-btn">
-          <MediaIcon />
-          <span>Add Media</span>
-        </button>
+      {/* Actions */}
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Button
-          variant="primary"
+          startIcon={<Image />}
+          sx={{
+            color: "text.secondary",
+            textTransform: "none",
+            "&:hover": { backgroundColor: "grey.100" },
+          }}
+        >
+          Add Media
+        </Button>
+        <Button
+          variant="contained"
           size="small"
           onClick={handlePost}
           disabled={!postContent.trim()}
+          sx={{
+            borderRadius: "20px",
+            px: 3,
+            textTransform: "none",
+            fontWeight: 600,
+          }}
         >
           Post
         </Button>
-      </div>
-    </div>
+      </Box>
+    </Card>
   );
 };
 
@@ -84,3 +104,4 @@ WritePost.propTypes = {
 };
 
 export default WritePost;
+

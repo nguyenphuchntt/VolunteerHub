@@ -1,7 +1,16 @@
-import React from "react";
 import PropTypes from "prop-types";
 import { eventCategories } from "../../data/mockEvents";
-import "../../css/EventFilter.css";
+import {
+  Box,
+  Paper,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Typography,
+} from "@mui/material";
+import { FilterList } from "@mui/icons-material";
 
 const EventFilter = ({
   selectedCategory,
@@ -27,115 +36,111 @@ const EventFilter = ({
     { id: "participants", name: "Most Joined" },
   ];
 
-  const SearchIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M19 19L14.65 14.65"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
-  const FilterIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path
-        d="M18 3H2L8.5 10.7V16L11.5 18V10.7L18 3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-
   return (
-    <div className="event-filter">
-      {/* Search Bar */}
-      {/* <div className="event-filter-search">
-        <div className="search-input-wrapper">
-          <SearchIcon />
-          <input
-            type="text"
-            placeholder="Search events..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="search-input"
-          />
-        </div>
-      </div> */}
+    <Paper
+      elevation={0}
+      sx={{
+        p: 2.5,
+        mb: 3,
+        borderRadius: "16px",
+        backgroundColor: "#fff",
+        border: "1px solid",
+        borderColor: "grey.200",
+      }}
+    >
+      {/* Categories */}
+      <Box sx={{ mb: 2.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <FilterList sx={{ fontSize: 20, color: "text.secondary" }} />
+          <Typography variant="body2" fontWeight={600} color="text.secondary">
+            Categories
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          {eventCategories.map((category) => (
+            <Chip
+              key={category.id}
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <span>{category.icon}</span>
+                  <span>{category.name}</span>
+                </Box>
+              }
+              onClick={() => onCategoryChange(category.id)}
+              sx={{
+                borderRadius: "20px",
+                fontWeight: 500,
+                fontSize: "13px",
+                py: 0.5,
+                backgroundColor:
+                  selectedCategory === category.id ? "primary.main" : "grey.100",
+                color:
+                  selectedCategory === category.id ? "#fff" : "text.primary",
+                "&:hover": {
+                  backgroundColor:
+                    selectedCategory === category.id
+                      ? "primary.dark"
+                      : "grey.200",
+                },
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
 
-      {/* Filter Bar */}
-      <div className="event-filter-bar">
-        {/* Categories */}
-        <div className="filter-section">
-          <div className="filter-label">
-            <FilterIcon />
-            <span>Categories</span>
-          </div>
-          <div className="filter-chips">
-            {eventCategories.map((category) => (
-              <button
-                key={category.id}
-                className={`filter-chip ${
-                  selectedCategory === category.id ? "active" : ""
-                }`}
-                onClick={() => onCategoryChange(category.id)}
-              >
-                <span className="chip-icon">{category.icon}</span>
-                <span className="chip-text">{category.name}</span>
-              </button>
+      {/* Status & Sort Filters */}
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Status Filter */}
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel id="status-filter-label">Status</InputLabel>
+          <Select
+            labelId="status-filter-label"
+            id="status-filter"
+            value={selectedStatus}
+            label="Status"
+            onChange={(e) => onStatusChange(e.target.value)}
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "#fff",
+            }}
+          >
+            {statuses.map((status) => (
+              <MenuItem key={status.id} value={status.id}>
+                {status.name}
+              </MenuItem>
             ))}
-          </div>
-        </div>
+          </Select>
+        </FormControl>
 
-        {/* Status & Sort Filters */}
-        <div className="filter-controls">
-          {/* Status Filter */}
-          <div className="filter-dropdown">
-            <label htmlFor="status-filter">Status:</label>
-            <select
-              id="status-filter"
-              value={selectedStatus}
-              onChange={(e) => onStatusChange(e.target.value)}
-              className="filter-select"
-            >
-              {statuses.map((status) => (
-                <option key={status.id} value={status.id}>
-                  {status.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sort Filter */}
-          <div className="filter-dropdown">
-            <label htmlFor="sort-filter">Sort by:</label>
-            <select
-              id="sort-filter"
-              value={sortBy}
-              onChange={(e) => onSortChange(e.target.value)}
-              className="filter-select"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
+        {/* Sort Filter */}
+        <FormControl size="small" sx={{ minWidth: 160 }}>
+          <InputLabel id="sort-filter-label">Sort by</InputLabel>
+          <Select
+            labelId="sort-filter-label"
+            id="sort-filter"
+            value={sortBy}
+            label="Sort by"
+            onChange={(e) => onSortChange(e.target.value)}
+            sx={{
+              borderRadius: "8px",
+              backgroundColor: "#fff",
+            }}
+          >
+            {sortOptions.map((option) => (
+              <MenuItem key={option.id} value={option.id}>
+                {option.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+    </Paper>
   );
 };
 
@@ -151,3 +156,4 @@ EventFilter.propTypes = {
 };
 
 export default EventFilter;
+

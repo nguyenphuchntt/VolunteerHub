@@ -1,31 +1,39 @@
-import React from "react";
-import "../../css/FeedFooter.css";
+import { Box, Typography, Link } from "@mui/material";
 
 const FeedFooter = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="feed-footer">
-      <div className="footer-content">
-        <div className="footer-links">
-          <a href="#about" className="footer-link">
-            About
-          </a>
-          <span className="footer-divider">•</span>
-          <a href="#help" className="footer-link">
-            Help
-          </a>
-          <span className="footer-divider">•</span>
-          <a href="#privacy" className="footer-link">
-            Privacy & Terms
-          </a>
-        </div>
-        <p className="footer-copyright">
-          © {currentYear} VolunteerHub. All rights reserved.
-        </p>
-      </div>
-    </footer>
+    <Box
+      component="footer"
+      sx={{
+        textAlign: "center",
+        py: 4,
+        mt: 4,
+        borderTop: "1px solid",
+        borderColor: "grey.200",
+        backgroundColor: "#fff",
+      }}
+    >
+      <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mb: 1 }}>
+        <Link href="#about" underline="hover" color="text.secondary" fontSize={14}>
+          About
+        </Link>
+        <Typography color="text.secondary" fontSize={14}>•</Typography>
+        <Link href="#help" underline="hover" color="text.secondary" fontSize={14}>
+          Help
+        </Link>
+        <Typography color="text.secondary" fontSize={14}>•</Typography>
+        <Link href="#privacy" underline="hover" color="text.secondary" fontSize={14}>
+          Privacy & Terms
+        </Link>
+      </Box>
+      <Typography variant="caption" color="text.secondary">
+        © {currentYear} VolunteerHub. All rights reserved.
+      </Typography>
+    </Box>
   );
 };
 
 export default FeedFooter;
+

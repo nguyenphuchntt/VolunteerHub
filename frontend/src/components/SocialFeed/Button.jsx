@@ -1,6 +1,20 @@
-import React from "react";
 import PropTypes from "prop-types";
-import "../../css/Button.css";
+import { Button as MuiButton } from "@mui/material";
+
+// Map custom variants to MUI variants
+const variantMap = {
+  primary: "contained",
+  secondary: "outlined",
+  text: "text",
+  icon: "text",
+};
+
+// Map custom sizes to MUI sizes
+const sizeMap = {
+  small: "small",
+  medium: "medium",
+  large: "large",
+};
 
 const Button = ({
   children,
@@ -11,17 +25,32 @@ const Button = ({
   type = "button",
   disabled = false,
   className = "",
+  sx = {},
+  ...props
 }) => {
+  const muiVariant = variantMap[variant] || "contained";
+  const muiSize = sizeMap[size] || "medium";
+
   return (
-    <button
+    <MuiButton
       type={type}
+      variant={muiVariant}
+      size={muiSize}
       onClick={onClick}
       disabled={disabled}
-      className={`btn btn-${variant} btn-${size} ${className}`}
+      className={className}
+      startIcon={icon}
+      sx={{
+        ...(variant === "icon" && {
+          minWidth: "auto",
+          padding: "8px",
+        }),
+        ...sx,
+      }}
+      {...props}
     >
-      {icon && <span className="btn-icon">{icon}</span>}
       {children}
-    </button>
+    </MuiButton>
   );
 };
 
@@ -34,6 +63,8 @@ Button.propTypes = {
   type: PropTypes.string,
   disabled: PropTypes.bool,
   className: PropTypes.string,
+  sx: PropTypes.object,
 };
 
 export default Button;
+

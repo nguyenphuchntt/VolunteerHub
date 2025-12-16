@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { EventFilter, EventCard } from "../components/EventFeed";
 import MainHeader from "../components/SocialFeed/MainHeader";
 import { mockEvents } from "../data/mockEvents";
-import "../css/EventFeed.css";
+import { Box, Container, Typography, Button, Grid } from "@mui/material";
+import { SearchOff } from "@mui/icons-material";
 
 const EventFeed = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -58,76 +59,107 @@ const EventFeed = () => {
     return events;
   }, [selectedCategory, selectedStatus, searchQuery, sortBy]);
 
+  const handleClearFilters = () => {
+    setSelectedCategory("all");
+    setSelectedStatus("all");
+    setSearchQuery("");
+  };
+
   return (
-    <div className="event-feed-page">
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#f5f7fa" }}>
       <MainHeader searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <main className="event-feed-main">
-        <div className="event-feed-container">
-          {/* Filter Section */}
-          <EventFilter
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            selectedStatus={selectedStatus}
-            onStatusChange={setSelectedStatus}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Filter Section */}
+        <EventFilter
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          selectedStatus={selectedStatus}
+          onStatusChange={setSelectedStatus}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
 
-          {/* Results Header */}
-          <div className="events-results-header">
-            <h2 className="results-title">
-              {filteredEvents.length} Event
-              {filteredEvents.length !== 1 ? "s" : ""} Found
-            </h2>
-            {(selectedCategory !== "all" ||
-              selectedStatus !== "all" ||
-              searchQuery) && (
-              <button
-                className="clear-filters-btn"
-                onClick={() => {
-                  setSelectedCategory("all");
-                  setSelectedStatus("all");
-                  setSearchQuery("");
-                }}
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-
-          {/* Events Grid */}
-          {filteredEvents.length > 0 ? (
-            <div className="events-grid">
-              {filteredEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </div>
-          ) : (
-            <div className="no-events">
-              <div className="no-events-icon">🔍</div>
-              <h3>No events found</h3>
-              <p>
-                Try adjusting your filters or search query to find more events.
-              </p>
-              <button
-                className="reset-btn"
-                onClick={() => {
-                  setSelectedCategory("all");
-                  setSelectedStatus("all");
-                  setSearchQuery("");
-                }}
-              >
-                Reset Filters
-              </button>
-            </div>
+        {/* Results Header */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h5" fontWeight={600}>
+            {filteredEvents.length} Event
+            {filteredEvents.length !== 1 ? "s" : ""} Found
+          </Typography>
+          {(selectedCategory !== "all" ||
+            selectedStatus !== "all" ||
+            searchQuery) && (
+            <Button
+              variant="text"
+              onClick={handleClearFilters}
+              sx={{
+                color: "primary.main",
+                fontWeight: 500,
+                "&:hover": {
+                  backgroundColor: "primary.light",
+                  color: "#fff",
+                },
+              }}
+            >
+              Clear Filters
+            </Button>
           )}
-        </div>
-      </main>
-    </div>
+        </Box>
+
+        {/* Events Grid */}
+        {filteredEvents.length > 0 ? (
+          <Grid container spacing={3}>
+            {filteredEvents.map((event) => (
+              <Grid item xs={12} sm={6} md={4} key={event.id}>
+                <EventCard event={event} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Box
+            sx={{
+              textAlign: "center",
+              py: 8,
+              backgroundColor: "#fff",
+              borderRadius: "16px",
+              border: "1px solid",
+              borderColor: "grey.200",
+            }}
+          >
+            <SearchOff sx={{ fontSize: 64, color: "grey.400", mb: 2 }} />
+            <Typography variant="h6" fontWeight={600} gutterBottom>
+              No events found
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              Try adjusting your filters or search query to find more events.
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={handleClearFilters}
+              sx={{
+                backgroundColor: "primary.main",
+                "&:hover": {
+                  backgroundColor: "primary.dark",
+                },
+              }}
+            >
+              Reset Filters
+            </Button>
+          </Box>
+        )}
+      </Container>
+    </Box>
   );
 };
 
 export default EventFeed;
+

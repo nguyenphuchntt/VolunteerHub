@@ -1,9 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import '../../css/Input.css';
+import PropTypes from "prop-types";
+import { TextField, InputAdornment } from "@mui/material";
 
-const Input = ({ 
-  type = 'text',
+const Input = ({
+  type = "text",
   placeholder,
   value,
   onChange,
@@ -11,24 +10,47 @@ const Input = ({
   hasIcon = false,
   multiline = false,
   rows = 3,
-  className = ''
+  className = "",
+  label,
+  error = false,
+  helperText,
+  fullWidth = true,
+  sx = {},
+  ...props
 }) => {
-  const InputComponent = multiline ? 'textarea' : 'input';
-
   return (
-    <div className={`input-wrapper ${hasIcon ? 'has-icon' : ''} ${className}`}>
-      {hasIcon && icon && (
-        <span className="input-icon">{icon}</span>
-      )}
-      <InputComponent
-        type={multiline ? undefined : type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        rows={multiline ? rows : undefined}
-        className="input-field"
-      />
-    </div>
+    <TextField
+      type={multiline ? undefined : type}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      multiline={multiline}
+      rows={multiline ? rows : undefined}
+      className={className}
+      label={label}
+      error={error}
+      helperText={helperText}
+      fullWidth={fullWidth}
+      variant="outlined"
+      size="small"
+      InputProps={{
+        ...(hasIcon && icon && {
+          startAdornment: (
+            <InputAdornment position="start">
+              {icon}
+            </InputAdornment>
+          ),
+        }),
+      }}
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          borderRadius: "8px",
+          backgroundColor: "white",
+        },
+        ...sx,
+      }}
+      {...props}
+    />
   );
 };
 
@@ -42,6 +64,12 @@ Input.propTypes = {
   multiline: PropTypes.bool,
   rows: PropTypes.number,
   className: PropTypes.string,
+  label: PropTypes.string,
+  error: PropTypes.bool,
+  helperText: PropTypes.string,
+  fullWidth: PropTypes.bool,
+  sx: PropTypes.object,
 };
 
 export default Input;
+

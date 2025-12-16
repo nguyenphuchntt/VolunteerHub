@@ -1,35 +1,64 @@
-import React from "react";
 import PropTypes from "prop-types";
-import Avatar from "./Avatar";
-import "../../css/Comment.css";
+import { Box, Avatar, Typography, Chip, Button } from "@mui/material";
 
 const Comment = ({ comment }) => {
   return (
-    <div className="comment">
-      <div className="comment-header">
-        <div className="comment-author">
-          <Avatar
-            src={comment.author.avatar}
-            alt={comment.author.name}
-            size="small"
-          />
-          <div className="comment-author-info">
-            <div className="comment-author-name-badge">
-              <h5 className="comment-author-name">{comment.author.name}</h5>
-              {comment.isAuthor && <span className="author-badge">Author</span>}
-            </div>
-            <p className="comment-author-bio">{comment.author.bio}</p>
-          </div>
-        </div>
-        <span className="comment-timestamp">{comment.timestamp}</span>
-      </div>
+    <Box sx={{ display: "flex", gap: 1.5, mb: 2 }}>
+      <Avatar
+        src={comment.author.avatar}
+        alt={comment.author.name}
+        sx={{ width: 32, height: 32 }}
+      />
+      <Box sx={{ flex: 1 }}>
+        {/* Header */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 0.5 }}>
+          <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="body2" fontWeight={600}>
+                {comment.author.name}
+              </Typography>
+              {comment.isAuthor && (
+                <Chip
+                  label="Author"
+                  size="small"
+                  sx={{
+                    height: 20,
+                    fontSize: "10px",
+                    backgroundColor: "primary.light",
+                    color: "#fff",
+                  }}
+                />
+              )}
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              {comment.author.bio}
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary">
+            {comment.timestamp}
+          </Typography>
+        </Box>
 
-      <p className="comment-text">{comment.content}</p>
+        {/* Content */}
+        <Typography variant="body2" sx={{ my: 1, lineHeight: 1.5 }}>
+          {comment.content}
+        </Typography>
 
-      <div className="comment-actions">
-        <button className="comment-reply-btn">Reply</button>
-      </div>
-    </div>
+        {/* Actions */}
+        <Button
+          size="small"
+          sx={{
+            minWidth: "auto",
+            p: 0,
+            color: "text.secondary",
+            fontSize: "12px",
+            "&:hover": { backgroundColor: "transparent", color: "primary.main" },
+          }}
+        >
+          Reply
+        </Button>
+      </Box>
+    </Box>
   );
 };
 
@@ -48,3 +77,4 @@ Comment.propTypes = {
 };
 
 export default Comment;
+

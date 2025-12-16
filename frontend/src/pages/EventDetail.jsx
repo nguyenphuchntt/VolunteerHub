@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { EventDetailBanner } from "../components/EventFeed";
 import MainHeader from "../components/SocialFeed/MainHeader";
@@ -6,11 +6,28 @@ import WritePost from "../components/SocialFeed/WritePost";
 import PostCard from "../components/SocialFeed/PostCard";
 import { mockEvents, getEventPosts } from "../data/mockEvents";
 import { mockUsers } from "../data/mockData";
-import "../css/EventDetail.css";
+import {
+  Box,
+  Container,
+  Tabs,
+  Tab,
+  Typography,
+  Card,
+  CardContent,
+  Chip,
+  Grid,
+  Avatar,
+} from "@mui/material";
+import {
+  Forum,
+  Info,
+  People,
+  PhotoLibrary,
+} from "@mui/icons-material";
 
 const EventDetail = () => {
   const { eventId } = useParams();
-  const [activeTab, setActiveTab] = useState("feed");
+  const [activeTab, setActiveTab] = useState(0);
 
   // Find the event
   const event = mockEvents.find((e) => e.id === parseInt(eventId));
@@ -56,166 +73,190 @@ const EventDetail = () => {
     );
   };
 
-  const tabs = [
-    { id: "feed", name: "Feed", icon: "💬" },
-    { id: "about", name: "About", icon: "ℹ️" },
-    { id: "participants", name: "Participants", icon: "👥" },
-    { id: "photos", name: "Photos", icon: "📸" },
-  ];
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   return (
-    <div className="event-detail-page">
+    <Box sx={{ minHeight: "100vh", backgroundColor: "#f5f7fa" }}>
       <MainHeader />
       <EventDetailBanner event={event} />
 
-      <main className="event-detail-main">
-        <div className="event-detail-container">
-          {/* Tabs Navigation */}
-          <div className="event-tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`event-tab ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                <span className="tab-icon">{tab.icon}</span>
-                <span className="tab-name">{tab.name}</span>
-              </button>
-            ))}
-          </div>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Tabs Navigation */}
+        <Card sx={{ borderRadius: "16px", mb: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            sx={{
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "14px",
+                minHeight: 56,
+              },
+            }}
+          >
+            <Tab icon={<Forum />} iconPosition="start" label="Feed" />
+            <Tab icon={<Info />} iconPosition="start" label="About" />
+            <Tab icon={<People />} iconPosition="start" label="Participants" />
+            <Tab icon={<PhotoLibrary />} iconPosition="start" label="Photos" />
+          </Tabs>
+        </Card>
 
-          {/* Tab Content */}
-          <div className="tab-content">
-            {/* Feed Tab */}
-            {activeTab === "feed" && (
-              <div className="feed-tab">
-                <div className="feed-content">
-                  {/* Write Post Section */}
-                  <WritePost currentUser={mockUsers[0]} />
+        {/* Tab Content */}
+        {/* Feed Tab */}
+        {activeTab === 0 && (
+          <Box sx={{ display: "flex", gap: 3 }}>
+            {/* Main Feed */}
+            <Box sx={{ flex: 1 }}>
+              <WritePost currentUser={mockUsers[0]} />
+              {posts.length > 0 ? (
+                posts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onLike={handleLike}
+                    onComment={handleComment}
+                  />
+                ))
+              ) : (
+                <Card sx={{ borderRadius: "16px", textAlign: "center", py: 6 }}>
+                  <Typography variant="h2" sx={{ mb: 2 }}>💬</Typography>
+                  <Typography variant="h6" fontWeight={600}>No posts yet</Typography>
+                  <Typography color="text.secondary">
+                    Be the first to share something about this event!
+                  </Typography>
+                </Card>
+              )}
+            </Box>
 
-                  {/* Posts Feed */}
-                  <div className="posts-feed">
-                    {posts.length > 0 ? (
-                      posts.map((post) => (
-                        <PostCard
-                          key={post.id}
-                          post={post}
-                          onLike={handleLike}
-                          onComment={handleComment}
-                        />
-                      ))
-                    ) : (
-                      <div className="no-posts">
-                        <div className="no-posts-icon">💬</div>
-                        <h3>No posts yet</h3>
-                        <p>Be the first to share something about this event!</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {/* Sidebar */}
+            <Box sx={{ width: 300, display: { xs: "none", md: "block" } }}>
+              <Card sx={{ borderRadius: "16px", mb: 2 }}>
+                <CardContent>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Event Details
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="body2" color="text.secondary">Category:</Typography>
+                      <Typography variant="body2" fontWeight={500}>{event.category}</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="body2" color="text.secondary">Status:</Typography>
+                      <Chip label={event.status} size="small" color="primary" />
+                    </Box>
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                      <Typography variant="body2" color="text.secondary">Participants:</Typography>
+                      <Typography variant="body2" fontWeight={500}>{event.participants.length}</Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
 
-                {/* Event Sidebar */}
-                <aside className="event-sidebar">
-                  <div className="sidebar-card">
-                    <h3 className="sidebar-title">Event Details</h3>
-                    <div className="sidebar-content">
-                      <div className="detail-row">
-                        <span className="detail-label">Category:</span>
-                        <span className="detail-value">{event.category}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Status:</span>
-                        <span className={`detail-value status-${event.status}`}>
-                          {event.status.charAt(0).toUpperCase() +
-                            event.status.slice(1)}
-                        </span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Participants:</span>
-                        <span className="detail-value">
-                          {event.participants.length}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+              <Card sx={{ borderRadius: "16px" }}>
+                <CardContent>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
+                    Tags
+                  </Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                    {event.tags.map((tag, index) => (
+                      <Chip key={index} label={`#${tag}`} size="small" variant="outlined" />
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+        )}
 
-                  <div className="sidebar-card">
-                    <h3 className="sidebar-title">Tags</h3>
-                    <div className="sidebar-tags">
-                      {event.tags.map((tag, index) => (
-                        <span key={index} className="tag">
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </aside>
-              </div>
-            )}
+        {/* About Tab */}
+        {activeTab === 1 && (
+          <Card sx={{ borderRadius: "16px" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
+                About This Event
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.7 }}>
+                {event.fullDescription || event.description}
+              </Typography>
 
-            {/* About Tab */}
-            {activeTab === "about" && (
-              <div className="about-tab">
-                <div className="about-content">
-                  <h2>About This Event</h2>
-                  <p>{event.fullDescription || event.description}</p>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
+                What to Expect
+              </Typography>
+              <Box component="ul" sx={{ pl: 2, mb: 3 }}>
+                <li>Meet like-minded volunteers passionate about making a difference</li>
+                <li>Hands-on activities that create real impact</li>
+                <li>Professional guidance and all necessary supplies provided</li>
+                <li>Opportunity to develop new skills and connections</li>
+              </Box>
 
-                  <h3>What to Expect</h3>
-                  <ul>
-                    <li>
-                      Meet like-minded volunteers passionate about making a
-                      difference
-                    </li>
-                    <li>Hands-on activities that create real impact</li>
-                    <li>
-                      Professional guidance and all necessary supplies provided
-                    </li>
-                    <li>Opportunity to develop new skills and connections</li>
-                  </ul>
+              <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
+                What to Bring
+              </Typography>
+              <Box component="ul" sx={{ pl: 2 }}>
+                <li>Comfortable clothing appropriate for the activity</li>
+                <li>Water bottle to stay hydrated</li>
+                <li>Sunscreen and hat (for outdoor events)</li>
+                <li>Positive attitude and willingness to help!</li>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
 
-                  <h3>What to Bring</h3>
-                  <ul>
-                    <li>Comfortable clothing appropriate for the activity</li>
-                    <li>Water bottle to stay hydrated</li>
-                    <li>Sunscreen and hat (for outdoor events)</li>
-                    <li>Positive attitude and willingness to help!</li>
-                  </ul>
-                </div>
-              </div>
-            )}
+        {/* Participants Tab */}
+        {activeTab === 2 && (
+          <Card sx={{ borderRadius: "16px" }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h5" fontWeight={600} sx={{ mb: 3 }}>
+                Participants ({event.participants.length})
+              </Typography>
+              <Grid container spacing={2}>
+                {event.participants.map((participant) => (
+                  <Grid item xs={6} sm={4} md={3} key={participant.user.id}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        p: 2,
+                        borderRadius: "12px",
+                        border: "1px solid",
+                        borderColor: "grey.200",
+                        "&:hover": { backgroundColor: "grey.50" },
+                      }}
+                    >
+                      <Avatar
+                        src={participant.user.avatar}
+                        alt={participant.user.name}
+                        sx={{ width: 56, height: 56, mb: 1 }}
+                      />
+                      <Typography variant="body2" fontWeight={500} textAlign="center">
+                        {participant.user.name}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
+        )}
 
-            {/* Participants Tab */}
-            {activeTab === "participants" && (
-              <div className="participants-tab">
-                <h2>Participants ({event.participants.length})</h2>
-                <div className="participants-grid">
-                  {event.participants.map((participant) => (
-                    <div key={participant.user.id} className="participant-card">
-                      <img src={participant.user.avatar} alt={participant.user.name} />
-                      <span>{participant.user.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Photos Tab */}
-            {activeTab === "photos" && (
-              <div className="photos-tab">
-                <h2>Event Photos</h2>
-                <div className="photos-grid">
-                  <div className="photo-placeholder">
-                    <span>📸</span>
-                    <p>Photos will be added soon</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
+        {/* Photos Tab */}
+        {activeTab === 3 && (
+          <Card sx={{ borderRadius: "16px", textAlign: "center", py: 8 }}>
+            <Typography variant="h2" sx={{ mb: 2 }}>📸</Typography>
+            <Typography variant="h6" fontWeight={600}>Photos will be added soon</Typography>
+            <Typography color="text.secondary">
+              Check back later for event photos
+            </Typography>
+          </Card>
+        )}
+      </Container>
+    </Box>
   );
 };
 
 export default EventDetail;
+
