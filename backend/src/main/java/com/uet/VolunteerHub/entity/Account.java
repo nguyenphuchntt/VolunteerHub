@@ -9,20 +9,30 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import org.springframework.security.core.CredentialsContainer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.time.OffsetDateTime;
-import java.util.Date;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = "accountId")
+@ToString(exclude = "userInfo")
 @Entity
 @Table(name = "account")
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
-public class Account {
+public class Account implements UserDetails, CredentialsContainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name="account_id", updatable = false, nullable = false)
+    @Column(name = "account_id", updatable = false, nullable = false)
     private UUID accountId;
 
     @NotNull
@@ -49,8 +59,22 @@ public class Account {
     @Email
     private String email;
 
-    @OneToOne(mappedBy="account", cascade = CascadeType.ALL)
-    @PrimaryKeyJoinColumn
+    @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, optional = false)
     private UserInfo userInfo;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.toString()));
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return accountStatus == AccountStatus.ACTIVE;
+    }
+
+    @Override
+    public void eraseCredentials() {
+        this.password = null;
+    }
 
 }
