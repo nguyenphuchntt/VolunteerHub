@@ -81,4 +81,7 @@ public class EventLikeService {
 
     }
 
+    public boolean isEventLikedByUser(Account account, Long eventId) {
+        return eventLikeRepository.existsByEventIdAndAccountId(eventId, account.getAccountId());
+    }
 }
