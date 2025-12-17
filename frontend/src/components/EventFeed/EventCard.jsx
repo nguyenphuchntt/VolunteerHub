@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -7,43 +8,117 @@ import {
   Box,
   Typography,
   Chip,
-  Avatar,
-  AvatarGroup,
+  IconButton,
 } from "@mui/material";
 import {
   CalendarMonth,
   LocationOn,
   People,
+  Favorite,
+  FavoriteBorder,
 } from "@mui/icons-material";
+import { eventService } from "../../api";
+import { useAuth } from "../../context/AuthContext";
+
 
 const EventCard = ({ event }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  // Local state for like count (optimistic update)
+  const [likeCount, setLikeCount] = useState(event.likeCount || 0);
+  const [isLiking, setIsLiking] = useState(false);
+  const [hasLiked, setHasLiked] = useState(false);
+
+  // Handle both API format (eventId) and mock format (id)
+  const eventId = event.eventId || event.id;
 
   const handleCardClick = () => {
-    navigate(`/events/${event.id}`);
+    navigate(`/events/${eventId}`);
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      upcoming: { bg: "#e3f2fd", color: "#1976d2" },
-      ongoing: { bg: "#e8f5e9", color: "#388e3c" },
-      completed: { bg: "#f3e5f5", color: "#7b1fa2" },
-    };
-    return colors[status] || colors.upcoming;
+  const handleLike = async (e) => {
+    e.stopPropagation(); // Prevent card click
+    if (!isAuthenticated) {
+      navigate("/signin");
+      return;
+    }
+    if (isLiking) return;
+    
+    setIsLiking(true);
+    try {
+      await eventService.likeEvent(eventId);
+      // Optimistic update
+      if (hasLiked) {
+        setLikeCount(prev => Math.max(0, prev - 1));
+        setHasLiked(false);
+      } else {
+        setLikeCount(prev => prev + 1);
+        setHasLiked(true);
+      }
+    } catch (err) {
+      console.error("Failed to like event:", err);
+    } finally {
+      setIsLiking(false);
+    }
   };
+
+
+  // Backend EventStatus: PENDING, SCHEDULED, STARTED, FINISHED, CANCELLED
+  const getStatusConfig = (status) => {
+    const statusUpper = (status || "PENDING").toUpperCase();
+    const configs = {
+      PENDING: { label: "Chờ duyệt", bg: "#fff3e0", color: "#f57c00" },
+      SCHEDULED: { label: "Đã lên lịch", bg: "#e3f2fd", color: "#1976d2" },
+      STARTED: { label: "Đang diễn ra", bg: "#e8f5e9", color: "#388e3c" },
+      FINISHED: { label: "Đã kết thúc", bg: "#f3e5f5", color: "#7b1fa2" },
+      CANCELLED: { label: "Đã hủy", bg: "#ffebee", color: "#d32f2f" },
+    };
+    return configs[statusUpper] || configs.PENDING;
+  };
+
+
 
   const formatDate = (dateString) => {
+    if (!dateString) return "TBD";
     const date = new Date(dateString);
     const options = { month: "short", day: "numeric", year: "numeric" };
-    return date.toLocaleDateString("en-US", options);
+    return date.toLocaleDateString("vi-VN", options);
   };
 
-  const getParticipantText = () => {
-    const count = event.participants.length;
-    return `${count} joined`;
+  const formatTime = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   };
 
-  const statusColor = getStatusColor(event.status);
+  // Handle both API format (startAt) and mock format (date)
+  const eventDate = event.startAt || event.date;
+  const eventTime = event.startAt ? formatTime(event.startAt) : event.time;
+  
+  // Handle attendee count - API returns attendeeCount, mock returns participants array
+  const attendeeCount = event.attendeeCount || event.participants?.length || 0;
+  
+  // Check if image exists
+  const hasImage = !!event.coverImage;
+  
+  // Generate gradient based on category for variety
+  const getGradient = (category) => {
+    const gradients = [
+      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+    ];
+    const hash = (category || "default").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return gradients[hash % gradients.length];
+  };
+  
+  // Status display - use backend status
+  const statusConfig = getStatusConfig(event.status);
+
 
   return (
     <Card
@@ -62,13 +137,34 @@ const EventCard = ({ event }) => {
     >
       {/* Image Section */}
       <Box sx={{ position: "relative" }}>
-        <CardMedia
-          component="img"
-          height="180"
-          image={event.coverImage}
-          alt={event.title}
-          sx={{ objectFit: "cover" }}
-        />
+        {hasImage ? (
+          <CardMedia
+            component="img"
+            height="180"
+            image={event.coverImage}
+            alt={event.title}
+            sx={{ objectFit: "cover", backgroundColor: "#e0e0e0" }}
+            onError={(e) => {
+              // Hide img and show placeholder on error
+              e.target.style.display = "none";
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              height: 180,
+              background: getGradient(event.category),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography variant="h4" sx={{ color: "white", opacity: 0.6 }}>
+              🎯
+            </Typography>
+          </Box>
+        )}
+
         {/* Overlay with badges */}
         <Box
           sx={{
@@ -81,24 +177,27 @@ const EventCard = ({ event }) => {
           }}
         >
           <Chip
-            label={event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+            label={statusConfig.label}
             size="small"
             sx={{
-              backgroundColor: statusColor.bg,
-              color: statusColor.color,
+              backgroundColor: statusConfig.bg,
+              color: statusConfig.color,
               fontWeight: 600,
               fontSize: "11px",
             }}
           />
-          <Chip
-            label={event.category}
-            size="small"
-            sx={{
-              backgroundColor: "rgba(0,0,0,0.6)",
-              color: "#fff",
-              fontSize: "11px",
-            }}
-          />
+
+          {event.category && (
+            <Chip
+              label={event.category}
+              size="small"
+              sx={{
+                backgroundColor: "rgba(0,0,0,0.6)",
+                color: "#fff",
+                fontSize: "11px",
+              }}
+            />
+          )}
         </Box>
       </Box>
 
@@ -132,7 +231,7 @@ const EventCard = ({ event }) => {
             minHeight: "42px",
           }}
         >
-          {event.description}
+          {event.description || "Không có mô tả"}
         </Typography>
 
         {/* Event Details */}
@@ -140,7 +239,7 @@ const EventCard = ({ event }) => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CalendarMonth sx={{ fontSize: 16, color: "text.secondary" }} />
             <Typography variant="caption" color="text.secondary">
-              {formatDate(event.date)} • {event.time}
+              {formatDate(eventDate)} {eventTime && `• ${eventTime}`}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -154,7 +253,7 @@ const EventCard = ({ event }) => {
                 whiteSpace: "nowrap",
               }}
             >
-              {event.location}
+              {event.location || "Địa điểm chưa xác định"}
             </Typography>
           </Box>
         </Box>
@@ -172,80 +271,59 @@ const EventCard = ({ event }) => {
         >
           {/* Participants */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <AvatarGroup
-              max={3}
-              sx={{
-                "& .MuiAvatar-root": {
-                  width: 24,
-                  height: 24,
-                  fontSize: "10px",
-                  border: "2px solid white",
-                },
-              }}
-            >
-              {event.participants.slice(0, 3).map((participant) => (
-                <Avatar
-                  key={participant.user.id}
-                  src={participant.user.avatar}
-                  alt={participant.user.name}
-                />
-              ))}
-            </AvatarGroup>
+            <People sx={{ fontSize: 18, color: "text.secondary" }} />
             <Typography variant="caption" color="text.secondary">
-              {getParticipantText()}
+              {attendeeCount} người tham gia
             </Typography>
           </Box>
 
-          {/* Host */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Avatar
-              src={event.host.avatar}
-              alt={event.host.name}
-              sx={{ width: 24, height: 24 }}
-            />
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ fontWeight: 500 }}
-            >
-              {event.host.name}
-            </Typography>
-          </Box>
+          {/* Likes - clickable */}
+          <IconButton
+            onClick={handleLike}
+            disabled={isLiking}
+            size="small"
+            sx={{
+              color: hasLiked ? "error.main" : "text.secondary",
+              "&:hover": { color: "error.main" },
+            }}
+          >
+            {hasLiked ? <Favorite fontSize="small" /> : <FavoriteBorder fontSize="small" />}
+          </IconButton>
+          <Typography variant="caption" color="text.secondary">
+            {likeCount}
+          </Typography>
         </Box>
       </CardContent>
     </Card>
   );
 };
 
+
 EventCard.propTypes = {
   event: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    // API format
+    eventId: PropTypes.number,
+    startAt: PropTypes.string,
+    endAt: PropTypes.string,
+    attendeeCount: PropTypes.number,
+    likeCount: PropTypes.number,
+    accountId: PropTypes.string,
+    // Common fields
     title: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
-    coverImage: PropTypes.string.isRequired,
-    date: PropTypes.string.isRequired,
-    time: PropTypes.string.isRequired,
-    location: PropTypes.string.isRequired,
-    status: PropTypes.oneOf(["upcoming", "ongoing", "completed"]).isRequired,
-    category: PropTypes.string.isRequired,
-    host: PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      name: PropTypes.string.isRequired,
-      avatar: PropTypes.string.isRequired,
-      type: PropTypes.string,
-    }).isRequired,
-    participants: PropTypes.arrayOf(
-      PropTypes.shape({
-        user: PropTypes.shape({
-          id: PropTypes.number.isRequired,
-          name: PropTypes.string.isRequired,
-          avatar: PropTypes.string.isRequired,
-        }).isRequired,
-        role: PropTypes.string.isRequired,
-      })
-    ).isRequired,
+    description: PropTypes.string,
+    coverImage: PropTypes.string,
+    location: PropTypes.string,
+    status: PropTypes.string,
+    category: PropTypes.string,
+    // Mock format (legacy)
+    id: PropTypes.number,
+    date: PropTypes.string,
+    time: PropTypes.string,
+    participants: PropTypes.array,
+    host: PropTypes.object,
   }).isRequired,
 };
 
 export default EventCard;
+
 

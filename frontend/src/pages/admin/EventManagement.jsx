@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
   Button,
   Chip,
-  Avatar,
   Tabs,
   Tab,
   Dialog,
@@ -13,42 +12,94 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  CircularProgress,
+  Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   CheckCircle,
   Block,
-  Delete,
   Visibility,
-  FilterList,
+  Delete,
+  Refresh,
+  Event,
 } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog } from "../../components/common";
-import { mockUsers } from "../../data/mockData";
-import { mockEvents } from "../../data/mockEvents";
-import { mockPendingEvents } from "../../data/mockAdminData";
+import { eventService } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 const AdminEventManagement = () => {
   const navigate = useNavigate();
-  const user = mockUsers[0];
-  
-  // Combine mockEvents and mockPendingEvents for full list
-  const allEvents = [
-    ...mockPendingEvents,
-    ...mockEvents.map((e) => ({ ...e, approvalStatus: "approved" })),
-  ];
-  
-  const [events, setEvents] = useState(allEvents);
+  const { user } = useAuth();
+
+  // API states - allEvents stores all fetched events, filtered is derived
+  const [allEvents, setAllEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
   const [selectedTab, setSelectedTab] = useState(0);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ open: false, type: null, event: null });
+  const [rejectDialog, setRejectDialog] = useState({ open: false, event: null });
   const [rejectReason, setRejectReason] = useState("");
 
-  const tabFilters = ["all", "pending", "approved", "rejected"];
+  // Fetch ALL events once - no dependency on selectedTab
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await eventService.searchEvents({ size: 100 });
+      setAllEvents(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+      setError("Không thể tải danh sách sự kiện.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const filteredEvents =
-    selectedTab === 0
-      ? events
-      : events.filter((e) => e.approvalStatus === tabFilters[selectedTab]);
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  // Filter events client-side based on selected tab - no refetch needed!
+  const filteredEvents = (() => {
+    switch (selectedTab) {
+      case 1: return allEvents.filter(e => e.status?.toUpperCase() === "PENDING");
+      case 2: return allEvents.filter(e => e.status?.toUpperCase() === "SCHEDULED");
+      case 3: return allEvents.filter(e => e.status?.toUpperCase() === "CANCELLED");
+      default: return allEvents;
+    }
+  })();
+
+  // Counts for tab labels  
+  const pendingCount = allEvents.filter((e) => e.status?.toUpperCase() === "PENDING").length;
+  const approvedCount = allEvents.filter((e) => e.status?.toUpperCase() === "SCHEDULED").length;
+  const rejectedCount = allEvents.filter((e) => e.status?.toUpperCase() === "CANCELLED").length;
+
+  // Backend EventStatus: PENDING, SCHEDULED, STARTED, FINISHED, CANCELLED
+  const getStatusConfig = (status) => {
+    const statusUpper = (status || "PENDING").toUpperCase();
+    const configs = {
+      PENDING: { label: "Chờ duyệt", bg: "#fff3e0", color: "#f57c00" },
+      SCHEDULED: { label: "Đã duyệt", bg: "#edf7ed", color: "#2e7d32" },
+      STARTED: { label: "Đang diễn ra", bg: "#e3f2fd", color: "#1976d2" },
+      FINISHED: { label: "Đã kết thúc", bg: "#f3e5f5", color: "#7b1fa2" },
+      CANCELLED: { label: "Đã hủy", bg: "#fdeded", color: "#d32f2f" },
+    };
+    return configs[statusUpper] || configs.PENDING;
+  };
+
+  // Get gradient for event without image
+  const getGradient = (category) => {
+    const gradients = [
+      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+    ];
+    const hash = (category || "default").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return gradients[hash % gradients.length];
+  };
 
   const columns = [
     {
@@ -56,47 +107,54 @@ const AdminEventManagement = () => {
       label: "Sự kiện",
       render: (value, row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Avatar
-            variant="rounded"
-            src={row.coverImage}
-            alt={value}
-            sx={{ width: 48, height: 48 }}
-          />
+          {row.coverImage ? (
+            <Box
+              component="img"
+              src={row.coverImage}
+              alt={value}
+              sx={{ width: 48, height: 48, borderRadius: "8px", objectFit: "cover" }}
+            />
+          ) : (
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "8px",
+                background: getGradient(row.category),
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Event sx={{ color: "white", fontSize: 20 }} />
+            </Box>
+          )}
           <Box>
-            <Box sx={{ fontWeight: 600, fontSize: "14px" }}>{value}</Box>
-            <Box sx={{ fontSize: "12px", color: "text.secondary" }}>{row.category}</Box>
+            <Typography variant="body2" fontWeight={600}>{value}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {row.location || "Chưa có địa điểm"}
+            </Typography>
           </Box>
         </Box>
       ),
     },
     {
-      id: "host",
-      label: "Người tạo",
+      id: "category",
+      label: "Danh mục",
       render: (value) => (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Avatar src={value?.avatar} sx={{ width: 24, height: 24 }} />
-          <Typography variant="body2">{value?.name}</Typography>
-        </Box>
+        <Chip label={value || "Khác"} size="small" sx={{ fontSize: "11px" }} />
       ),
     },
     {
-      id: "date",
-      label: "Ngày",
-      render: (value) => {
-        const date = new Date(value);
-        return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "short", year: "numeric" });
-      },
+      id: "attendeeCount",
+      label: "Người tham gia",
+      render: (value) => value || 0,
     },
     {
-      id: "approvalStatus",
+      id: "status",
       label: "Trạng thái",
       render: (value) => {
-        const config = {
-          pending: { label: "Chờ duyệt", bg: "#fff4e5", color: "#ed6c02" },
-          approved: { label: "Đã duyệt", bg: "#edf7ed", color: "#2e7d32" },
-          rejected: { label: "Từ chối", bg: "#fdeded", color: "#d32f2f" },
-        };
-        const c = config[value] || config.pending;
+        const c = getStatusConfig(value);
         return (
           <Chip
             label={c.label}
@@ -108,70 +166,87 @@ const AdminEventManagement = () => {
     },
   ];
 
-  const handleApprove = (event) => {
-    setEvents(
-      events.map((e) => (e.id === event.id ? { ...e, approvalStatus: "approved" } : e))
-    );
-  };
-
-  const handleReject = () => {
-    if (selectedEvent) {
-      setEvents(
-        events.map((e) =>
-          e.id === selectedEvent.id ? { ...e, approvalStatus: "rejected" } : e
-        )
-      );
-      setRejectDialogOpen(false);
-      setSelectedEvent(null);
-      setRejectReason("");
+  // Handle approve
+  const handleApprove = async (event) => {
+    try {
+      await eventService.updateEventStatus(event.eventId, "SCHEDULED");
+      setSnackbar({ open: true, message: "Đã duyệt sự kiện thành công!", severity: "success" });
+      fetchEvents();
+    } catch (err) {
+      console.error("Failed to approve event:", err);
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Không thể duyệt sự kiện.", 
+        severity: "error" 
+      });
     }
   };
 
-  const handleDelete = () => {
-    if (selectedEvent) {
-      setEvents(events.filter((e) => e.id !== selectedEvent.id));
-      setDeleteDialogOpen(false);
-      setSelectedEvent(null);
+  // Handle reject
+  const handleReject = async () => {
+    if (!rejectDialog.event) return;
+    try {
+      await eventService.updateEventStatus(rejectDialog.event.eventId, "CANCELLED");
+      setSnackbar({ open: true, message: "Đã từ chối sự kiện.", severity: "success" });
+      fetchEvents();
+    } catch (err) {
+      console.error("Failed to reject event:", err);
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Không thể từ chối sự kiện.", 
+        severity: "error" 
+      });
     }
+    setRejectDialog({ open: false, event: null });
+    setRejectReason("");
+  };
+
+  // Handle delete
+  const handleDelete = async () => {
+    if (!confirmDialog.event) return;
+    try {
+      await eventService.deleteEvent(confirmDialog.event.eventId);
+      setSnackbar({ open: true, message: "Đã xóa sự kiện.", severity: "success" });
+      fetchEvents();
+    } catch (err) {
+      console.error("Failed to delete event:", err);
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Không thể xóa sự kiện.", 
+        severity: "error" 
+      });
+    }
+    setConfirmDialog({ open: false, type: null, event: null });
   };
 
   const actions = [
     {
       label: "Xem",
       icon: <Visibility sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(`/events/${row.id}`),
+      onClick: (row) => navigate(`/events/${row.eventId}`),
     },
     {
       label: "Duyệt",
       icon: <CheckCircle sx={{ fontSize: 18 }} />,
       color: "success.main",
       onClick: (row) => handleApprove(row),
-      show: (row) => row.approvalStatus === "pending",
+      show: (row) => row.status?.toUpperCase() === "PENDING",
     },
     {
       label: "Từ chối",
       icon: <Block sx={{ fontSize: 18 }} />,
       color: "warning.main",
-      onClick: (row) => {
-        setSelectedEvent(row);
-        setRejectDialogOpen(true);
-      },
-      show: (row) => row.approvalStatus === "pending",
+      onClick: (row) => setRejectDialog({ open: true, event: row }),
+      show: (row) => row.status?.toUpperCase() === "PENDING",
     },
     {
       label: "Xóa",
       icon: <Delete sx={{ fontSize: 18 }} />,
       color: "error.main",
-      onClick: (row) => {
-        setSelectedEvent(row);
-        setDeleteDialogOpen(true);
-      },
+      onClick: (row) => setConfirmDialog({ open: true, type: "delete", event: row }),
     },
   ];
 
-  const pendingCount = events.filter((e) => e.approvalStatus === "pending").length;
-  const approvedCount = events.filter((e) => e.approvalStatus === "approved").length;
-  const rejectedCount = events.filter((e) => e.approvalStatus === "rejected").length;
 
   return (
     <ThreeColumnLayout user={user} role="admin" showRightSidebar={true} showSearch={false}>
@@ -181,6 +256,14 @@ const AdminEventManagement = () => {
           <Typography variant="h6" fontWeight={700}>
             Quản lý sự kiện
           </Typography>
+          <Button 
+            size="small" 
+            startIcon={<Refresh />} 
+            onClick={fetchEvents}
+            sx={{ textTransform: "none" }}
+          >
+            Làm mới
+          </Button>
         </Box>
 
         {/* Tabs */}
@@ -189,14 +272,10 @@ const AdminEventManagement = () => {
           onChange={(e, v) => setSelectedTab(v)}
           sx={{
             px: 2,
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              minHeight: 48,
-            },
+            "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 48 },
           }}
         >
-          <Tab label={`Tất cả (${events.length})`} />
+          <Tab label={`Tất cả (${allEvents.length})`} />
           <Tab
             label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -208,26 +287,45 @@ const AdminEventManagement = () => {
             }
           />
           <Tab label={`Đã duyệt (${approvedCount})`} />
-          <Tab label={`Từ chối (${rejectedCount})`} />
+          <Tab label={`Đã hủy (${rejectedCount})`} />
         </Tabs>
       </Box>
 
       <Box sx={{ p: 2 }}>
-        <DataTable
-          columns={columns}
-          data={filteredEvents}
-          searchable
-          searchPlaceholder="Tìm kiếm sự kiện..."
-          actions={actions}
-          onRowClick={(row) => navigate(`/events/${row.id}`)}
-          emptyMessage="Không có sự kiện nào"
-        />
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredEvents}
+            rowKey="eventId"
+            searchable
+            searchPlaceholder="Tìm kiếm sự kiện..."
+            actions={actions}
+            emptyMessage="Không có sự kiện nào"
+          />
+        )}
       </Box>
+
+      {/* Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open && confirmDialog.type === "delete"}
+        onClose={() => setConfirmDialog({ open: false, type: null, event: null })}
+        onConfirm={handleDelete}
+        title="Xóa sự kiện?"
+        message={`Bạn có chắc chắn muốn xóa sự kiện "${confirmDialog.event?.title}"? Hành động này không thể hoàn tác.`}
+        confirmLabel="Xóa"
+        variant="danger"
+      />
 
       {/* Reject Dialog */}
       <Dialog
-        open={rejectDialogOpen}
-        onClose={() => setRejectDialogOpen(false)}
+        open={rejectDialog.open}
+        onClose={() => setRejectDialog({ open: false, event: null })}
         maxWidth="sm"
         fullWidth
         PaperProps={{ sx: { borderRadius: "16px" } }}
@@ -235,24 +333,25 @@ const AdminEventManagement = () => {
         <DialogTitle sx={{ fontWeight: 700 }}>Từ chối sự kiện</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Vui lòng nhập lý do từ chối sự kiện "{selectedEvent?.title}"
+            Bạn có chắc chắn muốn từ chối sự kiện <strong>"{rejectDialog.event?.title}"</strong>?
           </Typography>
           <TextField
             fullWidth
             multiline
             rows={3}
-            placeholder="Lý do từ chối..."
+            label="Lý do từ chối (tùy chọn)"
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Nhập lý do từ chối..."
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2, pt: 0 }}>
-          <Button onClick={() => setRejectDialogOpen(false)} sx={{ textTransform: "none" }}>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setRejectDialog({ open: false, event: null })} sx={{ textTransform: "none" }}>
             Hủy
           </Button>
           <Button
             variant="contained"
-            color="warning"
+            color="error"
             onClick={handleReject}
             sx={{ textTransform: "none", borderRadius: "9999px" }}
           >
@@ -261,16 +360,20 @@ const AdminEventManagement = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirm Dialog */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={handleDelete}
-        title="Xóa sự kiện?"
-        message={`Bạn có chắc chắn muốn xóa sự kiện "${selectedEvent?.title}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa"
-        variant="danger"
-      />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </ThreeColumnLayout>
   );
 };

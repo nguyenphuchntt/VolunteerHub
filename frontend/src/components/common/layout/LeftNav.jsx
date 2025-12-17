@@ -34,33 +34,50 @@ import {
   AdminPanelSettingsOutlined,
 } from "@mui/icons-material";
 import { useState } from "react";
+import { useAuth } from "../../../context/AuthContext";
 
 const NAV_WIDTH = 280;
 
 /**
  * X-style Left Navigation component
+ * Now uses AuthContext directly for user and role info
  */
-const LeftNav = ({ user = null, role = "guest" }) => {
+const LeftNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
-
-  const isAuthenticated = !!user;
+  
+  // Get user and auth state from context
+  const { user, isAuthenticated, isAdmin, isManager, logout } = useAuth();
 
   const isActive = (path) => {
-    if (path === "/events") return location.pathname === "/events" || location.pathname.startsWith("/events/");
+    if (path === "/explore") return location.pathname === "/explore" || location.pathname.startsWith("/events/");
     return location.pathname.startsWith(path);
+  };
+
+
+  // Get display name from API format
+  const displayName = user?.firstName && user?.lastName 
+    ? `${user.firstName} ${user.lastName}` 
+    : user?.username || "Người dùng";
+
+  // Determine role string for display
+  const getRoleForDisplay = () => {
+    if (isAdmin) return "admin";
+    if (isManager) return "manager";
+    return "volunteer";
   };
 
   // Navigation items
   const navItems = [
     {
       label: "Khám phá",
-      path: "/events",
+      path: "/explore",
       icon: <ExploreOutlined />,
       activeIcon: <Explore />,
       show: true,
     },
+
     {
       label: "Dashboard",
       path: "/dashboard",
@@ -85,7 +102,7 @@ const LeftNav = ({ user = null, role = "guest" }) => {
     },
     {
       label: "Hồ sơ",
-      path: `/profile/${user?.id || "me"}`,
+      path: `/profiles/${user?.username || "me"}`,
       icon: <PersonOutline />,
       activeIcon: <Person />,
       show: isAuthenticated,
@@ -95,14 +112,14 @@ const LeftNav = ({ user = null, role = "guest" }) => {
       path: "/manage",
       icon: <AdminPanelSettingsOutlined />,
       activeIcon: <AdminPanelSettings />,
-      show: isAuthenticated && role === "manager",
+      show: isManager && !isAdmin,
     },
     {
       label: "Admin",
       path: "/admin",
       icon: <AdminPanelSettingsOutlined />,
       activeIcon: <AdminPanelSettings />,
-      show: isAuthenticated && role === "admin",
+      show: isAdmin,
     },
   ];
 
@@ -112,6 +129,12 @@ const LeftNav = ({ user = null, role = "guest" }) => {
 
   const handleMoreClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleMoreClose();
+    navigate("/signin");
   };
 
   return (
@@ -221,7 +244,7 @@ const LeftNav = ({ user = null, role = "guest" }) => {
       </List>
 
       {/* Create Event Button (for managers) */}
-      {role === "manager" && (
+      {isManager && (
         <Button
           variant="contained"
           fullWidth
@@ -254,13 +277,17 @@ const LeftNav = ({ user = null, role = "guest" }) => {
           }}
           onClick={handleMoreClick}
         >
-          <Avatar src={user.avatar} alt={user.name} sx={{ width: 40, height: 40 }} />
+          <Avatar 
+            sx={{ width: 40, height: 40, bgcolor: "primary.main" }}
+          >
+            {(displayName || "?").charAt(0).toUpperCase()}
+          </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" fontWeight={700} noWrap>
-              {user.name}
+              {displayName}
             </Typography>
             <Typography variant="caption" color="text.secondary" noWrap>
-              @{user.username}
+              @{user?.username}
             </Typography>
           </Box>
           <MoreHoriz sx={{ color: "text.secondary" }} />
@@ -315,10 +342,7 @@ const LeftNav = ({ user = null, role = "guest" }) => {
         }}
       >
         <MenuItem
-          onClick={() => {
-            navigate("/signin");
-            handleMoreClose();
-          }}
+          onClick={handleLogout}
           sx={{ py: 1.5, fontWeight: 700 }}
         >
           <ListItemIcon>
@@ -332,3 +356,4 @@ const LeftNav = ({ user = null, role = "guest" }) => {
 };
 
 export default LeftNav;
+

@@ -1,69 +1,159 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
-import { EventDetailBanner } from "../components/EventFeed";
 import WritePost from "../components/SocialFeed/WritePost";
 import PostCard from "../components/SocialFeed/PostCard";
 import { ThreeColumnLayout } from "../components/common";
-import { mockEvents, getEventPosts } from "../data/mockEvents";
-import { mockUsers } from "../data/mockData";
+import { eventService, myEventsService, postService, eventUserService } from "../api";
+import { useAuth } from "../context/AuthContext";
+
 import {
   Box,
   Tabs,
   Tab,
   Typography,
-  Card,
-  CardContent,
   Chip,
   Grid,
   Avatar,
   Button,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import {
   Forum,
   Info,
   People,
-  PhotoLibrary,
   ArrowBack,
+  CalendarMonth,
+  LocationOn,
 } from "@mui/icons-material";
 
 const EventDetail = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { user, isAuthenticated, isManager } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
 
-  const user = mockUsers[0];
-  const event = mockEvents.find((e) => e.id === parseInt(eventId));
-  const eventPosts = getEventPosts(parseInt(eventId));
-  const [posts, setPosts] = useState(eventPosts);
+  
+  // API states
+  const [event, setEvent] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [participants, setParticipants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [registering, setRegistering] = useState(false);
 
-  if (!event) {
-    return <Navigate to="/events" replace />;
+  // Fetch event data
+  const fetchEvent = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const eventData = await eventService.getEventById(eventId);
+      setEvent(eventData);
+    } catch (err) {
+      console.error("Failed to fetch event:", err);
+      if (err.response?.status === 404) {
+        setError("Sự kiện không tồn tại.");
+      } else {
+        setError("Không thể tải thông tin sự kiện.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId]);
+
+  // Fetch event posts
+  const fetchPosts = useCallback(async () => {
+    try {
+      const response = await postService.getPostsByEvent(eventId);
+      setPosts(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+    }
+  }, [eventId]);
+
+  // Fetch participants (only for managers/admins - backend requires ADMIN/MANAGER role)
+  const fetchParticipants = useCallback(async () => {
+    if (!isManager) {
+      // Regular users can't access event-users endpoint
+      return;
+    }
+    try {
+      const response = await eventUserService.getEventUsersByEventId(eventId);
+      setParticipants(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch participants:", err);
+    }
+  }, [eventId, isManager]);
+
+  useEffect(() => {
+    fetchEvent();
+    fetchPosts();
+    fetchParticipants();
+  }, [fetchEvent, fetchPosts, fetchParticipants]);
+
+
+  // Handle event registration
+  const handleRegister = async () => {
+    if (!isAuthenticated) {
+      navigate("/signin", { state: { from: { pathname: `/events/${eventId}` } } });
+      return;
+    }
+    
+    setRegistering(true);
+    try {
+      await myEventsService.registerForEvent(eventId, {});
+      alert("Đăng ký thành công!");
+      fetchParticipants();
+    } catch (err) {
+      console.error("Registration failed:", err);
+      alert(err.response?.data?.message || "Đăng ký thất bại.");
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  // Format date helper
+  const formatDate = (dateString) => {
+    if (!dateString) return "TBD";
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <ThreeColumnLayout user={user} role="volunteer" showRightSidebar={false}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </ThreeColumnLayout>
+    );
   }
 
-  const handleLike = (postId) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === postId
-          ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 }
-          : post
-      )
+  // Error state
+  if (error || !event) {
+    return (
+      <ThreeColumnLayout user={user} role="volunteer" showRightSidebar={false}>
+        <Box sx={{ p: 3 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>{error || "Sự kiện không tồn tại."}</Alert>
+          <Button variant="contained" onClick={() => navigate("/events")}>
+            Quay lại danh sách sự kiện
+          </Button>
+        </Box>
+      </ThreeColumnLayout>
     );
-  };
+  }
 
-  const handleComment = (postId, commentText) => {
-    const newComment = {
-      id: Date.now(),
-      author: user,
-      content: commentText,
-      timestamp: "Just now",
-      isAuthor: true,
-    };
-    setPosts(
-      posts.map((post) =>
-        post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post
-      )
-    );
-  };
+  // Get display values from API format
+  const attendeeCount = event.attendeeCount || participants.length || 0;
+  const coverImage = event.coverImage || "/images/default-event.jpg";
+  const statusDisplay = (event.status || "").toString();
 
   return (
     <ThreeColumnLayout user={user} role="volunteer" showRightSidebar={false} showSearch={false}>
@@ -82,7 +172,7 @@ const EventDetail = () => {
               {event.title}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {event.participants.length} tình nguyện viên
+              {attendeeCount} tình nguyện viên
             </Typography>
           </Box>
         </Box>
@@ -92,9 +182,10 @@ const EventDetail = () => {
       <Box
         sx={{
           height: 150,
-          backgroundImage: `url(${event.coverImage})`,
+          backgroundImage: `url(${coverImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
+          backgroundColor: "#e0e0e0",
         }}
       />
 
@@ -104,16 +195,39 @@ const EventDetail = () => {
           {event.title}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          {event.description}
+          {event.description || "Không có mô tả"}
         </Typography>
-        <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
-          <Chip label={event.category} size="small" color="primary" />
-          <Chip label={event.status} size="small" variant="outlined" />
-          <Chip label={event.date} size="small" variant="outlined" />
+        
+        {/* Event details */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CalendarMonth sx={{ fontSize: 18, color: "text.secondary" }} />
+            <Typography variant="body2" color="text.secondary">
+              {formatDate(event.startAt)} - {formatDate(event.endAt)}
+            </Typography>
+          </Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <LocationOn sx={{ fontSize: 18, color: "text.secondary" }} />
+            <Typography variant="body2" color="text.secondary">
+              {event.location || "Địa điểm chưa xác định"}
+            </Typography>
+          </Box>
         </Box>
+        
+        <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
+          {event.category && <Chip label={event.category} size="small" color="primary" />}
+          {statusDisplay && <Chip label={statusDisplay} size="small" variant="outlined" />}
+        </Box>
+        
         <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
-          <Button variant="contained" fullWidth sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}>
-            Đăng ký tham gia
+          <Button 
+            variant="contained" 
+            fullWidth 
+            onClick={handleRegister}
+            disabled={registering}
+            sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
+          >
+            {registering ? <CircularProgress size={20} /> : "Đăng ký tham gia"}
           </Button>
         </Box>
       </Box>
@@ -136,10 +250,10 @@ const EventDetail = () => {
       {/* Feed Tab */}
       {activeTab === 0 && (
         <Box>
-          <WritePost currentUser={user} />
+          {isAuthenticated && <WritePost currentUser={user} />}
           {posts.length > 0 ? (
             posts.map((post) => (
-              <PostCard key={post.id} post={post} onLike={handleLike} onComment={handleComment} />
+              <PostCard key={post.postId || post.id} post={post} />
             ))
           ) : (
             <Box sx={{ textAlign: "center", py: 8 }}>
@@ -158,25 +272,18 @@ const EventDetail = () => {
             Về sự kiện này
           </Typography>
           <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.8 }}>
-            {event.fullDescription || event.description}
+            {event.description || "Không có mô tả chi tiết."}
           </Typography>
 
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
-            Những gì bạn sẽ làm
+            Thông tin sự kiện
           </Typography>
-          <Box component="ul" sx={{ pl: 2, mb: 3, "& li": { mb: 0.5 } }}>
-            <li>Gặp gỡ những tình nguyện viên cùng đam mê</li>
-            <li>Hoạt động thực tế tạo ra tác động thực sự</li>
-            <li>Được hướng dẫn chuyên nghiệp và cung cấp vật tư</li>
-          </Box>
-
-          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
-            Cần mang theo
-          </Typography>
-          <Box component="ul" sx={{ pl: 2, "& li": { mb: 0.5 } }}>
-            <li>Trang phục thoải mái</li>
-            <li>Bình nước</li>
-            <li>Tinh thần tích cực!</li>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2"><strong>Thời gian bắt đầu:</strong> {formatDate(event.startAt)}</Typography>
+            <Typography variant="body2"><strong>Thời gian kết thúc:</strong> {formatDate(event.endAt)}</Typography>
+            <Typography variant="body2"><strong>Địa điểm:</strong> {event.location || "Chưa xác định"}</Typography>
+            <Typography variant="body2"><strong>Số người tham gia:</strong> {attendeeCount}</Typography>
+            <Typography variant="body2"><strong>Lượt thích:</strong> {event.likeCount || 0}</Typography>
           </Box>
         </Box>
       )}
@@ -185,36 +292,44 @@ const EventDetail = () => {
       {activeTab === 2 && (
         <Box sx={{ p: 2 }}>
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
-            Tình nguyện viên ({event.participants.length})
+            Tình nguyện viên ({participants.length})
           </Typography>
-          <Grid container spacing={1}>
-            {event.participants.map((participant) => (
-              <Grid item xs={6} key={participant.user.id}>
-                <Box
-                  onClick={() => navigate(`/profiles/${participant.user.username}`)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    p: 1,
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    "&:hover": { backgroundColor: "grey.50" },
-                  }}
-                >
-                  <Avatar src={participant.user.avatar} alt={participant.user.name} sx={{ width: 32, height: 32 }} />
-                  <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={500} noWrap>
-                      {participant.user.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {participant.role}
-                    </Typography>
+          {participants.length > 0 ? (
+            <Grid container spacing={1}>
+              {participants.map((participant) => (
+                <Grid item xs={6} key={participant.accountId || participant.id}>
+                  <Box
+                    onClick={() => participant.username && navigate(`/profiles/${participant.username}`)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      p: 1,
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      "&:hover": { backgroundColor: "grey.50" },
+                    }}
+                  >
+                    <Avatar sx={{ width: 32, height: 32 }}>
+                      {(participant.username || participant.firstName || "?").charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="body2" fontWeight={500} noWrap>
+                        {participant.firstName || participant.username || "Ẩn danh"}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {participant.eventUserRole || "Tình nguyện viên"}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Typography color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
+              Chưa có tình nguyện viên nào đăng ký.
+            </Typography>
+          )}
         </Box>
       )}
     </ThreeColumnLayout>
@@ -222,3 +337,4 @@ const EventDetail = () => {
 };
 
 export default EventDetail;
+

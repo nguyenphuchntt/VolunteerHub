@@ -1,71 +1,149 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, Typography, Button, Chip, Avatar, Tabs, Tab } from "@mui/material";
-import { CheckCircle, Cancel, Email, Download } from "@mui/icons-material";
+import { Box, Typography, Button, Chip, Avatar, Tabs, Tab, CircularProgress, Alert, Snackbar } from "@mui/material";
+import { CheckCircle, Cancel, Refresh } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog, EmptyState } from "../../components/common";
-import { mockEvents } from "../../data/mockEvents";
-import { mockUsers, mockSuggestedFriends } from "../../data/mockData";
-
-const allUsers = [...mockUsers, ...mockSuggestedFriends];
+import { eventUserService, eventService } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 const ParticipantManagement = () => {
   const navigate = useNavigate();
   const { eventId } = useParams();
-  const user = mockUsers[0];
+  const { user } = useAuth();
 
-  const event = eventId ? mockEvents.find((e) => e.id === parseInt(eventId)) : null;
-
-  const [participants, setParticipants] = useState(
-    allUsers.map((u, index) => ({
-      ...u,
-      eventId: mockEvents[index % mockEvents.length]?.id,
-      eventTitle: mockEvents[index % mockEvents.length]?.title,
-      registeredAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: ["pending", "approved", "completed", "rejected"][Math.floor(Math.random() * 4)],
-      role: ["Volunteer", "Team Leader"][Math.floor(Math.random() * 2)],
-    }))
-  );
+  // API states
+  const [participants, setParticipants] = useState([]);
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const [activeTab, setActiveTab] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, participant: null });
 
+  // Fetch event details if eventId provided
+  const fetchEvent = useCallback(async () => {
+    if (!eventId) return;
+    try {
+      const eventData = await eventService.getEventById(eventId);
+      setEvent(eventData);
+    } catch (err) {
+      console.error("Failed to fetch event:", err);
+    }
+  }, [eventId]);
+
+  // Fetch participants
+  const fetchParticipants = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Filter by eventId if provided, otherwise get all with PENDING status first
+      const params = eventId 
+        ? { eventId: eventId }
+        : activeTab === 1 
+          ? { status: "PENDING" } 
+          : activeTab === 2 
+            ? { status: "APPROVED" }
+            : {};
+      
+      const response = await eventUserService.searchEventUsers(params);
+      setParticipants(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch participants:", err);
+      setError("Không thể tải danh sách đăng ký.");
+    } finally {
+      setLoading(false);
+    }
+  }, [eventId, activeTab]);
+
+  useEffect(() => {
+    fetchEvent();
+  }, [fetchEvent]);
+
+  useEffect(() => {
+    fetchParticipants();
+  }, [fetchParticipants]);
+
+  // Backend EventUserStatus: APPROVED, REJECTED, PENDING, FINISHED
   const getStatusColor = (status) => {
+    const statusUpper = (status || "PENDING").toUpperCase();
     const colors = {
-      pending: { bg: "#fff3e0", color: "#f57c00" },
-      approved: { bg: "#e8f5e9", color: "#388e3c" },
-      completed: { bg: "#e3f2fd", color: "#1976d2" },
-      rejected: { bg: "#ffebee", color: "#d32f2f" },
+      PENDING: { bg: "#fff3e0", color: "#f57c00" },
+      APPROVED: { bg: "#e8f5e9", color: "#388e3c" },
+      FINISHED: { bg: "#e3f2fd", color: "#1976d2" },
+      REJECTED: { bg: "#ffebee", color: "#d32f2f" },
     };
-    return colors[status] || colors.pending;
+    return colors[statusUpper] || colors.PENDING;
   };
 
   const getStatusLabel = (status) => {
-    const labels = { pending: "Chờ duyệt", approved: "Đã duyệt", completed: "Hoàn thành", rejected: "Từ chối" };
-    return labels[status] || status;
+    const statusUpper = (status || "PENDING").toUpperCase();
+    const labels = { 
+      PENDING: "Chờ duyệt", 
+      APPROVED: "Đã duyệt", 
+      FINISHED: "Hoàn thành", 
+      REJECTED: "Từ chối" 
+    };
+    return labels[statusUpper] || status;
   };
 
-  const filteredParticipants = event
-    ? participants.filter((p) => p.eventId === event.id)
-    : activeTab === 0
-    ? participants
-    : participants.filter((p) => {
-        if (activeTab === 1) return p.status === "pending";
-        if (activeTab === 2) return p.status === "approved";
-        return true;
+  // Handle approve/reject
+  const handleConfirmAction = async () => {
+    const { action, participant } = confirmDialog;
+    if (!participant) return;
+    
+    const newStatus = action === "approve" ? "APPROVED" : "REJECTED";
+    
+    try {
+      await eventUserService.updateEventUserStatus(
+        participant.eventId, 
+        participant.accountId, 
+        newStatus
+      );
+      
+      setSnackbar({
+        open: true,
+        message: `Đã ${action === "approve" ? "duyệt" : "từ chối"} đăng ký thành công!`,
+        severity: "success"
       });
+      
+      // Refresh the list
+      fetchParticipants();
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || `Không thể ${action === "approve" ? "duyệt" : "từ chối"} đăng ký.`,
+        severity: "error"
+      });
+    }
+    
+    setConfirmDialog({ open: false, action: null, participant: null });
+  };
 
   const columns = [
     {
-      id: "name",
+      id: "username",
       label: "Tình nguyện viên",
       render: (value, row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Avatar src={row.avatar} alt={value} sx={{ width: 32, height: 32 }} />
-          <Typography variant="body2" fontWeight={500}>{value}</Typography>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
+            {(row.firstName || row.username || "?").charAt(0).toUpperCase()}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" fontWeight={500}>
+              {row.firstName && row.lastName ? `${row.firstName} ${row.lastName}` : value}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">@{value}</Typography>
+          </Box>
         </Box>
       ),
     },
-    { id: "role", label: "Vai trò" },
+    { 
+      id: "eventUserRole", 
+      label: "Vai trò",
+      render: (value) => value || "PARTICIPANT"
+    },
     {
       id: "status",
       label: "Trạng thái",
@@ -77,29 +155,42 @@ const ParticipantManagement = () => {
   ];
 
   const actions = [
-    { label: "Duyệt", icon: <CheckCircle sx={{ fontSize: 16, color: "success.main" }} />, onClick: (row) => row.status === "pending" && setConfirmDialog({ open: true, action: "approve", participant: row }) },
-    { label: "Từ chối", icon: <Cancel sx={{ fontSize: 16 }} />, color: "error.main", onClick: (row) => row.status === "pending" && setConfirmDialog({ open: true, action: "reject", participant: row }) },
+    { 
+      label: "Duyệt", 
+      icon: <CheckCircle sx={{ fontSize: 16, color: "success.main" }} />, 
+      onClick: (row) => row.status?.toUpperCase() === "PENDING" && setConfirmDialog({ open: true, action: "approve", participant: row }),
+      disabled: (row) => row.status?.toUpperCase() !== "PENDING"
+    },
+    { 
+      label: "Từ chối", 
+      icon: <Cancel sx={{ fontSize: 16 }} />, 
+      color: "error.main", 
+      onClick: (row) => row.status?.toUpperCase() === "PENDING" && setConfirmDialog({ open: true, action: "reject", participant: row }),
+      disabled: (row) => row.status?.toUpperCase() !== "PENDING"
+    },
   ];
 
-  const handleConfirmAction = () => {
-    const { action, participant } = confirmDialog;
-    if (!participant) return;
-    const newStatus = action === "approve" ? "approved" : "rejected";
-    setParticipants(participants.map((p) => (p.id === participant.id ? { ...p, status: newStatus } : p)));
-    setConfirmDialog({ open: false, action: null, participant: null });
-  };
-
-  const pendingCount = participants.filter((p) => p.status === "pending").length;
+  const pendingCount = participants.filter((p) => p.status?.toUpperCase() === "PENDING").length;
 
   return (
     <ThreeColumnLayout user={user} role="manager" showRightSidebar={true} showSearch={false}>
       {/* Header */}
       <Box sx={{ borderBottom: "1px solid", borderColor: "grey.200" }}>
-        <Typography variant="h6" fontWeight={700} sx={{ p: 2 }}>
-          {event ? `TNV - ${event.title}` : "Quản lý tình nguyện viên"}
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 2 }}>
+          <Typography variant="h6" fontWeight={700}>
+            {event ? `TNV - ${event.title}` : "Quản lý tình nguyện viên"}
+          </Typography>
+          <Button 
+            size="small" 
+            startIcon={<Refresh />} 
+            onClick={fetchParticipants}
+            sx={{ textTransform: "none" }}
+          >
+            Làm mới
+          </Button>
+        </Box>
 
-        {!event && (
+        {!eventId && (
           <Tabs
             value={activeTab}
             onChange={(e, v) => setActiveTab(v)}
@@ -113,8 +204,14 @@ const ParticipantManagement = () => {
       </Box>
 
       <Box sx={{ p: 2 }}>
-        {filteredParticipants.length > 0 ? (
-          <DataTable columns={columns} data={filteredParticipants} searchable searchPlaceholder="Tìm kiếm..." actions={actions} />
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
+        ) : participants.length > 0 ? (
+          <DataTable columns={columns} data={participants} searchable searchPlaceholder="Tìm kiếm..." actions={actions} />
         ) : (
           <EmptyState title="Chưa có đăng ký" description="Chưa có ai đăng ký tham gia." />
         )}
@@ -125,12 +222,28 @@ const ParticipantManagement = () => {
         onClose={() => setConfirmDialog({ open: false, action: null, participant: null })}
         onConfirm={handleConfirmAction}
         title={confirmDialog.action === "approve" ? "Duyệt đăng ký?" : "Từ chối đăng ký?"}
-        message={`Bạn có chắc chắn muốn ${confirmDialog.action === "approve" ? "duyệt" : "từ chối"} đăng ký của "${confirmDialog.participant?.name}"?`}
+        message={`Bạn có chắc chắn muốn ${confirmDialog.action === "approve" ? "duyệt" : "từ chối"} đăng ký của "${confirmDialog.participant?.firstName || confirmDialog.participant?.username}"?`}
         confirmLabel={confirmDialog.action === "approve" ? "Duyệt" : "Từ chối"}
         variant={confirmDialog.action === "approve" ? "success" : "danger"}
       />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </ThreeColumnLayout>
   );
 };
 
 export default ParticipantManagement;
+

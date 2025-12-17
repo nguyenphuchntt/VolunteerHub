@@ -24,7 +24,16 @@ export default defineConfig({
     // Hot reload
     open: false,
     port: 5173,
+    // Proxy API requests to backend to avoid CORS issues
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
+
   // Optimize dependencies
   optimizeDeps: {
     include: ["react", "react-dom"],

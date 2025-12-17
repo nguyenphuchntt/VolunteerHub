@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/common";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
@@ -26,37 +28,100 @@ import {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/signup" element={<Auth />} />
-        <Route path="/signin" element={<Auth />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/signup" element={<Auth />} />
+          <Route path="/signin" element={<Auth />} />
+          <Route path="/explore" element={<EventFeed />} />
+          <Route path="/events/:eventId" element={<EventDetail />} />
 
-        {/* Volunteer Routes */}
-        <Route path="/dashboard" element={<VolunteerDashboard />} />
-        <Route path="/events" element={<EventFeed />} />
-        <Route path="/events/:eventId" element={<EventDetail />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/profiles/:username" element={<Profile />} />
 
-        {/* Manager Routes */}
-        <Route path="/manage" element={<ManagerDashboard />} />
-        <Route path="/manage/events" element={<EventManagement />} />
-        <Route path="/manage/events/new" element={<EventForm />} />
-        <Route path="/manage/events/:eventId/edit" element={<EventForm />} />
-        <Route path="/manage/events/:eventId/participants" element={<ParticipantManagement />} />
-        <Route path="/manage/participants" element={<ParticipantManagement />} />
+          {/* Protected Volunteer Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <VolunteerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-events" element={
+            <ProtectedRoute>
+              <VolunteerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/profiles/:username" element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } />
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/events" element={<AdminEventManagement />} />
-        <Route path="/admin/users" element={<UserManagement />} />
-        <Route path="/admin/export" element={<DataExport />} />
-      </Routes>
-    </BrowserRouter>
+
+          {/* Protected Manager Routes */}
+          <Route path="/manage" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+              <ManagerDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage/events" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+              <EventManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage/events/new" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+              <EventForm />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage/events/:eventId/edit" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+              <EventForm />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage/events/:eventId/participants" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+              <ParticipantManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage/participants" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+              <ParticipantManagement />
+            </ProtectedRoute>
+          } />
+
+          {/* Protected Admin Routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/events" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <AdminEventManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <UserManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/export" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <DataExport />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
 export default App;
+
+
 

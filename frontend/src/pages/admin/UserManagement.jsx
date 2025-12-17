@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -13,6 +13,13 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  CircularProgress,
+  Alert,
+  Snackbar,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import {
   Lock,
@@ -20,50 +27,92 @@ import {
   Visibility,
   Email,
   CalendarMonth,
-  Event,
-  AccessTime,
+  Refresh,
   Person,
   AdminPanelSettings,
+  SupervisorAccount,
 } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog } from "../../components/common";
-import { mockUsers as currentUser } from "../../data/mockData";
-import { mockAllUsers } from "../../data/mockAdminData";
+import { userService } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 const UserManagement = () => {
   const navigate = useNavigate();
-  const user = currentUser[0];
+  const { user } = useAuth();
   
-  const [users, setUsers] = useState(mockAllUsers);
+  // API states
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  
   const [selectedTab, setSelectedTab] = useState(0);
   const [lockDialogOpen, setLockDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [newRole, setNewRole] = useState("");
 
-  const tabFilters = ["all", "volunteer", "manager", "locked"];
-
-  const filteredUsers = (() => {
-    switch (selectedTab) {
-      case 1:
-        return users.filter((u) => u.role === "volunteer" && u.status === "active");
-      case 2:
-        return users.filter((u) => u.role === "manager" && u.status === "active");
-      case 3:
-        return users.filter((u) => u.status === "locked");
-      default:
-        return users;
+  // Fetch users from API
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Build params based on selected tab
+      const params = {};
+      if (selectedTab === 1) params.role = "USER";
+      else if (selectedTab === 2) params.role = "MANAGER";
+      else if (selectedTab === 3) params.status = "INACTIVE";
+      
+      const response = await userService.searchUsers(params);
+      setUsers(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      setError("Không thể tải danh sách người dùng.");
+    } finally {
+      setLoading(false);
     }
-  })();
+  }, [selectedTab]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Backend UserRole: USER, MANAGER, ADMIN
+  // Backend AccountStatus: ACTIVE, INACTIVE
+  const getRoleConfig = (role) => {
+    const roleUpper = (role || "USER").toUpperCase();
+    const configs = {
+      USER: { label: "TNV", bg: "#e3f2fd", color: "#1976d2", icon: <Person sx={{ fontSize: 12 }} /> },
+      MANAGER: { label: "Quản lý", bg: "#f3e5f5", color: "#7b1fa2", icon: <SupervisorAccount sx={{ fontSize: 12 }} /> },
+      ADMIN: { label: "Admin", bg: "#fff3e0", color: "#f57c00", icon: <AdminPanelSettings sx={{ fontSize: 12 }} /> },
+    };
+    return configs[roleUpper] || configs.USER;
+  };
+
+  const getStatusConfig = (status) => {
+    const statusUpper = (status || "ACTIVE").toUpperCase();
+    const configs = {
+      ACTIVE: { label: "Hoạt động", bg: "#edf7ed", color: "#2e7d32" },
+      INACTIVE: { label: "Đã khóa", bg: "#fdeded", color: "#d32f2f" },
+    };
+    return configs[statusUpper] || configs.ACTIVE;
+  };
 
   const columns = [
     {
-      id: "name",
+      id: "username",
       label: "Người dùng",
       render: (value, row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Avatar src={row.avatar} alt={value} sx={{ width: 40, height: 40 }} />
+          <Avatar sx={{ width: 40, height: 40, bgcolor: "primary.main" }}>
+            {(row.firstName || row.username || "?").charAt(0).toUpperCase()}
+          </Avatar>
           <Box>
-            <Box sx={{ fontWeight: 600, fontSize: "14px" }}>{value}</Box>
-            <Box sx={{ fontSize: "12px", color: "text.secondary" }}>@{row.username}</Box>
+            <Box sx={{ fontWeight: 600, fontSize: "14px" }}>
+              {row.firstName && row.lastName ? `${row.firstName} ${row.lastName}` : value}
+            </Box>
+            <Box sx={{ fontSize: "12px", color: "text.secondary" }}>@{value}</Box>
           </Box>
         </Box>
       ),
@@ -81,11 +130,7 @@ const UserManagement = () => {
       id: "role",
       label: "Vai trò",
       render: (value) => {
-        const config = {
-          volunteer: { label: "TNV", bg: "#e3f2fd", color: "#1976d2", icon: <Person sx={{ fontSize: 12 }} /> },
-          manager: { label: "Quản lý", bg: "#f3e5f5", color: "#7b1fa2", icon: <AdminPanelSettings sx={{ fontSize: 12 }} /> },
-        };
-        const c = config[value] || config.volunteer;
+        const c = getRoleConfig(value);
         return (
           <Chip
             icon={c.icon}
@@ -106,11 +151,7 @@ const UserManagement = () => {
       id: "status",
       label: "Trạng thái",
       render: (value) => {
-        const config = {
-          active: { label: "Hoạt động", bg: "#edf7ed", color: "#2e7d32" },
-          locked: { label: "Đã khóa", bg: "#fdeded", color: "#d32f2f" },
-        };
-        const c = config[value] || config.active;
+        const c = getStatusConfig(value);
         return (
           <Chip
             label={c.label}
@@ -120,29 +161,52 @@ const UserManagement = () => {
         );
       },
     },
-    {
-      id: "lastActive",
-      label: "Hoạt động",
-      render: (value) => (
-        <Typography variant="caption" color="text.secondary">
-          {new Date(value).toLocaleDateString("vi-VN")}
-        </Typography>
-      ),
-    },
   ];
 
-  const handleToggleLock = () => {
-    if (selectedUser) {
-      setUsers(
-        users.map((u) =>
-          u.id === selectedUser.id
-            ? { ...u, status: u.status === "active" ? "locked" : "active" }
-            : u
-        )
-      );
-      setLockDialogOpen(false);
-      setSelectedUser(null);
+  // Handle role change
+  const handleRoleChange = async () => {
+    if (!selectedUser || !newRole) return;
+    
+    try {
+      await userService.updateUserRole(selectedUser.accountID, newRole);
+      setSnackbar({ open: true, message: "Đã thay đổi vai trò thành công!", severity: "success" });
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to update role:", err);
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Không thể thay đổi vai trò.", 
+        severity: "error" 
+      });
     }
+    setRoleDialogOpen(false);
+    setSelectedUser(null);
+  };
+
+  // Handle lock/unlock
+  const handleToggleLock = async () => {
+    if (!selectedUser) return;
+    
+    const newStatus = selectedUser.status?.toUpperCase() === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    
+    try {
+      await userService.updateUserStatus(selectedUser.accountID, newStatus);
+      setSnackbar({ 
+        open: true, 
+        message: `Đã ${newStatus === "ACTIVE" ? "mở khóa" : "khóa"} tài khoản thành công!`, 
+        severity: "success" 
+      });
+      fetchUsers();
+    } catch (err) {
+      console.error("Failed to toggle lock:", err);
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Không thể thay đổi trạng thái.", 
+        severity: "error" 
+      });
+    }
+    setLockDialogOpen(false);
+    setSelectedUser(null);
   };
 
   const actions = [
@@ -155,6 +219,15 @@ const UserManagement = () => {
       },
     },
     {
+      label: "Đổi role",
+      icon: <SupervisorAccount sx={{ fontSize: 18 }} />,
+      onClick: (row) => {
+        setSelectedUser(row);
+        setNewRole(row.role || "USER");
+        setRoleDialogOpen(true);
+      },
+    },
+    {
       label: "Khóa",
       icon: <Lock sx={{ fontSize: 18 }} />,
       color: "error.main",
@@ -162,7 +235,7 @@ const UserManagement = () => {
         setSelectedUser(row);
         setLockDialogOpen(true);
       },
-      show: (row) => row.status === "active",
+      show: (row) => row.status?.toUpperCase() === "ACTIVE",
     },
     {
       label: "Mở khóa",
@@ -172,13 +245,13 @@ const UserManagement = () => {
         setSelectedUser(row);
         setLockDialogOpen(true);
       },
-      show: (row) => row.status === "locked",
+      show: (row) => row.status?.toUpperCase() !== "ACTIVE",
     },
   ];
 
-  const volunteerCount = users.filter((u) => u.role === "volunteer" && u.status === "active").length;
-  const managerCount = users.filter((u) => u.role === "manager" && u.status === "active").length;
-  const lockedCount = users.filter((u) => u.status === "locked").length;
+  const volunteerCount = users.filter((u) => u.role?.toUpperCase() === "USER").length;
+  const managerCount = users.filter((u) => u.role?.toUpperCase() === "MANAGER").length;
+  const lockedCount = users.filter((u) => u.status?.toUpperCase() !== "ACTIVE").length;
 
   return (
     <ThreeColumnLayout user={user} role="admin" showRightSidebar={true} showSearch={false}>
@@ -188,6 +261,14 @@ const UserManagement = () => {
           <Typography variant="h6" fontWeight={700}>
             Quản lý người dùng
           </Typography>
+          <Button 
+            size="small" 
+            startIcon={<Refresh />} 
+            onClick={fetchUsers}
+            sx={{ textTransform: "none" }}
+          >
+            Làm mới
+          </Button>
         </Box>
 
         {/* Tabs */}
@@ -220,14 +301,22 @@ const UserManagement = () => {
       </Box>
 
       <Box sx={{ p: 2 }}>
-        <DataTable
-          columns={columns}
-          data={filteredUsers}
-          searchable
-          searchPlaceholder="Tìm kiếm người dùng..."
-          actions={actions}
-          emptyMessage="Không có người dùng nào"
-        />
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={users}
+            searchable
+            searchPlaceholder="Tìm kiếm người dùng..."
+            actions={actions}
+            emptyMessage="Không có người dùng nào"
+          />
+        )}
       </Box>
 
       {/* Lock/Unlock Confirm Dialog */}
@@ -235,15 +324,55 @@ const UserManagement = () => {
         open={lockDialogOpen}
         onClose={() => setLockDialogOpen(false)}
         onConfirm={handleToggleLock}
-        title={selectedUser?.status === "active" ? "Khóa tài khoản?" : "Mở khóa tài khoản?"}
+        title={selectedUser?.status?.toUpperCase() === "ACTIVE" ? "Khóa tài khoản?" : "Mở khóa tài khoản?"}
         message={
-          selectedUser?.status === "active"
-            ? `Bạn có chắc chắn muốn khóa tài khoản "${selectedUser?.name}"? Người dùng này sẽ không thể đăng nhập cho đến khi được mở khóa.`
-            : `Bạn có chắc chắn muốn mở khóa tài khoản "${selectedUser?.name}"?`
+          selectedUser?.status?.toUpperCase() === "ACTIVE"
+            ? `Bạn có chắc chắn muốn khóa tài khoản "${selectedUser?.firstName || selectedUser?.username}"?`
+            : `Bạn có chắc chắn muốn mở khóa tài khoản "${selectedUser?.firstName || selectedUser?.username}"?`
         }
-        confirmLabel={selectedUser?.status === "active" ? "Khóa" : "Mở khóa"}
-        variant={selectedUser?.status === "active" ? "danger" : "primary"}
+        confirmLabel={selectedUser?.status?.toUpperCase() === "ACTIVE" ? "Khóa" : "Mở khóa"}
+        variant={selectedUser?.status?.toUpperCase() === "ACTIVE" ? "danger" : "primary"}
       />
+
+      {/* Role Change Dialog */}
+      <Dialog
+        open={roleDialogOpen}
+        onClose={() => setRoleDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "16px" } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>Thay đổi vai trò</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Chọn vai trò mới cho <strong>{selectedUser?.firstName || selectedUser?.username}</strong>
+          </Typography>
+          <FormControl fullWidth>
+            <InputLabel>Vai trò</InputLabel>
+            <Select
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+              label="Vai trò"
+            >
+              <MenuItem value="USER">Tình nguyện viên (USER)</MenuItem>
+              <MenuItem value="MANAGER">Quản lý sự kiện (MANAGER)</MenuItem>
+              <MenuItem value="ADMIN">Admin (ADMIN)</MenuItem>
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setRoleDialogOpen(false)} sx={{ textTransform: "none" }}>
+            Hủy
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleRoleChange}
+            sx={{ textTransform: "none", borderRadius: "9999px" }}
+          >
+            Lưu thay đổi
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* User Detail Dialog */}
       <Dialog
@@ -255,10 +384,14 @@ const UserManagement = () => {
       >
         <DialogTitle sx={{ pb: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Avatar src={selectedUser?.avatar} sx={{ width: 56, height: 56 }} />
+            <Avatar sx={{ width: 56, height: 56, bgcolor: "primary.main" }}>
+              {(selectedUser?.firstName || selectedUser?.username || "?").charAt(0).toUpperCase()}
+            </Avatar>
             <Box>
               <Typography variant="h6" fontWeight={700}>
-                {selectedUser?.name}
+                {selectedUser?.firstName && selectedUser?.lastName 
+                  ? `${selectedUser.firstName} ${selectedUser.lastName}` 
+                  : selectedUser?.username}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 @{selectedUser?.username}
@@ -276,52 +409,18 @@ const UserManagement = () => {
             </Box>
             
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <CalendarMonth sx={{ color: "text.secondary", fontSize: 20 }} />
+              {getRoleConfig(selectedUser?.role).icon}
               <Typography variant="body2">
-                Đăng ký: {selectedUser?.registeredAt && new Date(selectedUser.registeredAt).toLocaleDateString("vi-VN")}
+                Vai trò: <strong>{getRoleConfig(selectedUser?.role).label}</strong>
               </Typography>
             </Box>
             
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <AccessTime sx={{ color: "text.secondary", fontSize: 20 }} />
+              <CalendarMonth sx={{ color: "text.secondary", fontSize: 20 }} />
               <Typography variant="body2">
-                Hoạt động lần cuối: {selectedUser?.lastActive && new Date(selectedUser.lastActive).toLocaleDateString("vi-VN")}
+                Trạng thái: <strong>{getStatusConfig(selectedUser?.status).label}</strong>
               </Typography>
             </Box>
-
-            <Divider />
-
-            {selectedUser?.role === "volunteer" ? (
-              <>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Event sx={{ color: "text.secondary", fontSize: 20 }} />
-                  <Typography variant="body2">
-                    Sự kiện đã tham gia: <strong>{selectedUser?.eventsJoined}</strong>
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <AccessTime sx={{ color: "text.secondary", fontSize: 20 }} />
-                  <Typography variant="body2">
-                    Giờ tình nguyện: <strong>{selectedUser?.hoursVolunteered}h</strong>
-                  </Typography>
-                </Box>
-              </>
-            ) : (
-              <>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Event sx={{ color: "text.secondary", fontSize: 20 }} />
-                  <Typography variant="body2">
-                    Sự kiện đã tạo: <strong>{selectedUser?.eventsCreated}</strong>
-                  </Typography>
-                </Box>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Person sx={{ color: "text.secondary", fontSize: 20 }} />
-                  <Typography variant="body2">
-                    Tổng TNV: <strong>{selectedUser?.totalParticipants}</strong>
-                  </Typography>
-                </Box>
-              </>
-            )}
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
@@ -329,19 +428,46 @@ const UserManagement = () => {
             Đóng
           </Button>
           <Button
+            variant="outlined"
+            startIcon={<SupervisorAccount />}
+            onClick={() => {
+              setDetailDialogOpen(false);
+              setNewRole(selectedUser?.role || "USER");
+              setRoleDialogOpen(true);
+            }}
+            sx={{ textTransform: "none", borderRadius: "9999px" }}
+          >
+            Đổi vai trò
+          </Button>
+          <Button
             variant="contained"
-            color={selectedUser?.status === "active" ? "error" : "success"}
-            startIcon={selectedUser?.status === "active" ? <Lock /> : <LockOpen />}
+            color={selectedUser?.status?.toUpperCase() === "ACTIVE" ? "error" : "success"}
+            startIcon={selectedUser?.status?.toUpperCase() === "ACTIVE" ? <Lock /> : <LockOpen />}
             onClick={() => {
               setDetailDialogOpen(false);
               setLockDialogOpen(true);
             }}
             sx={{ textTransform: "none", borderRadius: "9999px" }}
           >
-            {selectedUser?.status === "active" ? "Khóa tài khoản" : "Mở khóa"}
+            {selectedUser?.status?.toUpperCase() === "ACTIVE" ? "Khóa tài khoản" : "Mở khóa"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </ThreeColumnLayout>
   );
 };

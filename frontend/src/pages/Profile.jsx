@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import ParticipatedEventCard from "../components/EventFeed/ParticipatedEventCard";
 import { ThreeColumnLayout } from "../components/common";
-import { mockUsers } from "../data/mockData";
-import { mockEvents } from "../data/mockEvents";
+import { profileService, userService, myEventsService } from "../api";
+import { useAuth } from "../context/AuthContext";
+
 import {
   Box,
   Avatar,
@@ -11,30 +11,120 @@ import {
   Button,
   Tabs,
   Tab,
-  Grid,
-  Divider,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { CalendarMonth, LocationOn, Edit } from "@mui/icons-material";
 
 const Profile = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
 
-  const user = mockUsers.find((u) => u.username === username) || mockUsers[0];
-  const currentUser = mockUsers[0]; // Logged in user
-  const isOwnProfile = user.id === currentUser.id;
+  // API states
+  const [profileUser, setProfileUser] = useState(null);
+  const [participatedEvents, setParticipatedEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const isOwnProfile = currentUser?.username === username;
+
+  // Fetch profile data
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      if (isOwnProfile) {
+        // Fetch own profile
+        const profile = await profileService.getMyProfile();
+        setProfileUser(profile);
+      } else {
+        // Fetch other user's profile by username
+        const response = await userService.searchUsers({ username });
+        if (response.content && response.content.length > 0) {
+          setProfileUser(response.content[0]);
+        } else {
+          setError("Không tìm thấy người dùng.");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch profile:", err);
+      setError("Không thể tải thông tin hồ sơ.");
+    } finally {
+      setLoading(false);
+    }
+  }, [username, isOwnProfile]);
+
+  // Fetch participated events (only for own profile using myEventsService)
+  const fetchEvents = useCallback(async () => {
+    if (!isOwnProfile) {
+      // For other users' profiles, we can't access their events without ADMIN/MANAGER role
+      return;
+    }
+    try {
+      const response = await myEventsService.getMyEvents();
+      setParticipatedEvents(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+    }
+  }, [isOwnProfile]);
+
+
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (isOwnProfile && isAuthenticated) {
+      fetchEvents();
+    }
+  }, [isOwnProfile, isAuthenticated, fetchEvents]);
+
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const participatedEvents = mockEvents
-    .map((event) => {
-      const participation = event.participants.find((p) => p.user.id === user.id);
-      return participation ? { ...event, role: participation.role } : null;
-    })
-    .filter(Boolean);
+  const formatDate = (dateString) => {
+    if (!dateString) return "TBD";
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <ThreeColumnLayout user={currentUser} role="volunteer" showRightSidebar={true}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </ThreeColumnLayout>
+    );
+  }
+
+  // Error state
+  if (error || !profileUser) {
+    return (
+      <ThreeColumnLayout user={currentUser} role="volunteer" showRightSidebar={true}>
+        <Box sx={{ p: 3 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>{error || "Người dùng không tồn tại."}</Alert>
+          <Button variant="contained" onClick={() => navigate("/events")}>
+            Quay lại
+          </Button>
+        </Box>
+      </ThreeColumnLayout>
+    );
+  }
+
+  // Get display values from API format
+  const displayName = profileUser.firstName && profileUser.lastName 
+    ? `${profileUser.firstName} ${profileUser.lastName}` 
+    : profileUser.username || "Người dùng";
 
   return (
     <ThreeColumnLayout user={currentUser} role="volunteer" showRightSidebar={true} showSearch={false}>
@@ -45,7 +135,7 @@ const Profile = () => {
           fontWeight={700}
           sx={{ p: 2, position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 10 }}
         >
-          {user.name}
+          {displayName}
         </Typography>
       </Box>
 
@@ -53,7 +143,8 @@ const Profile = () => {
       <Box
         sx={{
           height: 150,
-          backgroundImage: `url(${user.coverImage || "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800"})`,
+          backgroundColor: "#e0e0e0",
+          backgroundImage: `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -64,19 +155,22 @@ const Profile = () => {
         {/* Avatar & Actions */}
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <Avatar
-            src={user.avatar}
-            alt={user.name}
             sx={{
               width: 100,
               height: 100,
               border: "4px solid white",
               mt: -6,
+              bgcolor: "primary.main",
+              fontSize: "2rem",
             }}
-          />
+          >
+            {(displayName || "?").charAt(0).toUpperCase()}
+          </Avatar>
           {isOwnProfile ? (
             <Button
               variant="outlined"
               startIcon={<Edit />}
+              onClick={() => navigate("/settings/profile")}
               sx={{
                 borderRadius: "9999px",
                 textTransform: "none",
@@ -104,14 +198,16 @@ const Profile = () => {
         {/* User Info */}
         <Box sx={{ mt: 1 }}>
           <Typography variant="h6" fontWeight={700}>
-            {user.name}
+            {displayName}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            @{user.username}
+            @{profileUser.username}
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            {user.bio}
-          </Typography>
+          {profileUser.email && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {profileUser.email}
+            </Typography>
+          )}
 
           {/* Stats */}
           <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
@@ -125,18 +221,10 @@ const Profile = () => {
             </Box>
             <Box sx={{ display: "flex", gap: 0.5 }}>
               <Typography variant="body2" fontWeight={700}>
-                5.8k
+                {profileUser.role || "USER"}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Đang theo dõi
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Typography variant="body2" fontWeight={700}>
-                2.1k
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Người theo dõi
+                vai trò
               </Typography>
             </Box>
           </Box>
@@ -159,7 +247,7 @@ const Profile = () => {
           }}
         >
           <Tab label="Lịch sử tham gia" />
-          <Tab label="Người theo dõi" />
+          <Tab label="Thông tin" />
         </Tabs>
       </Box>
 
@@ -167,10 +255,10 @@ const Profile = () => {
       {activeTab === 0 && (
         <Box>
           {participatedEvents.length > 0 ? (
-            participatedEvents.map((event) => (
+            participatedEvents.map((eventUser) => (
               <Box
-                key={event.id}
-                onClick={() => navigate(`/events/${event.id}`)}
+                key={eventUser.eventId || eventUser.id}
+                onClick={() => navigate(`/events/${eventUser.eventId}`)}
                 sx={{
                   p: 2,
                   borderBottom: "1px solid",
@@ -181,33 +269,34 @@ const Profile = () => {
               >
                 <Box sx={{ display: "flex", gap: 1.5 }}>
                   <Box
-                    component="img"
-                    src={event.coverImage}
-                    alt={event.title}
                     sx={{
                       width: 80,
                       height: 80,
                       borderRadius: "12px",
-                      objectFit: "cover",
+                      backgroundColor: "#e0e0e0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
-                  />
+                  >
+                    <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />
+                  </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="body1" fontWeight={600}>
-                      {event.title}
+                      {eventUser.eventTitle || `Sự kiện #${eventUser.eventId}`}
                     </Typography>
                     <Typography variant="caption" color="primary.main" fontWeight={500}>
-                      {event.role}
+                      {eventUser.eventUserRole || "Tình nguyện viên"}
                     </Typography>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                       <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
                       <Typography variant="caption" color="text.secondary">
-                        {event.date}
+                        {formatDate(eventUser.startAt)}
                       </Typography>
                     </Box>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <LocationOn sx={{ fontSize: 14, color: "text.secondary" }} />
-                      <Typography variant="caption" color="text.secondary" noWrap>
-                        {event.location}
+                      <Typography variant="caption" color="text.secondary">
+                        Trạng thái: {eventUser.status || "PENDING"}
                       </Typography>
                     </Box>
                   </Box>
@@ -225,10 +314,30 @@ const Profile = () => {
       )}
 
       {activeTab === 1 && (
-        <Box sx={{ textAlign: "center", py: 8 }}>
-          <Typography variant="body1" color="text.secondary">
-            Danh sách người theo dõi sẽ sớm được cập nhật
+        <Box sx={{ p: 2 }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+            Thông tin tài khoản
           </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            <Typography variant="body2">
+              <strong>Tên người dùng:</strong> {profileUser.username}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Email:</strong> {profileUser.email || "Chưa cung cấp"}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Họ:</strong> {profileUser.firstName || "Chưa cung cấp"}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Tên:</strong> {profileUser.lastName || "Chưa cung cấp"}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Vai trò:</strong> {profileUser.role || "USER"}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Trạng thái:</strong> {profileUser.status || "ACTIVE"}
+            </Typography>
+          </Box>
         </Box>
       )}
     </ThreeColumnLayout>
@@ -236,3 +345,4 @@ const Profile = () => {
 };
 
 export default Profile;
+

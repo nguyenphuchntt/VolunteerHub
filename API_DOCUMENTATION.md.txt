@@ -1,0 +1,1114 @@
+﻿API Documentation
+1. AuthenticationController
+Login
+* Endpoint: /api/auth/login
+* RequestBody: LoginDTO
+   * Structure: { "usernameOrEmail": "...", "password": "..." }
+   * e.g.:
+{
+
+
+  "usernameOrEmail": "john.doe",
+
+
+  "password": "password123"
+
+
+}
+
+
+* Response: JwtResponse
+   * e.g.:
+
+
+{
+
+
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+
+
+  "type": "Bearer"
+
+
+}
+
+
+________________
+
+
+2. AccountProfileController
+Get Profile
+* Endpoint: /api/me/profile
+* Response: UserSearchDTO
+   * e.g.:
+
+
+{
+
+
+  "accountID": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+
+
+  "username": "john.doe",
+
+
+  "email": "john.doe@example.com",
+
+
+  "status": "ACTIVE",
+
+
+  "role": "USER",
+
+
+  "firstName": "John",
+
+
+  "lastName": "Doe",
+
+
+  "dateOfBirth": "1995-05-15",
+
+
+  "country": "USA",
+
+
+  "city": "New York",
+
+
+  "address": "123 Main St",
+
+
+  "organization": "Volunteer Org",
+
+
+  "createdAt": "2023-10-27T10:00:00Z"
+
+
+}
+Update Profile
+* Endpoint: /api/me/profile/update
+* RequestBody: UserProfileUpdateDTO
+   * Structure: { "email": "...", "firstName": "...", "lastName": "...", "dateOfBirth": "...", "country": "...", "city": "...", "address": "...", "organization": "..." }
+   * e.g.:
+
+
+{
+
+
+  "email": "new.email@example.com",
+
+
+  "firstName": "Johnny",
+
+
+  "lastName": "Doe",
+
+
+  "dateOfBirth": "1995-05-15",
+
+
+  "country": "USA",
+
+
+  "city": "San Francisco",
+
+
+  "address": "456 Market St",
+
+
+  "organization": "New Org"
+
+
+}
+
+
+* Response: Updated UserSearchDTO (Full structure as above)
+Delete Profile
+* Endpoint: /api/me/profile/delete
+* RequestBody: AccountPasswordDTO
+   * Structure: { "password": "..." }
+   * e.g.:
+
+
+{
+
+
+  "password": "password123"
+
+
+}
+
+
+* Response: 204 No Content
+Change Password
+* Endpoint: /api/me/profile/change-password
+* RequestBody: AccountPasswordChangeDTO
+   * Structure: { "oldPassword": "...", "newPassword": "...", "confirmPassword": "..." }
+   * e.g.:
+
+
+{
+
+
+  "oldPassword": "oldPassword123",
+
+
+  "newPassword": "newPassword456",
+
+
+  "confirmPassword": "newPassword456"
+
+
+}
+
+
+* Response: 204 No Content
+
+
+________________
+
+
+3. AccountEventController
+Get All My Events
+* Endpoint: /api/me/events?page={page}&size={size}
+   * e.g.: /api/me/events?page=0&size=10
+* Response: Page<EventUserSearchDTO>
+   * e.g.:
+
+
+{
+
+
+  "content": [
+
+
+    {
+
+
+      "eventId": 101,
+
+
+      "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+
+
+      "registeredAt": "2023-11-01T08:30:00Z",
+
+
+      "status": "APPROVED",
+
+
+      "role": "MEMBER",
+
+
+      "startAt": "2023-12-15T09:00:00Z",
+
+
+      "endAt": "2023-12-15T17:00:00Z",
+
+
+      "username": "john.doe",
+
+
+      "email": "john.doe@example.com",
+
+
+      "firstName": "John",
+
+
+      "lastName": "Doe",
+
+
+      "title": "Community Cleanup",
+
+
+      "description": "Cleaning up the local park.",
+
+
+      "location": "Central Park",
+
+
+      "eventStatus": "OPEN"
+
+
+    }
+
+
+  ],
+
+
+  "pageable": {
+
+
+    "pageNumber": 0,
+
+
+    "pageSize": 10,
+
+
+    "sort": {
+
+
+      "empty": false,
+
+
+      "sorted": true,
+
+
+      "unsorted": false
+
+
+    },
+
+
+    "offset": 0,
+
+
+    "paged": true,
+
+
+    "unpaged": false
+
+
+  },
+
+
+  "last": true,
+
+
+  "totalPages": 1,
+
+
+  "totalElements": 1,
+
+
+  "size": 10,
+
+
+  "number": 0,
+
+
+  "sort": {
+
+
+    "empty": false,
+
+
+    "sorted": true,
+
+
+    "unsorted": false
+
+
+  },
+
+
+  "first": true,
+
+
+  "numberOfElements": 1,
+
+
+  "empty": false
+
+
+}
+Get Specific Event
+* Endpoint: /api/me/events/{eventId}
+   * e.g.: /api/me/events/101 with 101 is eventId
+* Response: EventUserSearchDTO
+   * e.g.:
+
+
+{
+
+
+  "eventId": 101,
+
+
+  "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+
+
+  "registeredAt": "2023-11-01T08:30:00Z",
+
+
+  "status": "APPROVED",
+
+
+  "role": "MEMBER",
+
+
+  "startAt": "2023-12-15T09:00:00Z",
+
+
+  "endAt": "2023-12-15T17:00:00Z",
+
+
+  "username": "john.doe",
+
+
+  "email": "john.doe@example.com",
+
+
+  "firstName": "John",
+
+
+  "lastName": "Doe",
+
+
+  "title": "Community Cleanup",
+
+
+  "description": "Cleaning up the local park.",
+
+
+  "location": "Central Park",
+
+
+  "eventStatus": "OPEN"
+
+
+}
+Register for Event
+* Endpoint: /api/me/events/{eventId}/register
+   * e.g.: /api/me/events/101/register with 101 is eventId
+* RequestBody: EventUserRegisterDTO
+   * Structure: { "startAt": "...", "endAt": "..." }
+   * e.g.:
+
+
+{
+
+
+  "startAt": "2023-12-15T09:00:00Z",
+
+
+  "endAt": "2023-12-15T17:00:00Z"
+
+
+}
+
+
+* Response: EventUserSearchDTO (Full structure as above)
+Unregister from Event
+* Endpoint: /api/me/events/{eventId}/unregister
+   * e.g.: /api/me/events/101/unregister with 101 is eventId
+* Response: 204 No Content
+Update Event Participation
+* Endpoint: /api/me/events/{eventId}/update
+   * e.g.: /api/me/events/101/update with 101 is eventId
+* RequestBody: EventUserUpdateDTO
+   * Structure: { "startAt": "...", "endAt": "..." }
+   * e.g.:
+
+
+{
+
+
+  "startAt": "2023-12-15T10:00:00Z",
+
+
+  "endAt": "2023-12-15T16:00:00Z"
+
+
+}
+
+
+* Response: Updated EventUserSearchDTO (Full structure as above)
+
+
+________________
+
+
+4. AdminUserController
+Create User
+* Endpoint: /api/admin/users/create-user
+* RequestBody: AccountAdminCreateDTO
+   * Structure: { "username": "...", "password": "...", "confirmPassword": "...", "accountStatus": "...", "role": "...", "email": "..." }
+   * e.g.:
+
+
+{
+
+
+  "username": "jane.smith",
+
+
+  "password": "password123",
+
+
+  "confirmPassword": "password123",
+
+
+  "accountStatus": "ACTIVE",
+
+
+  "role": "MANAGER",
+
+
+  "email": "jane.smith@example.com"
+
+
+}
+
+
+* Response: UserSearchDTO (Full structure as in AccountProfileController)
+Change User Role
+* Endpoint: /api/admin/users/{id}/role
+   * e.g.: /api/admin/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/role with a0eebc99... is id (UUID)
+* RequestBody: AccountRoleUpdateDTO
+   * Structure: { "role": "..." }
+   * e.g.:
+
+
+{
+
+
+  "role": "ADMIN"
+
+
+}
+
+
+* Response: Updated UserSearchDTO
+Change Account Status
+* Endpoint: /api/admin/users/{id}/status
+   * e.g.: /api/admin/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/status with a0eebc99... is id (UUID)
+* RequestBody: AccountStatusUpdateDTO
+   * Structure: { "status": "..." }
+   * e.g.:
+
+
+{
+
+
+  "status": "BLOCKED"
+
+
+}
+
+
+* Response: Updated UserSearchDTO
+Delete Account
+* Endpoint: /api/admin/users/{id}/delete
+   * e.g.: /api/admin/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/delete with a0eebc99... is id (UUID)
+* Response: 204 No Content
+Change User Password (Admin)
+* Endpoint: /api/admin/users/{id}/change-password
+   * e.g.: /api/admin/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/change-password with a0eebc99... is id (UUID)
+* RequestBody: AccountAdminPasswordChangeDTO
+   * Structure: { "newPassword": "...", "confirmPassword": "..." }
+   * e.g.:
+
+
+{
+
+
+  "newPassword": "newAdminPassword123",
+
+
+  "confirmPassword": "newAdminPassword123"
+
+
+}
+
+
+* Response: 204 No Content
+Update User Details (Admin)
+* Endpoint: /api/admin/users/{id}/update-details
+   * e.g.: /api/admin/users/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/update-details with a0eebc99... is id (UUID)
+* RequestBody: UserProfileUpdateDTO
+   * Structure: { "email": "...", "firstName": "...", "lastName": "...", "dateOfBirth": "...", "country": "...", "city": "...", "address": "...", "organization": "..." }
+   * e.g.:
+
+
+{
+
+
+  "firstName": "Jane",
+
+
+  "lastName": "Smith Updated",
+
+
+  "email": "jane.updated@example.com",
+
+
+  "dateOfBirth": "1990-01-01",
+
+
+  "country": "UK",
+
+
+  "city": "London",
+
+
+  "address": "Baker St",
+
+
+  "organization": "Updated Org"
+
+
+}
+
+
+* Response: Updated UserSearchDTO
+
+
+________________
+
+
+5. EventController
+Search Events
+* Endpoint: /api/events/search?{parameters}
+   * e.g.: /api/events/search?status=OPEN&location=Central
+* Response: Page<EventSearchDTO>
+   * e.g.:
+
+
+{
+
+
+  "content": [
+
+
+    {
+
+
+      "eventId": 101,
+
+
+      "title": "Community Cleanup",
+
+
+      "createAt": "2023-10-01T10:00:00Z",
+
+
+      "startAt": "2023-12-15T09:00:00Z",
+
+
+      "endAt": "2023-12-15T17:00:00Z",
+
+
+      "category": "Environment",
+
+
+      "location": "Central Park",
+
+
+      "description": "Cleaning up the park.",
+
+
+      "status": "OPEN",
+
+
+      "attendeeCount": 0,
+
+
+      "likeCount": 15,
+
+
+      "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+
+
+    }
+
+
+  ],
+
+
+  "pageable": {
+
+
+    "pageNumber": 0,
+
+
+    "pageSize": 10,
+
+
+    "sort": {
+
+
+      "empty": false,
+
+
+      "sorted": true,
+
+
+      "unsorted": false
+
+
+    },
+
+
+    "offset": 0,
+
+
+    "paged": true,
+
+
+    "unpaged": false
+
+
+  },
+
+
+  "last": true,
+
+
+  "totalPages": 1,
+
+
+  "totalElements": 1,
+
+
+  "size": 10,
+
+
+  "number": 0,
+
+
+  "sort": {
+
+
+    "empty": false,
+
+
+    "sorted": true,
+
+
+    "unsorted": false
+
+
+  },
+
+
+  "first": true,
+
+
+  "numberOfElements": 1,
+
+
+  "empty": false
+
+
+}
+Get Event by ID
+* Endpoint: /api/events/{eventId}
+   * e.g.: /api/events/101 with 101 is eventId
+* Response: EventSearchDTO
+   * e.g.:
+
+
+{
+
+
+  "eventId": 101,
+
+
+  "title": "Community Cleanup",
+
+
+  "createAt": "2023-10-01T10:00:00Z",
+
+
+  "startAt": "2023-12-15T09:00:00Z",
+
+
+  "endAt": "2023-12-15T17:00:00Z",
+
+
+  "category": "Environment",
+
+
+  "location": "Central Park",
+
+
+  "description": "Cleaning up the park.",
+
+
+  "status": "OPEN",
+
+
+  "attendeeCount": 0,
+
+
+  "likeCount": 15,
+
+
+  "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+
+
+}
+Register Event (Manager/Admin)
+* Endpoint: /api/events/register-event
+* RequestBody: EventManagerCreateDTO
+   * Structure: { "title": "...", "startAt": "...", "endAt": "...", "category": "...", "location": "...", "description": "...", "attendeeCount": 0 }
+   * e.g.:
+
+
+{
+
+
+  "title": "Local Charity Run",
+
+
+  "startAt": "2024-01-20T07:00:00Z",
+
+
+  "endAt": "2024-01-20T12:00:00Z",
+
+
+  "category": "Sports",
+
+
+  "location": "City Stadium",
+
+
+  "description": "Annual charity run.",
+
+
+  "attendeeCount": 100
+
+
+}
+
+
+* Response: Created EventSearchDTO
+Create Event (Admin)
+* Endpoint: /api/events/create-event
+* RequestBody: EventAdminCreateDTO
+   * Structure: { "title": "...", "startAt": "...", "endAt": "...", "category": "...", "location": "...", "description": "...", "status": "...", "attendeeCount": 0 }
+   * e.g.:
+
+
+{
+
+
+  "title": "Global Summit",
+
+
+  "startAt": "2024-05-10T09:00:00Z",
+
+
+  "endAt": "2024-05-12T18:00:00Z",
+
+
+  "category": "Conference",
+
+
+  "location": "Convention Center",
+
+
+  "description": "International summit.",
+
+
+  "status": "OPEN",
+
+
+  "attendeeCount": 500
+
+
+}
+
+
+* Response: Created EventSearchDTO
+Update Event Status
+* Endpoint: /api/events/{eventId}/event-status
+   * e.g.: /api/events/101/event-status with 101 is eventId
+* RequestBody: EventStatusUpdateDTO
+   * Structure: { "status": "..." }
+   * e.g.:
+
+
+{
+
+
+  "status": "CANCELLED"
+
+
+}
+
+
+* Response: Updated EventSearchDTO
+Delete Event
+* Endpoint: /api/events/{eventId}/delete
+   * e.g.: /api/events/101/delete with 101 is eventId
+* Response: 204 No Content
+Update Event Details
+* Endpoint: /api/events/{eventId}/update
+   * e.g.: /api/events/101/update with 101 is eventId
+* RequestBody: EventUpdateDTO
+   * Structure: { "title": "...", "startAt": "...", "endAt": "...", "category": "...", "location": "...", "description": "...", "attendeeCount": 0 }
+   * e.g.:
+
+
+{
+
+
+  "title": "Updated Charity Run",
+
+
+  "startAt": "2024-01-20T08:00:00Z",
+
+
+  "endAt": "2024-01-20T13:00:00Z",
+
+
+  "category": "Sports",
+
+
+  "location": "New Stadium",
+
+
+  "description": "Updated description",
+
+
+  "attendeeCount": 150
+
+
+}
+
+
+* Response: EventSearchDTO
+Like Event
+* Endpoint: /api/events/{eventId}/like
+   * e.g.: /api/events/101/like with 101 is eventId
+* Response: EventLikeDTO
+   * e.g.:
+
+
+{
+
+
+  "eventId": 101,
+
+
+  "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+
+
+  "liked": true,
+
+
+  "likesCount": 16
+
+
+}
+
+
+________________
+
+
+6. EventUserController
+Search Event Users
+* Endpoint: /api/event-users/search?{parameters}
+   * e.g.: /api/event-users/search?eventId=101&status=PENDING
+* Response: Page<EventUserSearchDTO>
+   * e.g.:
+
+
+{
+
+
+  "content": [
+
+
+    {
+
+
+      "eventId": 101,
+
+
+      "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+
+
+      "registeredAt": "2023-11-10T14:30:00Z",
+
+
+      "status": "PENDING",
+
+
+      "role": "MEMBER",
+
+
+      "startAt": "2023-12-15T09:00:00Z",
+
+
+      "endAt": "2023-12-15T17:00:00Z",
+
+
+      "username": "volunteer1",
+
+
+      "email": "volunteer1@example.com",
+
+
+      "firstName": "Volunteer",
+
+
+      "lastName": "One",
+
+
+      "title": "Community Cleanup",
+
+
+      "description": "Cleaning up...",
+
+
+      "location": "Central Park",
+
+
+      "eventStatus": "OPEN"
+
+
+    }
+
+
+  ],
+
+
+  "pageable": {
+
+
+    "pageNumber": 0,
+
+
+    "pageSize": 10,
+
+
+    "sort": {
+
+
+      "empty": false,
+
+
+      "sorted": true,
+
+
+      "unsorted": false
+
+
+    },
+
+
+    "offset": 0,
+
+
+    "paged": true,
+
+
+    "unpaged": false
+
+
+  },
+
+
+  "last": true,
+
+
+  "totalPages": 1,
+
+
+  "totalElements": 1,
+
+
+  "size": 10,
+
+
+  "number": 0,
+
+
+  "sort": {
+
+
+    "empty": false,
+
+
+    "sorted": true,
+
+
+    "unsorted": false
+
+
+  },
+
+
+  "first": true,
+
+
+  "numberOfElements": 1,
+
+
+  "empty": false
+
+
+}
+Create Event User
+* Endpoint: /api/event-users/{eventId}/{accountId}/create
+   * e.g.: /api/event-users/101/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/create with 101 is eventId, a0eebc99... is accountId
+* RequestBody: EventUserCreateDTO
+   * Structure: { "accountId": "...", "eventId": 0, "status": "...", "role": "...", "startAt": "...", "endAt": "..." }
+   * e.g.:
+
+
+{
+
+
+  "accountId": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+
+
+  "eventId": 101,
+
+
+  "status": "APPROVED",
+
+
+  "role": "MEMBER",
+
+
+  "startAt": "2024-01-20T07:00:00Z",
+
+
+  "endAt": "2024-01-20T12:00:00Z"
+
+
+}
+
+
+* Response: Created EventUserSearchDTO
+Update Event User Role
+* Endpoint: /api/event-users/{eventId}/{accountId}/update-role
+   * e.g.: /api/event-users/101/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/update-role with 101 is eventId, a0eebc99... is accountId
+* RequestBody: EventUserRoleUpdateDTO
+   * Structure: { "eventUserRole": "..." }
+   * e.g.:
+
+
+{
+
+
+  "eventUserRole": "LEADER"
+
+
+}
+
+
+* Response: Updated EventUserSearchDTO
+Update Event User Status
+* Endpoint: /api/event-users/{eventId}/{accountId}/update-status
+   * e.g.: /api/event-users/101/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11/update-status with 101 is eventId, a0eebc99... is accountId
+* RequestBody: EventUserStatusUpdateDTO
+   * Structure: { "status": "..." }
+   * e.g.:
+
+
+{
+
+
+  "status": "REJECTED"
+
+
+}
+
+
+* Response: Updated EventUserSearchDTO

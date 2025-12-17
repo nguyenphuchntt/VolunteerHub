@@ -33,6 +33,7 @@ const DataTable = ({
   onSelectionChange,
   actions = [],
   emptyMessage = "Không có dữ liệu",
+  rowKey = "id", // Custom key field for rows
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -42,6 +43,14 @@ const DataTable = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [actionAnchorEl, setActionAnchorEl] = useState(null);
   const [actionRow, setActionRow] = useState(null);
+
+  // Helper to get unique key for each row
+  const getRowKey = (row, index) => {
+    if (typeof rowKey === 'function') {
+      return rowKey(row);
+    }
+    return row[rowKey] || row.id || row.eventId || row.accountId || index;
+  };
 
   // Sorting
   const handleSort = (columnId) => {
@@ -255,11 +264,12 @@ const DataTable = ({
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedData.map((row) => {
-                const isItemSelected = isSelected(row.id);
+              paginatedData.map((row, index) => {
+                const rowId = getRowKey(row, index);
+                const isItemSelected = isSelected(rowId);
                 return (
                   <TableRow
-                    key={row.id}
+                    key={rowId}
                     hover
                     onClick={() => onRowClick?.(row)}
                     selected={isItemSelected}
@@ -274,7 +284,7 @@ const DataTable = ({
                           checked={isItemSelected}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleSelectRow(row.id);
+                            handleSelectRow(rowId);
                           }}
                         />
                       </TableCell>
@@ -298,6 +308,7 @@ const DataTable = ({
                 );
               })
             )}
+
           </TableBody>
         </Table>
       </TableContainer>

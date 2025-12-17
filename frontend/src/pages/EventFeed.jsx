@@ -1,67 +1,81 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { EventFilter, EventCard } from "../components/EventFeed";
 import { ThreeColumnLayout } from "../components/common";
-import { mockEvents } from "../data/mockEvents";
-import { mockUsers } from "../data/mockData";
-import { Box, Typography, Button, Grid } from "@mui/material";
+import { eventService } from "../api";
+import { useAuth } from "../context/AuthContext";
+import { Box, Typography, Button, Grid, CircularProgress, Alert } from "@mui/material";
 import { SearchOff } from "@mui/icons-material";
 
 const EventFeed = () => {
+  const { user } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("date-asc");
 
-  // For demo: use first mock user as authenticated user
-  const user = mockUsers[0];
+  // Fetch events from API
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = {};
+      if (selectedCategory !== "all") {
+        params.category = selectedCategory;
+      }
+      if (selectedStatus !== "all") {
+        params.status = selectedStatus;
+      }
+      if (searchQuery.trim()) {
+        params.title = searchQuery;
+      }
+      
+      const response = await eventService.searchEvents(params);
+      setEvents(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+      setError("Không thể tải danh sách sự kiện. Vui lòng thử lại.");
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategory, selectedStatus, searchQuery]);
 
-  // Filter and sort events
+  // Initial fetch and refetch when filters change
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  // Sort and filter events - hide PENDING and CANCELLED from public view
   const filteredEvents = useMemo(() => {
-    let events = [...mockEvents];
+    // Filter out PENDING and CANCELLED events for public explore page
+    let publicEvents = events.filter(event => {
+      const status = (event.status || "").toUpperCase();
+      return status !== "PENDING" && status !== "CANCELLED";
+    });
 
-    // Filter by category
-    if (selectedCategory !== "all") {
-      events = events.filter(
-        (event) =>
-          event.category.toLowerCase().replace(/\s+/g, "-") === selectedCategory
-      );
-    }
-
-    // Filter by status
-    if (selectedStatus !== "all") {
-      events = events.filter((event) => event.status === selectedStatus);
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      events = events.filter(
-        (event) =>
-          event.title.toLowerCase().includes(query) ||
-          event.description.toLowerCase().includes(query) ||
-          event.location.toLowerCase().includes(query) ||
-          event.tags.some((tag) => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // Sort events
-    events.sort((a, b) => {
+    // Sort events locally
+    publicEvents.sort((a, b) => {
       switch (sortBy) {
         case "date-asc":
-          return new Date(a.date) - new Date(b.date);
+          return new Date(a.startAt) - new Date(b.startAt);
         case "date-desc":
-          return new Date(b.date) - new Date(a.date);
+          return new Date(b.startAt) - new Date(a.startAt);
         case "popular":
-          return b.stats.shares - a.stats.shares;
+          return (b.likeCount || 0) - (a.likeCount || 0);
         case "participants":
-          return b.participants.length - a.participants.length;
+          return (b.attendeeCount || 0) - (a.attendeeCount || 0);
         default:
           return 0;
       }
     });
 
-    return events;
-  }, [selectedCategory, selectedStatus, searchQuery, sortBy]);
+    return publicEvents;
+  }, [events, sortBy]);
+
+
 
   const handleClearFilters = () => {
     setSelectedCategory("all");
@@ -110,9 +124,6 @@ const EventFeed = () => {
             mb: 3,
           }}
         >
-          <Typography variant="body1" fontWeight={600}>
-            {filteredEvents.length} sự kiện tìm thấy
-          </Typography>
           {(selectedCategory !== "all" ||
             selectedStatus !== "all" ||
             searchQuery) && (
@@ -131,16 +142,29 @@ const EventFeed = () => {
           )}
         </Box>
 
-        {/* Events Grid */}
-        {filteredEvents.length > 0 ? (
-          <Grid container spacing={2}>
+        {/* Loading State */}
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Events List - 1 per row */}
+        {!loading && !error && filteredEvents.length > 0 ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {filteredEvents.map((event) => (
-              <Grid item xs={12} sm={6} key={event.id}>
-                <EventCard event={event} />
-              </Grid>
+              <EventCard key={event.eventId} event={event} />
             ))}
-          </Grid>
-        ) : (
+          </Box>
+
+        ) : !loading && !error && (
           <Box
             sx={{
               textAlign: "center",
@@ -169,5 +193,6 @@ const EventFeed = () => {
     </ThreeColumnLayout>
   );
 };
+
 
 export default EventFeed;

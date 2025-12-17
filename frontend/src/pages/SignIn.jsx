@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -10,9 +10,13 @@ import {
   IconButton,
   Divider,
   InputAdornment,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import { Close, Google, Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import { keyframes } from "@mui/system";
+import { useAuth } from "../context/AuthContext";
+import { userService } from "../api";
 
 // Animations
 const fadeIn = keyframes`
@@ -32,10 +36,16 @@ const float = keyframes`
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
+  
   const [signInOpen, setSignInOpen] = useState(false);
   const [signUpOpen, setSignUpOpen] = useState(false);
   const [signInStep, setSignInStep] = useState(1); // 1: username, 2: password
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   
   const [signInData, setSignInData] = useState({
     username: "",
@@ -43,51 +53,136 @@ const SignIn = () => {
   });
 
   const [signUpData, setSignUpData] = useState({
-    fullName: "",
+    username: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
+
+  // Redirect if already authenticated
+  const from = location.state?.from?.pathname || "/dashboard";
+
 
   // Handle Sign In
   const handleSignInOpen = () => {
     setSignInOpen(true);
     setSignInStep(1);
     setSignInData({ username: "", password: "" });
+    setError("");
   };
 
   const handleSignInClose = () => {
     setSignInOpen(false);
     setSignInStep(1);
+    setError("");
   };
 
-  const handleSignInNext = () => {
+  const handleSignInNext = async () => {
     if (signInStep === 1 && signInData.username) {
-      // TODO: Verify if username exists via API
+      // Move to password step
       setSignInStep(2);
     } else if (signInStep === 2 && signInData.password) {
-      // TODO: Implement actual sign in logic
-      console.log("Sign in:", signInData);
-      handleSignInClose();
-      navigate("/events");
+      // Actually sign in
+      setLoading(true);
+      setError("");
+      try {
+        const profile = await login(signInData.username, signInData.password);
+        handleSignInClose();
+        
+        // Role-based routing
+        if (profile?.role === "ADMIN") {
+          navigate("/admin", { replace: true });
+        } else if (profile?.role === "MANAGER") {
+          navigate("/manage", { replace: true });
+        } else {
+          // Regular users go to saved location or /explore
+          navigate(from !== "/dashboard" ? from : "/explore", { replace: true });
+        }
+
+
+      } catch (err) {
+        console.error("Sign in error:", err);
+        // Better error messages for common cases
+        const status = err.response?.status;
+        const serverMessage = err.response?.data?.message;
+        
+        if (status === 401 || status === 403) {
+          setError("Mật khẩu không chính xác. Vui lòng thử lại.");
+        } else if (status === 404) {
+          setError("Tài khoản không tồn tại. Vui lòng kiểm tra lại tên đăng nhập.");
+        } else if (serverMessage) {
+          setError(serverMessage);
+        } else {
+          setError("Đăng nhập thất bại. Vui lòng thử lại sau.");
+        }
+
+      } finally {
+        setLoading(false);
+      }
     }
   };
+
+
 
   // Handle Sign Up
   const handleSignUpOpen = () => {
     setSignUpOpen(true);
+    setError("");
   };
 
   const handleSignUpClose = () => {
     setSignUpOpen(false);
-    setSignUpData({ fullName: "", email: "", password: "" });
+    setSignUpData({ username: "", email: "", password: "", confirmPassword: "" });
+    setError("");
   };
 
-  const handleSignUpSubmit = () => {
-    // TODO: Implement actual sign up logic
-    console.log("Sign up:", signUpData);
-    handleSignUpClose();
-    navigate("/events");
+  const handleSignUpSubmit = async () => {
+    // Frontend validation
+    if (signUpData.username.length < 3) {
+      setError("Tên người dùng phải có ít nhất 3 ký tự.");
+      return;
+    }
+    if (signUpData.password.length < 8) {
+      setError("Mật khẩu phải có ít nhất 8 ký tự.");
+      return;
+    }
+    if (signUpData.password !== signUpData.confirmPassword) {
+      setError("Mật khẩu xác nhận không khớp.");
+      return;
+    }
+    
+    setLoading(true);
+    setError("");
+    try {
+      await userService.register({
+        username: signUpData.username,
+        email: signUpData.email,
+        password: signUpData.password,
+        confirmPassword: signUpData.confirmPassword,
+      });
+      // After successful registration, log them in
+      await login(signUpData.username, signUpData.password);
+      handleSignUpClose();
+      navigate(from, { replace: true });
+    } catch (err) {
+      console.error("Sign up error:", err);
+      // Handle different error response formats
+      const errorData = err.response?.data;
+      let errorMessage = "Đăng ký thất bại. Vui lòng thử lại.";
+      if (typeof errorData === "string") {
+        errorMessage = errorData;
+      } else if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (errorData?.errors) {
+        // Handle validation errors array
+        errorMessage = Object.values(errorData.errors).join(", ");
+      }
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   const handleGoogleAuth = () => {
     console.log("Google Auth");
@@ -593,11 +688,28 @@ const SignIn = () => {
                 }}
               />
 
+              {/* Error display */}
+              {error && (
+                <Alert 
+                  severity="error" 
+                  sx={{ 
+                    mb: 2, 
+                    borderRadius: "12px",
+                    "& .MuiAlert-message": { fontWeight: 500 }
+                  }}
+                  onClose={() => setError("")}
+                >
+                  {error}
+                </Alert>
+              )}
+
               <Button
+
                 variant="contained"
                 fullWidth
-                disabled={!signInData.password}
+                disabled={!signInData.password || loading}
                 onClick={handleSignInNext}
+
                 sx={{
                   height: 48,
                   borderRadius: "50px",
@@ -621,9 +733,8 @@ const SignIn = () => {
                   },
                 }}
               >
-                Đăng nhập
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Đăng nhập"}
               </Button>
-
               <Typography
                 sx={{
                   textAlign: "center",
@@ -726,11 +837,17 @@ const SignIn = () => {
           </Typography>
 
           <Box sx={{ animation: `${slideUp} 0.3s ease-out` }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2, borderRadius: "12px" }}>
+                {error}
+              </Alert>
+            )}
+            
             <TextField
               fullWidth
-              label="Họ và Tên"
-              value={signUpData.fullName}
-              onChange={(e) => setSignUpData({ ...signUpData, fullName: e.target.value })}
+              label="Tên người dùng"
+              value={signUpData.username}
+              onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
               variant="outlined"
               sx={{
                 mb: 2.5,
@@ -745,6 +862,7 @@ const SignIn = () => {
                 "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
               }}
             />
+
 
             <TextField
               fullWidth
@@ -787,6 +905,39 @@ const SignIn = () => {
                 ),
               }}
               sx={{
+                mb: 2.5,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "#f8fdf8",
+                  "& fieldset": { borderColor: colors.border },
+                  "&:hover fieldset": { borderColor: colors.primary },
+                  "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                },
+                "& .MuiInputLabel-root": { color: colors.textSecondary },
+                "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+              }}
+            />
+
+            <TextField
+              fullWidth
+              type={showConfirmPassword ? "text" : "password"}
+              label="Xác nhận mật khẩu"
+              value={signUpData.confirmPassword}
+              onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+              variant="outlined"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      sx={{ color: colors.textSecondary }}
+                    >
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
                 mb: 3,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: "12px",
@@ -800,27 +951,28 @@ const SignIn = () => {
               }}
             />
 
+
             <Button
               variant="contained"
               fullWidth
-              disabled={!signUpData.fullName || !signUpData.email || !signUpData.password}
+              disabled={!signUpData.username || !signUpData.email || !signUpData.password || !signUpData.confirmPassword || loading}
               onClick={handleSignUpSubmit}
               sx={{
                 height: 48,
                 borderRadius: "50px",
-                background: (signUpData.fullName && signUpData.email && signUpData.password) 
+                background: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) 
                   ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
                   : "#e0e0e0",
-                color: (signUpData.fullName && signUpData.email && signUpData.password) ? colors.white : "#9e9e9e",
+                color: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) ? colors.white : "#9e9e9e",
                 fontWeight: 700,
                 fontSize: 15,
                 textTransform: "none",
                 mb: 3,
-                boxShadow: (signUpData.fullName && signUpData.email && signUpData.password) 
+                boxShadow: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) 
                   ? "0 6px 20px rgba(67, 160, 71, 0.35)" 
                   : "none",
                 "&:hover": {
-                  background: (signUpData.fullName && signUpData.email && signUpData.password) 
+                  background: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) 
                     ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
                     : "#e0e0e0",
                 },
@@ -830,8 +982,9 @@ const SignIn = () => {
                 },
               }}
             >
-              Đăng ký
+              {loading ? <CircularProgress size={24} color="inherit" /> : "Đăng ký"}
             </Button>
+
           </Box>
 
           <Divider sx={{ my: 2.5 }}>
