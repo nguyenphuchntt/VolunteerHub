@@ -5,10 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -33,5 +32,26 @@ public class AdminDashboardController {
     @GetMapping("/stats/rankings")
     public ResponseEntity<?> getDashboardRankings(@RequestParam(value = "type", defaultValue = "top_events") String type) {
         return ResponseEntity.ok(adminDashboardService.getDashboardRankings(type));
+    }
+
+    @GetMapping("/events/pending")
+    public ResponseEntity<?> getPendingEvents() {
+        return ResponseEntity.ok(adminDashboardService.getPendingEvents());
+    }
+
+    @PatchMapping("/events/{id}/status")
+    public ResponseEntity<?> updateEventStatus(@PathVariable Long id, @RequestBody Map<String, String> statusUpdate) {
+        String status = statusUpdate.get("status");
+        if (status == null) {
+            return ResponseEntity.badRequest().body("Status is required");
+        }
+        try {
+            adminDashboardService.updateEventStatus(id, status);
+            return ResponseEntity.ok(Map.of("message", "Event status updated to " + status));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

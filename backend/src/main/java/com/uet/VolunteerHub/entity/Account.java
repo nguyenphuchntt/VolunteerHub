@@ -28,6 +28,7 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Account implements UserDetails, CredentialsContainer {
 
     @Id
@@ -41,6 +42,7 @@ public class Account implements UserDetails, CredentialsContainer {
 
     @NotNull
     @Size(min = 8, message = "Password must be at least 8 characters long")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Enumerated(EnumType.STRING)

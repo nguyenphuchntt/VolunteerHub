@@ -46,4 +46,6 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
 
     @Query("SELECT SUM(e.attendeeCount) FROM Event e")
     Long sumAttendeeCount();
+
+    List<Event> findAllByStatus(EventStatus status);
 }

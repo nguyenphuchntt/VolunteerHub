@@ -61,7 +61,7 @@ public class AdminDashboardService {
         // Events Stats
         long totalEvents = eventRepository.count();
         long pendingEvents = eventRepository.countByStatus(EventStatus.PENDING);
-        long ongoingEvents = eventRepository.countByStatus(EventStatus.STARTED); // Assuming STARTED is ongoing
+        long ongoingEvents = eventRepository.countByStatus(EventStatus.STARTED);
         long finishedEvents = eventRepository.countByStatus(EventStatus.FINISHED);
         long cancelledEvents = eventRepository.countByStatus(EventStatus.CANCELLED);
         long scheduledEvents = eventRepository.countByStatus(EventStatus.SCHEDULED);
@@ -177,7 +177,7 @@ public class AdminDashboardService {
                 String accountId = (String) row[0];
                 String username = (String) row[1];
                 String email = (String) row[2];
-                Number score = (Number) row[3]; // Can be BigInteger or Long depending on DB
+                Number score = (Number) row[3];
 
                 rankings.add(RankingItemDTO.builder()
                         .id(accountId)
@@ -190,5 +190,39 @@ public class AdminDashboardService {
         }
 
         return rankings;
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.uet.VolunteerHub.dto.Event.EventSearchDTO> getPendingEvents() {
+        List<Event> events = eventRepository.findAllByStatus(EventStatus.PENDING);
+        return events.stream().map(event -> com.uet.VolunteerHub.dto.Event.EventSearchDTO.builder()
+                .eventId(event.getEventId())
+                .title(event.getTitle())
+                .createAt(event.getCreateAt())
+                .startAt(event.getStartAt())
+                .endAt(event.getEndAt())
+                .category(event.getCategory())
+                .location(event.getLocation())
+                .description(event.getDescription())
+                .status(event.getStatus())
+                .attendeeCount(event.getAttendeeCount())
+                .likeCount(event.getLikeCount())
+                .accountId(event.getCreatedBy() != null ? event.getCreatedBy().getAccountId() : null)
+                .build())
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional
+    public void updateEventStatus(Long eventId, String status) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        try {
+            EventStatus newStatus = EventStatus.valueOf(status.toUpperCase());
+            event.setStatus(newStatus);
+            eventRepository.save(event);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + status);
+        }
     }
 }
