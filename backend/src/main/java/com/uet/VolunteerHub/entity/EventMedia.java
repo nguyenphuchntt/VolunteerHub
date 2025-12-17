@@ -26,7 +26,7 @@ public class EventMedia {
     @JoinColumn(name = "event_id", nullable = false, insertable = false, updatable = false)
     private Event event;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "media_id", nullable = false, insertable = false, updatable = false)
     private Media media;
 }

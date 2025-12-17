@@ -11,6 +11,6 @@ public class AccountAdminPasswordChangeDTO {
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String newPassword;
 
-    @NotBlank(message = "Please confirm your new password")
+    @NotBlank(message = "Please confirm new password")
     private String confirmPassword;
 }
