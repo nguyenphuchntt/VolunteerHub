@@ -38,6 +38,9 @@ public interface EventUserRepository extends JpaRepository<EventUser, EventUserI
     @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})
     Page<EventUser> findByStatus(EventUserStatus status, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})
+    Page<EventUser> findByAccountIdAndStatus(UUID accountId, EventUserStatus status, Pageable pageable);
+
     void deleteByAccountIdAndEventId(UUID accountID, Long eventId);
 
     @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})

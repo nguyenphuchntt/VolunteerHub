@@ -42,6 +42,9 @@ public class Notification {
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
     @CreationTimestamp
     @Column(name = "create_at", nullable = false, updatable = false)
     private OffsetDateTime createAt;
