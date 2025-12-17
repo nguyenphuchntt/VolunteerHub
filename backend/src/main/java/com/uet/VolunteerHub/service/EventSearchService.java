@@ -8,8 +8,6 @@ import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
-import com.uet.VolunteerHub.entity.EventLike;
-import com.uet.VolunteerHub.repository.EventLikeRepository;
 import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
@@ -105,17 +103,6 @@ public class EventSearchService {
         Specification<Event> spec = PublicEventSpecification.fromCriteria(criteria);
         Page<Event> eventPage = eventRepository.findAll(spec, pageable);
         return eventPage.map(event -> {
-            Account account = event.getCreatedBy();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
-            return mapToEventSearchDTO(event, account, userInfo);
-        });
-    }
-
-    @Transactional
-    public Page<EventSearchDTO> getEventsLikedByAccount(UUID accountId, Pageable pageable) {
-        Page<EventLike> eventLikes = eventLikeRepository.findAllByAccountId(accountId, pageable);
-        return eventLikes.map(eventLike -> {
-            Event event = eventLike.getEvent();
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
