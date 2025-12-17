@@ -45,12 +45,15 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
 
     long countByCreateAtBetween(OffsetDateTime start, OffsetDateTime end);
 
-    @Query(value = "SELECT a.*, " +
+    @Query(value = "SELECT CAST(a.account_id AS CHAR) as account_id, a.username, a.email, " +
             "(COALESCE((SELECT COUNT(*) FROM comment c WHERE c.created_by_account_id = a.account_id), 0) + " +
             " COALESCE((SELECT COUNT(*) FROM post_like pl WHERE pl.account_id = a.account_id), 0) + " +
             " COALESCE((SELECT COUNT(*) FROM event_like el WHERE el.account_id = a.account_id), 0)) as score " +
             "FROM account a " +
             "ORDER BY score DESC " +
             "LIMIT 5", nativeQuery = true)
-    List<Account> findTopInteractiveUsers();
+    List<Object[]> findTopInteractiveUsers();
+
+    @Query("SELECT DATE(a.createAt) as date, COUNT(a) as count FROM Account a WHERE a.createAt >= :startDate GROUP BY DATE(a.createAt) ORDER BY date ASC")
+    List<Object[]> countNewUsersByDate(java.time.OffsetDateTime startDate);
 }

@@ -1,15 +1,21 @@
 package com.uet.VolunteerHub.service;
 
+import com.uet.VolunteerHub.dto.AdminDashboard.ChartDataDTO;
 import com.uet.VolunteerHub.dto.AdminDashboard.DashboardOverviewDTO;
+import com.uet.VolunteerHub.dto.AdminDashboard.RankingItemDTO;
+import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +27,7 @@ public class AdminDashboardService {
 
     private final AccountRepository accountRepository;
     private final EventRepository eventRepository;
+    private final EventUserRepository eventUserRepository;
     private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final EventLikeRepository eventLikeRepository;
@@ -105,5 +112,83 @@ public class AdminDashboardService {
                 .events(eventStats)
                 .engagement(engagementStats)
                 .build();
+    }
+
+    public ChartDataDTO getDashboardChart(String type) {
+        OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
+        List<Object[]> data = new ArrayList<>();
+
+        if ("new_events_last_7_days".equals(type)) {
+            data = eventRepository.countNewEventsByDate(sevenDaysAgo);
+        } else if ("new_users_last_7_days".equals(type)) {
+            data = accountRepository.countNewUsersByDate(sevenDaysAgo);
+        }
+
+        Map<String, Long> dataMap = new HashMap<>();
+        for (Object[] row : data) {
+            dataMap.put(row[0].toString(), (Long) row[1]);
+        }
+
+        List<ChartDataDTO.DataPoint> points = new ArrayList<>();
+        for (int i = 6; i >= 0; i--) {
+            String date = java.time.LocalDate.now().minusDays(i).toString();
+            points.add(ChartDataDTO.DataPoint.builder()
+                    .date(date)
+                    .count(dataMap.getOrDefault(date, 0L))
+                    .build());
+        }
+
+        return ChartDataDTO.builder()
+                .chartType(type)
+                .data(points)
+                .build();
+    }
+
+    public List<RankingItemDTO> getDashboardRankings(String type) {
+        List<RankingItemDTO> rankings = new ArrayList<>();
+
+        if ("top_events".equals(type)) {
+            List<Event> topEvents = eventRepository.findTop5ByOrderByLikeCountDesc();
+            for (Event event : topEvents) {
+                rankings.add(RankingItemDTO.builder()
+                        .id(event.getEventId())
+                        .title(event.getTitle())
+                        .subText("Attendees: " + event.getAttendeeCount())
+                        .value(event.getLikeCount())
+                        .status(event.getStatus().toString())
+                        .build());
+            }
+        } else if ("top_active_users".equals(type)) {
+            List<Object[]> topUsers = eventUserRepository.findTopActiveUsers(PageRequest.of(0, 5));
+            for (Object[] row : topUsers) {
+                Account account = (Account) row[0];
+                Long count = (Long) row[1];
+                rankings.add(RankingItemDTO.builder()
+                        .id(account.getAccountId())
+                        .title(account.getUsername())
+                        .subText(account.getEmail())
+                        .value(count)
+                        .imageUrl(null)
+                        .build());
+            }
+        } else if ("top_interactive_users".equals(type)) {
+            List<Object[]> topUsers = accountRepository.findTopInteractiveUsers();
+            for (Object[] row : topUsers) {
+                String accountId = (String) row[0];
+                String username = (String) row[1];
+                String email = (String) row[2];
+                Number score = (Number) row[3]; // Can be BigInteger or Long depending on DB
+
+                rankings.add(RankingItemDTO.builder()
+                        .id(accountId)
+                        .title(username)
+                        .subText(email)
+                        .value(score.longValue())
+                        .imageUrl(null)
+                        .build());
+            }
+        }
+
+        return rankings;
     }
 }

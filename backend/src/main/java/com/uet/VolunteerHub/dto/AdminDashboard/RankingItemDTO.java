@@ -14,7 +14,7 @@ public class RankingItemDTO {
     private String imageUrl; // Avatar or Event thumbnail
 
     // Metrics
-    private long value;
+    private long value; // like for events and react for user
     private Map<String, Object> details;
     private String status; // For events
 }
