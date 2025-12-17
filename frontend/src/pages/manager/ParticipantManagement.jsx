@@ -139,6 +139,15 @@ const ParticipantManagement = () => {
         </Box>
       ),
     },
+    {
+      id: "title",
+      label: "Sự kiện",
+      render: (value) => (
+        <Typography variant="body2" sx={{ maxWidth: 200 }} noWrap title={value}>
+          {value}
+        </Typography>
+      )
+    },
     { 
       id: "eventUserRole", 
       label: "Vai trò",

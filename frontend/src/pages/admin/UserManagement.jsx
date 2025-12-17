@@ -33,7 +33,7 @@ import {
   SupervisorAccount,
 } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog } from "../../components/common";
-import { userService } from "../../api";
+import { userService, adminService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
 const UserManagement = () => {
@@ -59,10 +59,10 @@ const UserManagement = () => {
     setError(null);
     try {
       // Build params based on selected tab
-      const params = {};
+      const params = { size: 100 }; // Get up to 100 users for display
       if (selectedTab === 1) params.role = "USER";
       else if (selectedTab === 2) params.role = "MANAGER";
-      else if (selectedTab === 3) params.status = "INACTIVE";
+      else if (selectedTab === 3) params.accountStatus = "BANNED";
       
       const response = await userService.searchUsers(params);
       setUsers(response.content || []);
@@ -74,9 +74,28 @@ const UserManagement = () => {
     }
   }, [selectedTab]);
 
+  // Fetch counts for all tabs (runs once on mount and after updates)
+  const fetchCounts = useCallback(async () => {
+    try {
+      // Use size: 0 to just get totalElements without fetching content
+      const [allRes, volunteersRes, managersRes, lockedRes] = await Promise.all([
+        userService.searchUsers({ size: 0 }), // All users including banned
+        userService.searchUsers({ role: "USER", size: 0 }),
+        userService.searchUsers({ role: "MANAGER", size: 0 }),
+        userService.searchUsers({ accountStatus: "BANNED", size: 0 }),
+      ]);
+    } catch (err) {
+      console.error("Failed to fetch counts:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetchCounts();
+  }, [fetchCounts]);
 
   // Backend UserRole: USER, MANAGER, ADMIN
   // Backend AccountStatus: ACTIVE, INACTIVE
@@ -94,7 +113,8 @@ const UserManagement = () => {
     const statusUpper = (status || "ACTIVE").toUpperCase();
     const configs = {
       ACTIVE: { label: "Hoạt động", bg: "#edf7ed", color: "#2e7d32" },
-      INACTIVE: { label: "Đã khóa", bg: "#fdeded", color: "#d32f2f" },
+      INACTIVE: { label: "Không hoạt động", bg: "#fff3e0", color: "#f57c00" },
+      BANNED: { label: "Đã khóa", bg: "#fdeded", color: "#d32f2f" },
     };
     return configs[statusUpper] || configs.ACTIVE;
   };
@@ -168,9 +188,10 @@ const UserManagement = () => {
     if (!selectedUser || !newRole) return;
     
     try {
-      await userService.updateUserRole(selectedUser.accountID, newRole);
+      await adminService.updateUserRole(selectedUser.accountID, newRole);
       setSnackbar({ open: true, message: "Đã thay đổi vai trò thành công!", severity: "success" });
       fetchUsers();
+      fetchCounts(); // Update counts after role change
     } catch (err) {
       console.error("Failed to update role:", err);
       setSnackbar({ 
@@ -187,16 +208,17 @@ const UserManagement = () => {
   const handleToggleLock = async () => {
     if (!selectedUser) return;
     
-    const newStatus = selectedUser.status?.toUpperCase() === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+    const newStatus = selectedUser.status?.toUpperCase() === "ACTIVE" ? "BANNED" : "ACTIVE";
     
     try {
-      await userService.updateUserStatus(selectedUser.accountID, newStatus);
+      await adminService.updateUserStatus(selectedUser.accountID, newStatus);
       setSnackbar({ 
         open: true, 
         message: `Đã ${newStatus === "ACTIVE" ? "mở khóa" : "khóa"} tài khoản thành công!`, 
         severity: "success" 
       });
       fetchUsers();
+      fetchCounts(); // Update counts after status change
     } catch (err) {
       console.error("Failed to toggle lock:", err);
       setSnackbar({ 
@@ -249,9 +271,7 @@ const UserManagement = () => {
     },
   ];
 
-  const volunteerCount = users.filter((u) => u.role?.toUpperCase() === "USER").length;
-  const managerCount = users.filter((u) => u.role?.toUpperCase() === "MANAGER").length;
-  const lockedCount = users.filter((u) => u.status?.toUpperCase() !== "ACTIVE").length;
+  // Tab counts are now fetched separately for consistency
 
   return (
     <ThreeColumnLayout user={user} role="admin" showRightSidebar={true} showSearch={false}>
@@ -284,19 +304,10 @@ const UserManagement = () => {
             },
           }}
         >
-          <Tab label={`Tất cả (${users.length})`} />
-          <Tab label={`Tình nguyện viên (${volunteerCount})`} />
-          <Tab label={`Quản lý sự kiện (${managerCount})`} />
-          <Tab
-            label={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                Đã khóa
-                {lockedCount > 0 && (
-                  <Chip label={lockedCount} size="small" color="error" sx={{ height: 20 }} />
-                )}
-              </Box>
-            }
-          />
+          <Tab label={`Tất cả`} />
+          <Tab label={`Tình nguyện viên`} />
+          <Tab label={`Quản lý sự kiện`} />
+          <Tab label={`Đã khóa`} />
         </Tabs>
       </Box>
 

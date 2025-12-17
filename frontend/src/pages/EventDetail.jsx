@@ -316,6 +316,8 @@ const EventDetail = () => {
                        ? "Đang chờ duyệt."
                        : participationStatus === "APPROVED"
                        ? "Bạn đã tham gia sự kiện này."
+                       : participationStatus === "REJECTED"
+                       ? "Yêu cầu của bạn đã bị từ chối."
                        : ""}
                    </Typography>
                  </Box>
@@ -330,6 +332,20 @@ const EventDetail = () => {
                      onClick={() => setConfirmUnregisterOpen(true)}
                    >
                      Hủy tham gia
+                   </Button>
+                 )}
+                 
+                 {participationStatus === "REJECTED" && 
+                 event.status !== "FINISHED" && 
+                 event.status !== "CANCELLED" && (
+                   <Button 
+                     size="small" 
+                     variant="contained"
+                     color="primary"
+                     sx={{ textTransform: "none", borderRadius: "9999px" }}
+                     onClick={handleRegisterClick}
+                   >
+                     Gửi lại yêu cầu
                    </Button>
                  )}
                </Box>

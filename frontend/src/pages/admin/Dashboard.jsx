@@ -272,63 +272,6 @@ const AdminDashboard = () => {
                 )}
               </CardContent>
             </Card>
-
-            {/* Trending Events */}
-            <Card
-              elevation={0}
-              sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200" }}
-            >
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-                  <TrendingUp sx={{ color: "primary.main", fontSize: 20 }} />
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Sự kiện nổi bật
-                  </Typography>
-                </Box>
-
-                {trendingEvents.length > 0 ? (
-                  trendingEvents.map((event, index) => (
-                    <Box
-                      key={event.eventId}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.5,
-                        p: 1.5,
-                        mb: 1,
-                        borderRadius: "12px",
-                        backgroundColor: index === 0 ? "rgba(136, 178, 139, 0.1)" : "grey.50",
-                        cursor: "pointer",
-                        "&:hover": { opacity: 0.8 },
-                        "&:last-child": { mb: 0 },
-                      }}
-                      onClick={() => navigate(`/events/${event.eventId}`)}
-                    >
-                      <Typography
-                        variant="h6"
-                        fontWeight={700}
-                        color={index === 0 ? "primary.main" : "text.secondary"}
-                        sx={{ width: 28 }}
-                      >
-                        #{index + 1}
-                      </Typography>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={600} noWrap>
-                          {event.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ❤️ {event.likeCount || 0} likes • {event.attendeeCount || 0} người tham gia
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 3 }}>
-                    Chưa có dữ liệu sự kiện.
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
           </>
         )}
       </Box>

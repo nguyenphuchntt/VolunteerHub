@@ -338,7 +338,7 @@ const DataTable = ({
           sx: { borderRadius: "8px", minWidth: 150 },
         }}
       >
-        {actions.map((action) => (
+        {actionRow && actions.filter(action => !action.show || action.show(actionRow)).map((action) => (
           <MenuItem
             key={action.label}
             onClick={() => handleActionSelect(action)}

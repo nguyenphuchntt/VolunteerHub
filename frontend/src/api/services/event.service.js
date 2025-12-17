@@ -4,7 +4,7 @@ export const eventService = {
   // GET /api/events/search?params (public)
   // params: { title, status, category, location, startAtFrom, startAtTo, etc. }
   async searchEvents(params = {}) {
-    const response = await api.get('/events/search', { params });
+    const response = await api.get('/events/search-public', { params });
     return response.data; // Page<EventSearchDTO>
   },
 

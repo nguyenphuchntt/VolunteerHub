@@ -15,7 +15,13 @@ export const AuthProvider = ({ children }) => {
       if (authService.isAuthenticated()) {
         try {
           const profile = await profileService.getMyProfile();
-          setUser(profile);
+          if (profile.status === 'BANNED') {
+            authService.logout();
+            setUser(null);
+            setError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
+          } else {
+            setUser(profile);
+          }
         } catch (err) {
           console.error('Failed to fetch profile:', err);
           authService.logout();
@@ -32,10 +38,17 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.login(usernameOrEmail, password);
       const profile = await profileService.getMyProfile();
+      
+      if (profile.status === 'BANNED') {
+        authService.logout();
+        setUser(null);
+        throw new Error("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
+      }
+      
       setUser(profile);
       return profile;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Đăng nhập thất bại';
+      const errorMessage = err.message || err.response?.data?.message || 'Đăng nhập thất bại';
       setError(errorMessage);
       throw err;
     }
@@ -51,6 +64,11 @@ export const AuthProvider = ({ children }) => {
     if (authService.isAuthenticated()) {
       try {
         const profile = await profileService.getMyProfile();
+        if (profile.status === 'BANNED') {
+          logout();
+          setError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
+          return null;
+        }
         setUser(profile);
         return profile;
       } catch (err) {
@@ -71,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     // Helper getters for role checking
     isAdmin: user?.role === 'ADMIN',
-    isManager: user?.role === 'MANAGER' || user?.role === 'ADMIN',
+    isManager: user?.role === 'MANAGER',
     isVolunteer: user?.role === 'USER',
   };
 

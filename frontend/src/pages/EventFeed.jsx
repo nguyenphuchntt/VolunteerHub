@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { EventFilter, EventCard } from "../components/EventFeed";
 import { ThreeColumnLayout } from "../components/common";
 import { eventService, myEventsService } from "../api";
@@ -16,9 +16,19 @@ const EventFeed = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("date-asc");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch user's registered events to show status
   const fetchUserStatuses = useCallback(async () => {
@@ -56,8 +66,8 @@ const EventFeed = () => {
       if (selectedStatus !== "all") {
         params.status = selectedStatus;
       }
-      if (searchQuery.trim()) {
-        params.title = searchQuery;
+      if (debouncedSearchQuery.trim()) {
+        params.title = debouncedSearchQuery;
       }
       
       const response = await eventService.searchEvents(params);
@@ -85,32 +95,41 @@ const EventFeed = () => {
          fetchUserStatuses();
       }
     }
-  }, [selectedCategory, selectedStatus, searchQuery, fetchUserStatuses]);
+  }, [selectedCategory, selectedStatus, debouncedSearchQuery, fetchUserStatuses]);
 
   // Initial fetch and refetch when filters change (reset to page 0)
   useEffect(() => {
     setPage(0);
     fetchEvents(0);
-  }, [selectedCategory, selectedStatus, searchQuery]); // Removing fetchEvents from dep to avoid loop if not memoized correctly, but it is useCallback with these deps.
+  }, [selectedCategory, selectedStatus, debouncedSearchQuery]); // Removing fetchEvents from dep to avoid loop if not memoized correctly, but it is useCallback with these deps.
   // Actually, fetchEvents depends on these deps. So it changes when they change.
   // We want to run ONLY when these change.
   // Correct usage: useEffect(() => { fetchEvents(0); }, [fetchEvents]); -> fetchEvents updates when filters update.
   
-  // Infinite Scroll Listener
+  // Infinite Scroll with Intersection Observer
+  const observerTarget = useRef(null);
+
   useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 200 // Threshold 200px
-      ) {
-        if (!loading && !loadingMore && hasMore) {
-          fetchEvents(page + 1);
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+           if (!loading && !loadingMore && hasMore) {
+             fetchEvents(page + 1);
+           }
         }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
       }
     };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, [loading, loadingMore, hasMore, page, fetchEvents]);
 
   // Sort and filter events - hide PENDING and CANCELLED from public view
@@ -244,6 +263,8 @@ const EventFeed = () => {
                 <CircularProgress size={24} />
               </Box>
             )}
+            {/* Sentinel element for infinite scroll */}
+            <div ref={observerTarget} style={{ height: "10px", width: "100%" }} />
           </Box>
 
         ) : !loading && !error && (

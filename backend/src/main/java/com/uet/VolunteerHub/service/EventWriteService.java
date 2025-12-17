@@ -179,7 +179,7 @@ public class EventWriteService {
         if (eventUpdateDTO.getLocation() != null) {
             event.setLocation(eventUpdateDTO.getLocation());
         }
-        if (eventUpdateDTO.getAttendeeCount() != 0) {
+        if (eventUpdateDTO.getAttendeeCount() != null && eventUpdateDTO.getAttendeeCount() != 0) {
             event.setAttendeeCount(eventUpdateDTO.getAttendeeCount());
         }
         if (eventUpdateDTO.getTitle() != null) {

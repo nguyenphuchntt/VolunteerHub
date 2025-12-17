@@ -32,6 +32,10 @@ import {
   EventNoteOutlined,
   AdminPanelSettings,
   AdminPanelSettingsOutlined,
+  KeyboardArrowDown,
+  Event,
+  People,
+  Download,
 } from "@mui/icons-material";
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
@@ -46,6 +50,8 @@ const LeftNav = ({ isMobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [adminAnchorEl, setAdminAnchorEl] = useState(null);
+  const [managerAnchorEl, setManagerAnchorEl] = useState(null);
   
   // Get user and auth state from context
   const { user, isAuthenticated, isAdmin, isManager, logout } = useAuth();
@@ -66,6 +72,88 @@ const LeftNav = ({ isMobile = false }) => {
     if (isAdmin) return "admin";
     if (isManager) return "manager";
     return "volunteer";
+  };
+
+  // Admin dropdown items
+  const adminDropdownItems = [
+    {
+      label: "Dashboard",
+      path: "/admin",
+      icon: <Dashboard />,
+      description: "Tổng quan hệ thống",
+    },
+    {
+      label: "Quản lý sự kiện",
+      path: "/admin/events",
+      icon: <Event />,
+      description: "Duyệt/xóa/quản lý sự kiện",
+    },
+    {
+      label: "Quản lý người dùng",  
+      path: "/admin/users",
+      icon: <People />,
+      description: "Thay đổi role, khóa/mở tài khoản",
+    },
+    {
+      label: "Xuất dữ liệu",
+      path: "/admin/export",
+      icon: <Download />,
+      description: "Export CSV/JSON",
+    },
+  ];
+
+  const handleAdminClick = (event) => {
+    setAdminAnchorEl(event.currentTarget);
+  };
+
+  const handleAdminClose = () => {
+    setAdminAnchorEl(null);
+  };
+
+  const handleAdminItemClick = (path) => {
+    navigate(path);
+    handleAdminClose();
+  };
+
+  // Manager dropdown items
+  const managerDropdownItems = [
+    {
+      label: "Dashboard",
+      path: "/manage",
+      icon: <Dashboard />,
+      description: "Tổng quan sự kiện",
+    },
+    {
+      label: "Sự kiện của tôi",
+      path: "/manage/events",
+      icon: <Event />,
+      description: "Quản lý sự kiện đã tạo",
+    },
+    {
+      label: "Tạo sự kiện mới",
+      path: "/manage/events/new",
+      icon: <Add />,
+      description: "Thêm sự kiện mới",
+    },
+    {
+      label: "Quản lý TNV",
+      path: "/manage/participants",
+      icon: <People />,
+      description: "Duyệt/huỷ đăng ký TNV",
+    },
+  ];
+
+  const handleManagerClick = (event) => {
+    setManagerAnchorEl(event.currentTarget);
+  };
+
+  const handleManagerClose = () => {
+    setManagerAnchorEl(null);
+  };
+
+  const handleManagerItemClick = (path) => {
+    navigate(path);
+    handleManagerClose();
   };
 
   // Navigation items
@@ -100,20 +188,8 @@ const LeftNav = ({ isMobile = false }) => {
       activeIcon: <Person />,
       show: isAuthenticated,
     },
-    {
-      label: "Quản lý",
-      path: "/manage",
-      icon: <AdminPanelSettingsOutlined />,
-      activeIcon: <AdminPanelSettings />,
-      show: isManager && !isAdmin,
-    },
-    {
-      label: "Admin",
-      path: "/admin",
-      icon: <AdminPanelSettingsOutlined />,
-      activeIcon: <AdminPanelSettings />,
-      show: isAdmin,
-    },
+    // Manager item is handled separately with dropdown
+    // Admin item is handled separately with dropdown
   ];
 
   const handleMoreClick = (event) => {
@@ -207,6 +283,192 @@ const LeftNav = ({ isMobile = false }) => {
             );
           })}
 
+        {/* Manager Dropdown - for manager users  */}
+        {isManager &&(
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={handleManagerClick}
+              sx={{
+                borderRadius: "9999px",
+                py: 1.5,
+                px: 2,
+                backgroundColor: location.pathname.startsWith("/manage") ? "rgba(136, 178, 139, 0.1)" : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(136, 178, 139, 0.1)",
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 40,
+                  color: location.pathname.startsWith("/manage") ? "primary.main" : "text.primary",
+                }}
+              >
+                {location.pathname.startsWith("/manage") ? <AdminPanelSettings /> : <AdminPanelSettingsOutlined />}
+              </ListItemIcon>
+              <ListItemText
+                primary="Quản lý"
+                primaryTypographyProps={{
+                  fontSize: 18,
+                  fontWeight: location.pathname.startsWith("/manage") ? 700 : 400,
+                  color: location.pathname.startsWith("/manage") ? "primary.main" : "text.primary",
+                }}
+              />
+              <KeyboardArrowDown 
+                sx={{ 
+                  color: "text.secondary",
+                  transform: Boolean(managerAnchorEl) ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }} 
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
+
+        {/* Manager Dropdown Menu */}
+        <Menu
+          anchorEl={managerAnchorEl}
+          open={Boolean(managerAnchorEl)}
+          onClose={handleManagerClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{
+            elevation: 3,
+            sx: {
+              borderRadius: "16px",
+              minWidth: 240,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              mt: 1,
+            },
+          }}
+        >
+          {managerDropdownItems.map((item) => (
+            <MenuItem
+              key={item.path}
+              onClick={() => handleManagerItemClick(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                py: 1.5,
+                px: 2,
+                borderRadius: "8px",
+                mx: 1,
+                my: 0.5,
+                "&.Mui-selected": {
+                  backgroundColor: "rgba(136, 178, 139, 0.15)",
+                  "&:hover": {
+                    backgroundColor: "rgba(136, 178, 139, 0.25)",
+                  },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: location.pathname === item.path ? "primary.main" : "text.secondary" }}>
+                {item.icon}
+              </ListItemIcon>
+              <Box>
+                <Typography variant="body2" fontWeight={location.pathname === item.path ? 700 : 500}>
+                  {item.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {item.description}
+                </Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
+
+        {/* Admin Dropdown - for admin users */}
+        {isAdmin && (
+          <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={handleAdminClick}
+              sx={{
+                borderRadius: "9999px",
+                py: 1.5,
+                px: 2,
+                backgroundColor: location.pathname.startsWith("/admin") ? "rgba(136, 178, 139, 0.1)" : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(136, 178, 139, 0.1)",
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 40,
+                  color: location.pathname.startsWith("/admin") ? "primary.main" : "text.primary",
+                }}
+              >
+                {location.pathname.startsWith("/admin") ? <AdminPanelSettings /> : <AdminPanelSettingsOutlined />}
+              </ListItemIcon>
+              <ListItemText
+                primary="Admin"
+                primaryTypographyProps={{
+                  fontSize: 18,
+                  fontWeight: location.pathname.startsWith("/admin") ? 700 : 400,
+                  color: location.pathname.startsWith("/admin") ? "primary.main" : "text.primary",
+                }}
+              />
+              <KeyboardArrowDown 
+                sx={{ 
+                  color: "text.secondary",
+                  transform: Boolean(adminAnchorEl) ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }} 
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
+
+        {/* Admin Dropdown Menu */}
+        <Menu
+          anchorEl={adminAnchorEl}
+          open={Boolean(adminAnchorEl)}
+          onClose={handleAdminClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          PaperProps={{
+            elevation: 3,
+            sx: {
+              borderRadius: "16px",
+              minWidth: 240,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              mt: 1,
+            },
+          }}
+        >
+          {adminDropdownItems.map((item) => (
+            <MenuItem
+              key={item.path}
+              onClick={() => handleAdminItemClick(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                py: 1.5,
+                px: 2,
+                borderRadius: "8px",
+                mx: 1,
+                my: 0.5,
+                "&.Mui-selected": {
+                  backgroundColor: "rgba(136, 178, 139, 0.15)",
+                  "&:hover": {
+                    backgroundColor: "rgba(136, 178, 139, 0.25)",
+                  },
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: location.pathname === item.path ? "primary.main" : "text.secondary" }}>
+                {item.icon}
+              </ListItemIcon>
+              <Box>
+                <Typography variant="body2" fontWeight={location.pathname === item.path ? 700 : 500}>
+                  {item.label}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {item.description}
+                </Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
+
         {/* Settings - for authenticated users */}
         {isAuthenticated && (
           <ListItem disablePadding sx={{ mb: 0.5 }}>
@@ -235,6 +497,7 @@ const LeftNav = ({ isMobile = false }) => {
           </ListItem>
         )}
       </List>
+
 
       {/* Create Event Button (for managers) */}
       {isManager && (

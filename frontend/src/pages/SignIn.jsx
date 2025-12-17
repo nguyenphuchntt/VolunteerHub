@@ -112,6 +112,8 @@ const SignIn = () => {
           setError("Tài khoản không tồn tại. Vui lòng kiểm tra lại tên đăng nhập.");
         } else if (serverMessage) {
           setError(serverMessage);
+        } else if (err.message) {
+          setError(err.message);
         } else {
           setError("Đăng nhập thất bại. Vui lòng thử lại sau.");
         }

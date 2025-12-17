@@ -204,7 +204,7 @@ const EventManagement = () => {
               variant="contained"
               size="small"
               startIcon={<Add />}
-              onClick={() => navigate("/manage/events/create")}
+              onClick={() => navigate("/manage/events/new")}
               sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
             >
               Tạo sự kiện
@@ -241,7 +241,7 @@ const EventManagement = () => {
             <Button
               variant="contained"
               startIcon={<Add />}
-              onClick={() => navigate("/manage/events/create")}
+              onClick={() => navigate("/manage/events/new")}
               sx={{ borderRadius: "9999px", textTransform: "none" }}
             >
               Tạo sự kiện
