@@ -68,6 +68,15 @@ public class PostController {
         return ResponseEntity.ok(postsPage);
     }
 
+    @GetMapping("/liked-by/{accountId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<PostReadDTO>> getPostsLikedByAccount(
+            @PathVariable java.util.UUID accountId,
+            Pageable pageable) {
+        Page<PostReadDTO> postsPage = postReadService.getPostsLikedByAccount(accountId, pageable);
+        return ResponseEntity.ok(postsPage);
+    }
+
     @GetMapping("{id}/like-count")
     public ResponseEntity<LikeCountResponse> getPostLikeCount(
             @PathVariable("id") Long postId) {

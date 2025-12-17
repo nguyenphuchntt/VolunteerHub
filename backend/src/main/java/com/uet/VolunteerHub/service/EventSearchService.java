@@ -4,6 +4,7 @@ import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
 import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
+import com.uet.VolunteerHub.entity.EventLike;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.repository.EventLikeRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
@@ -23,10 +24,12 @@ import java.util.UUID;
 @Service
 public class EventSearchService {
     private final EventRepository eventRepository;
+    private final EventLikeRepository eventLikeRepository;
 
     @Autowired
-    public EventSearchService(EventRepository eventRepository) {
+    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository) {
         this.eventRepository = eventRepository;
+        this.eventLikeRepository = eventLikeRepository;
     }
 
     private EventSearchDTO mapToEventSearchDTO (Event event, Account account, UserInfo userInfo) {
@@ -78,6 +81,18 @@ public class EventSearchService {
             return mapToEventSearchDTO(event, account, userInfo);
         });
 
+    }
+
+
+    @Transactional
+    public Page<EventSearchDTO> getEventsLikedByAccount(UUID accountId, Pageable pageable) {
+        Page<EventLike> eventLikes = eventLikeRepository.findAllByAccountId(accountId, pageable);
+        return eventLikes.map(eventLike -> {
+            Event event = eventLike.getEvent();
+            Account account = event.getCreatedBy();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            return mapToEventSearchDTO(event, account, userInfo);
+        });
     }
 
 }

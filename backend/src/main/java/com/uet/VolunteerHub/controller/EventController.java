@@ -59,6 +59,14 @@ public class EventController {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsByAccountId(accountId, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
+    
+    @GetMapping("/liked-by/{accountId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<EventSearchDTO>> getEventsLikedByAccount(@PathVariable UUID accountId,
+                                                                        @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.getEventsLikedByAccount(accountId, pageable);
+        return ResponseEntity.ok(eventSearchDTOPage);
+    }
 
     @PostMapping("/register-event")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")

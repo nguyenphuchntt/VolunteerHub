@@ -6,6 +6,7 @@ import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.EventUser;
 import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.specification.EventUserSpecification;
@@ -70,7 +71,17 @@ public class EventUserSearchService {
 
     @Transactional
     public Page<EventUserSearchDTO> findByAccountId(UUID accountId, Pageable pageable) {
-        Page<EventUser> eventUserPage = eventUserRepository.findByAccountId(accountId, pageable);
+        return findByAccountId(accountId, null, pageable);
+    }
+
+    @Transactional
+    public Page<EventUserSearchDTO> findByAccountId(UUID accountId, EventUserStatus status, Pageable pageable) {
+        Page<EventUser> eventUserPage;
+        if (status != null) {
+            eventUserPage = eventUserRepository.findByAccountIdAndStatus(accountId, status, pageable);
+        } else {
+            eventUserPage = eventUserRepository.findByAccountId(accountId, pageable);
+        }
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
