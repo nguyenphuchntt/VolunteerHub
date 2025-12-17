@@ -3,6 +3,7 @@ package com.uet.VolunteerHub.controller;
 import com.uet.VolunteerHub.dto.*;
 import com.uet.VolunteerHub.dto.Post.CommentCountResponse;
 import com.uet.VolunteerHub.dto.Post.LikeCountResponse;
+import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.CommentService;
 import com.uet.VolunteerHub.service.PostLikeService;
 import com.uet.VolunteerHub.service.PostReadService;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -92,6 +94,13 @@ public class PostController {
         return ResponseEntity.ok(Map.of("isLiked", isNowLiked));
     }
 
+    @PostMapping("{id}/is-liked")
+    public ResponseEntity<Map<String, Boolean>> isPostLiked(@AuthenticationPrincipal Account account,
+                                                             @PathVariable("id") Long postId) {
+        boolean isLiked = postLikeService.isPostLiked(account, postId);
+        return ResponseEntity.ok(Map.of("isLiked", isLiked));
+    }
+
     @GetMapping("{id}/comments")
     public ResponseEntity<Page<CommentReadDTO>> getCommentsByPost(
             @PathVariable("id") Long postId,
@@ -107,6 +116,8 @@ public class PostController {
                 .count(commentService.countCommentsByPost(postId))
                 .build());
     }
+
+
 
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canCreatePost(#postCreateDTO.eventId)")
     @PostMapping

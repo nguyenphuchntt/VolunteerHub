@@ -131,4 +131,10 @@ public class EventController {
         return eventLikeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/{eventId}/liked")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> isEventLikedByUser(@AuthenticationPrincipal Account account, @PathVariable Long eventId) {
+        boolean isLiked = eventLikeService.isEventLikedByUser(account, eventId);
+        return ResponseEntity.ok(isLiked);
+    }
 }
