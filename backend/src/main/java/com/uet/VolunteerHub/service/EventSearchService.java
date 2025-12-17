@@ -6,6 +6,7 @@ import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
+import com.uet.VolunteerHub.repository.EventLikeRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
 import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
@@ -107,6 +108,17 @@ public class EventSearchService {
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
         });
+    }
+
+    @Transactional
+    public Page<EventSearchDTO> findEventsLikedByAccount(UUID accountId, Pageable pageable) {
+        return eventLikeRepository.findAllByAccountId(accountId, pageable)
+                .map(eventLike -> {
+                    Event event = eventLike.getEvent();
+                    Account account = event.getCreatedBy();
+                    UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+                    return mapToEventSearchDTO(event, account, userInfo);
+                });
     }
 
 }
