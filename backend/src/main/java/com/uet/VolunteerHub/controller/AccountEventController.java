@@ -48,7 +48,7 @@ public class AccountEventController {
     @GetMapping("/liked")
     public ResponseEntity<Page<EventSearchDTO>> getLikedEvents(@AuthenticationPrincipal Account account,
                                                                @PageableDefault(size = 10, page = 0) Pageable pageable) {
-        return ResponseEntity.ok(eventSearchService.getEventsLikedByAccount(account.getAccountId(), pageable));
+        return ResponseEntity.ok(eventSearchService.findEventsLikedByAccount(account.getAccountId(), pageable));
     }
 
     @GetMapping("/{eventId}")
