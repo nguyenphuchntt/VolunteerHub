@@ -26,7 +26,7 @@ public class AccountMedia {
     @JoinColumn(name = "account_id", nullable = false, insertable = false, updatable = false)
     private Account account;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "media_id", nullable = false, insertable = false, updatable = false)
     private Media media;
 }

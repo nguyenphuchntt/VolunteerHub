@@ -1,9 +1,13 @@
 package com.uet.VolunteerHub.controller;
 
+import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.dto.EventUser.EventUserRegisterDTO;
 import com.uet.VolunteerHub.dto.EventUser.EventUserSearchDTO;
 import com.uet.VolunteerHub.dto.EventUser.EventUserUpdateDTO;
+
 import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.enums.EventUserStatus;
+import com.uet.VolunteerHub.service.EventSearchService;
 import com.uet.VolunteerHub.service.EventUserSearchService;
 import com.uet.VolunteerHub.service.EventUserWriteService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,19 +26,29 @@ public class AccountEventController {
 
     private final EventUserSearchService eventUserSearchService;
     private final EventUserWriteService eventUserWriteService;
+    private final EventSearchService eventSearchService;
 
     @Autowired
     public AccountEventController(EventUserSearchService eventUserSearchService,
-                                  EventUserWriteService eventUserWriteService) {
+                                  EventUserWriteService eventUserWriteService,
+                                  EventSearchService eventSearchService) {
         this.eventUserSearchService = eventUserSearchService;
         this.eventUserWriteService = eventUserWriteService;
+        this.eventSearchService = eventSearchService;
     }
 
     @GetMapping
     public ResponseEntity<Page<EventUserSearchDTO>> getAllEvents(@AuthenticationPrincipal Account account,
+                                                                 @RequestParam(required = false) EventUserStatus status,
                                                                  @PageableDefault(size = 10, page = 0) Pageable pageable) {
-        Page<EventUserSearchDTO> eventUserSearchDTOPage = eventUserSearchService.findByAccountId(account.getAccountId(), pageable);
+        Page<EventUserSearchDTO> eventUserSearchDTOPage = eventUserSearchService.findByAccountId(account.getAccountId(), status, pageable);
         return ResponseEntity.ok(eventUserSearchDTOPage);
+    }
+
+    @GetMapping("/liked")
+    public ResponseEntity<Page<EventSearchDTO>> getLikedEvents(@AuthenticationPrincipal Account account,
+                                                               @PageableDefault(size = 10, page = 0) Pageable pageable) {
+        return ResponseEntity.ok(eventSearchService.getEventsLikedByAccount(account.getAccountId(), pageable));
     }
 
     @GetMapping("/{eventId}")

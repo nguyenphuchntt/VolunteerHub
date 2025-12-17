@@ -2,7 +2,7 @@ CREATE DATABASE IF NOT EXISTS volunteer_hub CHARACTER SET utf8mb4 COLLATE utf8mb
 USE volunteer_hub;
 
 CREATE TABLE IF NOT EXISTS account (
-    account_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
     username VARCHAR(50) NOT NULL,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS account (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS user_info (
-    account_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
     first_name VARCHAR(255),
     last_name VARCHAR(255),
     date_of_birth DATE,
@@ -28,14 +28,14 @@ CREATE TABLE IF NOT EXISTS user_info (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS media (
-    id BINARY(16) NOT NULL,
+    id VARCHAR(36) NOT NULL,
     url TEXT NOT NULL,
     file_path TEXT NOT NULL,
     file_type VARCHAR(255),
     mime_type VARCHAR(255),
     size_bytes INT,
     uploaded_at DATETIME(6),
-    uploaded_by BINARY(16),
+    uploaded_by VARCHAR(36),
     PRIMARY KEY (id),
     CONSTRAINT fk_media_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES account(account_id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
@@ -52,18 +52,18 @@ CREATE TABLE IF NOT EXISTS event (
     end_at DATETIME(6),
     attendee_count INT NOT NULL DEFAULT 0,
     like_count INT NOT NULL DEFAULT 0,
-    created_by_account_id BINARY(16),
+    created_by_account_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (event_id),
     CONSTRAINT fk_event_created_by FOREIGN KEY (created_by_account_id) REFERENCES account(account_id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS event_user (
-    account_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
     event_id BIGINT NOT NULL,
     registered_at DATETIME(6),
     start_at DATETIME(6),
     end_at DATETIME(6),
-    status ENUM('APPROVED', 'REJECTED', 'PENDING', 'FINISHED') NOT NULL DEFAULT 'PENDING',
+    status ENUM('APPROVED', 'REJECTED', 'PENDING', 'FINISHED', 'UNFINISHED') NOT NULL DEFAULT 'PENDING',
     event_user_role ENUM('ATTENDEE', 'MANAGER') NOT NULL DEFAULT 'ATTENDEE',
     PRIMARY KEY (account_id, event_id),
     CONSTRAINT fk_event_user_account FOREIGN KEY (account_id) REFERENCES account(account_id) ON DELETE CASCADE,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS event_user (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS event_like (
-    account_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
     event_id BIGINT NOT NULL,
     create_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (account_id, event_id),
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS post (
     status ENUM('CREATED', 'HIDDEN', 'DELETED') NOT NULL DEFAULT 'CREATED',
     create_at DATETIME(6) NOT NULL,
     event_id BIGINT,
-    created_by_account_id BINARY(16) NOT NULL,
+    created_by_account_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (post_id),
     CONSTRAINT fk_post_event FOREIGN KEY (event_id) REFERENCES event(event_id) ON DELETE SET NULL,
     CONSTRAINT fk_post_created_by FOREIGN KEY (created_by_account_id) REFERENCES account(account_id) ON DELETE CASCADE
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS comment (
     content TEXT NOT NULL,
     create_at DATETIME(6) NOT NULL,
     post_id BIGINT NOT NULL,
-    created_by_account_id BINARY(16) NOT NULL,
+    created_by_account_id VARCHAR(36) NOT NULL,
     reply_to BIGINT,
     PRIMARY KEY (comment_id),
     CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES post(post_id) ON DELETE CASCADE,
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS comment (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS post_like (
-    account_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
     post_id BIGINT NOT NULL,
     create_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
     PRIMARY KEY (post_id, account_id),
@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS notification (
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     create_at DATETIME(6) NOT NULL,
-    sender_account_id BINARY(16) NOT NULL,
-    receiver_account_id BINARY(16) NOT NULL,
+    sender_account_id VARCHAR(36) NOT NULL,
+    receiver_account_id VARCHAR(36) NOT NULL,
     destination_type VARCHAR(255),
     destination_id VARCHAR(255),
     PRIMARY KEY (notification_id),
@@ -131,16 +131,16 @@ CREATE TABLE IF NOT EXISTS notification (
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS follow_user (
-    account_id BINARY(16) NOT NULL,
-    followed_by_account_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
+    followed_by_account_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (account_id, followed_by_account_id),
     CONSTRAINT fk_follow_user_account FOREIGN KEY (account_id) REFERENCES account(account_id) ON DELETE CASCADE,
     CONSTRAINT fk_follow_user_followed_by FOREIGN KEY (followed_by_account_id) REFERENCES account(account_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS account_media (
-    account_id BINARY(16) NOT NULL,
-    media_id BINARY(16) NOT NULL,
+    account_id VARCHAR(36) NOT NULL,
+    media_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (account_id, media_id),
     CONSTRAINT fk_account_media_account FOREIGN KEY (account_id) REFERENCES account(account_id) ON DELETE CASCADE,
     CONSTRAINT fk_account_media_media FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS account_media (
 
 CREATE TABLE IF NOT EXISTS event_media (
     event_id BIGINT NOT NULL,
-    media_id BINARY(16) NOT NULL,
+    media_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (event_id, media_id),
     CONSTRAINT fk_event_media_event FOREIGN KEY (event_id) REFERENCES event(event_id) ON DELETE CASCADE,
     CONSTRAINT fk_event_media_media FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS event_media (
 
 CREATE TABLE IF NOT EXISTS post_media (
     post_id BIGINT NOT NULL,
-    media_id BINARY(16) NOT NULL,
+    media_id VARCHAR(36) NOT NULL,
     PRIMARY KEY (post_id, media_id),
     CONSTRAINT fk_post_media_post FOREIGN KEY (post_id) REFERENCES post(post_id) ON DELETE CASCADE,
     CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
@@ -174,3 +174,8 @@ CREATE INDEX idx_comment_post_id ON comment(post_id);
 CREATE INDEX idx_comment_created_by ON comment(created_by_account_id);
 CREATE INDEX idx_notification_receiver_unread ON notification(receiver_account_id, is_read);
 CREATE INDEX idx_media_uploaded_by ON media(uploaded_by);
+CREATE INDEX idx_media_file_type ON media(file_type);
+CREATE INDEX idx_media_uploaded_at ON media(uploaded_at);
+CREATE INDEX idx_account_media_media_id ON account_media(media_id);
+CREATE INDEX idx_event_media_media_id ON event_media(media_id);
+CREATE INDEX idx_post_media_media_id ON post_media(media_id);

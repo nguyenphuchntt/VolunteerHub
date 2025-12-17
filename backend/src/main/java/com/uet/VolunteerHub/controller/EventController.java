@@ -41,22 +41,41 @@ public class EventController {
     }
 
     @GetMapping("search")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventSearchDTO>> searchEvents(EventSearchCriteriaDTO criteria,
                                                              @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventBySpecification(criteria, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    @GetMapping("search-public")
+    public ResponseEntity<Page<EventSearchDTO>> searchPublicEvents(EventSearchCriteriaDTO criteria,
+                                                                   @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findPublicEventBySpecification(criteria, pageable);
+        return ResponseEntity.ok(eventSearchDTOPage);
+    }
+
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId) {
-        Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId);
+    public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId, @AuthenticationPrincipal Account account) {
+        UUID accountId = (account != null) ? account.getAccountId() : null;
+        Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, accountId);
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/accounts/{accountId}")
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and #accountId == #account.accountId)")
     public ResponseEntity<Page<EventSearchDTO>> getEventsByAccountId(@PathVariable UUID accountId,
+                                                                     @AuthenticationPrincipal Account account,
                                                                      @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsByAccountId(accountId, pageable);
+        return ResponseEntity.ok(eventSearchDTOPage);
+    }
+    
+    @GetMapping("/liked-by/{accountId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<EventSearchDTO>> getEventsLikedByAccount(@PathVariable UUID accountId,
+                                                                        @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsLikedByAccount(accountId, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
