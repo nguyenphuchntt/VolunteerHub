@@ -22,7 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-public class WebSecurityConfig   {
+public class WebSecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -51,7 +51,8 @@ public class WebSecurityConfig   {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+            throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
@@ -60,19 +61,17 @@ public class WebSecurityConfig   {
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry ->
-                        authorizationManagerRequestMatcherRegistry
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(
+                        authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
                                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                                 .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "ADMIN")
                                 .requestMatchers("/api/posts/**").permitAll()
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/media/download/**").permitAll()
                                 .requestMatchers("/api-docs/**").permitAll()
-                                .anyRequest().authenticated()
-                )
+                                .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

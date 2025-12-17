@@ -4,11 +4,11 @@ import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
 import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
-import com.uet.VolunteerHub.entity.EventLike;
 import com.uet.VolunteerHub.entity.UserInfo;
-import com.uet.VolunteerHub.repository.EventLikeRepository;
+import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
+import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +24,10 @@ import java.util.UUID;
 @Service
 public class EventSearchService {
     private final EventRepository eventRepository;
-    private final EventLikeRepository eventLikeRepository;
 
     @Autowired
-    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository) {
+    public EventSearchService(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
-        this.eventLikeRepository = eventLikeRepository;
     }
 
     private EventSearchDTO mapToEventSearchDTO (Event event, Account account, UserInfo userInfo) {
@@ -62,6 +60,21 @@ public class EventSearchService {
     }
 
     @Transactional
+    public Optional<EventSearchDTO> findByEventID(Long eventID, UUID accountId) {
+        Optional<Event> event = eventRepository.findById(eventID);
+        if (event.isPresent() && !event.get().getCreatedBy().getAccountId().equals(accountId)) {
+            if (event.get().getStatus() != null && (event.get().getStatus().equals(EventStatus.PENDING) || event.get().getStatus().equals(EventStatus.CANCELLED))) {
+                return Optional.empty();
+            }
+        }
+        return event.map(value -> {
+            Account account = value.getCreatedBy();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            return mapToEventSearchDTO(value, account, userInfo);
+        });
+    }
+
+    @Transactional
     public Page<EventSearchDTO> findEventBySpecification(EventSearchCriteriaDTO criteria, Pageable pageable) {
         Specification<Event> spec = EventSpecification.fromCriteria(criteria);
         Page<Event> eventPage = eventRepository.findAll(spec, pageable);
@@ -83,12 +96,11 @@ public class EventSearchService {
 
     }
 
-
     @Transactional
-    public Page<EventSearchDTO> getEventsLikedByAccount(UUID accountId, Pageable pageable) {
-        Page<EventLike> eventLikes = eventLikeRepository.findAllByAccountId(accountId, pageable);
-        return eventLikes.map(eventLike -> {
-            Event event = eventLike.getEvent();
+    public Page<EventSearchDTO> findPublicEventBySpecification(EventSearchCriteriaDTO criteria, Pageable pageable) {
+        Specification<Event> spec = PublicEventSpecification.fromCriteria(criteria);
+        Page<Event> eventPage = eventRepository.findAll(spec, pageable);
+        return eventPage.map(event -> {
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
