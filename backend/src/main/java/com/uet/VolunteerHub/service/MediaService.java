@@ -85,7 +85,8 @@ public class MediaService {
     }
 
     @Transactional
-    public MediaUploadResponse uploadAccountMedia(MultipartFile file, UUID accountId, Account uploader) {
+    public MediaUploadResponse uploadAccountMedia(MultipartFile file, Account uploader) {
+        UUID accountId = uploader.getAccountId();
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found with id: " + accountId));
 

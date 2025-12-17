@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +22,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/media")
+@PreAuthorize("isAuthenticated()")
 public class MediaController {
 
     private final MediaService mediaService;
@@ -40,16 +42,16 @@ public class MediaController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/upload/account/{accountId}")
+    @PostMapping("/upload/account")
     public ResponseEntity<MediaUploadResponse> uploadAccountMedia(
             @RequestParam("file") MultipartFile file,
-            @PathVariable UUID accountId,
             @AuthenticationPrincipal Account account) {
-        MediaUploadResponse response = mediaService.uploadAccountMedia(file, accountId, account);
+        MediaUploadResponse response = mediaService.uploadAccountMedia(file, account);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/upload/event/{eventId}")
+    @PreAuthorize("@eventSecurityService.isCreatorOfEvent(#eventId)")
     public ResponseEntity<MediaUploadResponse> uploadEventMedia(
             @RequestParam("file") MultipartFile file,
             @PathVariable Long eventId,
@@ -59,6 +61,7 @@ public class MediaController {
     }
 
     @PostMapping("/upload/post/{postId}")
+    @PreAuthorize("@postSecurityService.isOwnerOfPost(#postId)")
     public ResponseEntity<MediaUploadResponse> uploadPostMedia(
             @RequestParam("file") MultipartFile file,
             @PathVariable Long postId,
