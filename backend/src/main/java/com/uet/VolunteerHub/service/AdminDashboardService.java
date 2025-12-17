@@ -1,0 +1,109 @@
+package com.uet.VolunteerHub.service;
+
+import com.uet.VolunteerHub.dto.AdminDashboard.DashboardOverviewDTO;
+import com.uet.VolunteerHub.enums.AccountStatus;
+import com.uet.VolunteerHub.enums.EventStatus;
+import com.uet.VolunteerHub.enums.UserRole;
+import com.uet.VolunteerHub.repository.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class AdminDashboardService {
+
+    private final AccountRepository accountRepository;
+    private final EventRepository eventRepository;
+    private final CommentRepository commentRepository;
+    private final PostLikeRepository postLikeRepository;
+    private final EventLikeRepository eventLikeRepository;
+    private final PostRepository postRepository;
+
+    public DashboardOverviewDTO getDashboardOverview() {
+        // Users Stats
+        long totalUsers = accountRepository.count();
+        long newUsers = accountRepository.countByCreateAtBetween(
+                OffsetDateTime.now().minusDays(30), OffsetDateTime.now());
+        long activeUsers = accountRepository.countByAccountStatus(AccountStatus.ACTIVE);
+        long bannedUsers = accountRepository.countByAccountStatus(AccountStatus.BANNED);
+        long inactiveUsers = accountRepository.countByAccountStatus(AccountStatus.INACTIVE);
+
+        Map<String, Long> userByRole = new HashMap<>();
+        userByRole.put("ADMIN", accountRepository.countByRole(UserRole.ADMIN));
+        userByRole.put("MANAGER", accountRepository.countByRole(UserRole.MANAGER));
+        userByRole.put("USER", accountRepository.countByRole(UserRole.USER));
+
+        DashboardOverviewDTO.UserStats userStats = DashboardOverviewDTO.UserStats.builder()
+                .summary(DashboardOverviewDTO.UserSummary.builder()
+                        .total(totalUsers)
+                        .newThisMonth(newUsers)
+                        .active(activeUsers)
+                        .banned(bannedUsers)
+                        .inactive(inactiveUsers)
+                        .build())
+                .byRole(userByRole)
+                .build();
+
+        // Events Stats
+        long totalEvents = eventRepository.count();
+        long pendingEvents = eventRepository.countByStatus(EventStatus.PENDING);
+        long ongoingEvents = eventRepository.countByStatus(EventStatus.STARTED); // Assuming STARTED is ongoing
+        long finishedEvents = eventRepository.countByStatus(EventStatus.FINISHED);
+        long cancelledEvents = eventRepository.countByStatus(EventStatus.CANCELLED);
+        long scheduledEvents = eventRepository.countByStatus(EventStatus.SCHEDULED);
+
+        Long totalAttendeesLong = eventRepository.sumAttendeeCount();
+        long totalAttendees = totalAttendeesLong != null ? totalAttendeesLong : 0;
+        double completionRate = totalEvents > 0 ? (double) finishedEvents / totalEvents * 100 : 0;
+
+        Map<String, Long> eventByCategory = new HashMap<>();
+        List<Object[]> categoryCounts = eventRepository.countEventsByCategory();
+        for (Object[] row : categoryCounts) {
+            String category = (String) row[0];
+            Long count = (Long) row[1];
+            if (category != null) {
+                eventByCategory.put(category, count);
+            }
+        }
+
+        DashboardOverviewDTO.EventStats eventStats = DashboardOverviewDTO.EventStats.builder()
+                .summary(DashboardOverviewDTO.EventSummary.builder()
+                        .total(totalEvents)
+                        .pending(pendingEvents)
+                        .ongoing(ongoingEvents + scheduledEvents) // Active = Started + Scheduled
+                        .finished(finishedEvents)
+                        .cancelled(cancelledEvents)
+                        .build())
+                .performance(DashboardOverviewDTO.Performance.builder()
+                        .totalAttendees(totalAttendees)
+                        .completionRate(completionRate)
+                        .avgAttendeesPerEvent(totalEvents > 0 ? (double) totalAttendees / totalEvents : 0)
+                        .build())
+                .byCategory(eventByCategory)
+                .build();
+
+        // Engagement Stats
+        long totalPosts = postRepository.count();
+        long totalComments = commentRepository.count();
+        long totalLikes = postLikeRepository.count() + eventLikeRepository.count();
+
+        DashboardOverviewDTO.EngagementStats engagementStats = DashboardOverviewDTO.EngagementStats.builder()
+                .totalPosts(totalPosts)
+                .totalComments(totalComments)
+                .totalLikes(totalLikes)
+                .build();
+
+        return DashboardOverviewDTO.builder()
+                .users(userStats)
+                .events(eventStats)
+                .engagement(engagementStats)
+                .build();
+    }
+}

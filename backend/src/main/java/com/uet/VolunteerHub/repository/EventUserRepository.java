@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -49,4 +50,6 @@ public interface EventUserRepository extends JpaRepository<EventUser, EventUserI
     @EntityGraph(attributePaths = {"account", "account.userInfo", "event"})
     List<EventUser> findByEventId(Long eventId);
 
+    @Query("SELECT eu.account, COUNT(eu) as count FROM EventUser eu GROUP BY eu.account ORDER BY count DESC")
+    List<Object[]> findTopActiveUsers(Pageable pageable);
 }
