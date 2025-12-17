@@ -81,6 +81,11 @@ public class CommentService {
         return commentMapper.toCommentReadDTO(savedComment);
     }
 
+    @Transactional(readOnly = true)
+    public Long countCommentsByPost(Long postId) {
+        return commentRepository.countByPost_PostId(postId);
+    }
+
     @Transactional
     public boolean deleteComment(Long commentId) {
         if (commentRepository.existsById(commentId)) {

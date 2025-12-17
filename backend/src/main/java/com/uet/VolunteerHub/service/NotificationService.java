@@ -17,6 +17,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Log
@@ -41,7 +42,8 @@ public class NotificationService {
                 .and(notificationSpecification.hasSenderId(senderAccountId))
                 .and(notificationSpecification.hasReceiverId(receiverAccountId))
                 .and(notificationSpecification.hasType(type))
-                .and(notificationSpecification.isRead(isRead));
+                .and(notificationSpecification.isRead(isRead))
+                .and(notificationSpecification.isDeleted(false));
         Page<Notification> notificationPage = notificationRepository.findAll(spec, pageable);
         return notificationPage.map(notificationMapper::toDTO);
     }
@@ -71,12 +73,24 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public Long getUnreadNotificationCount(UUID receiverId) {
-        return notificationRepository.countByReceiverAccount_AccountIdAndIsReadFalse(receiverId);
+        return notificationRepository.countByReceiverAccount_AccountIdAndIsReadFalseAndIsDeletedFalse(receiverId);
     }
 
     @Transactional
     public void markAllAsRead(UUID receiverId) {
         notificationRepository.markAllAsReadByReceiverId(receiverId);
+    }
+
+    @Transactional
+    public boolean deleteNotification(Long notificationId) {
+        Optional<Notification> notificationOptional = notificationRepository.findById(notificationId);
+        if (notificationOptional.isEmpty()) {
+            return false;
+        }
+        Notification notification = notificationOptional.get();
+        notification.setIsDeleted(true);
+        notificationRepository.save(notification);
+        return true;
     }
 
     @Transactional
@@ -90,6 +104,7 @@ public class NotificationService {
         notification.setNotificationType(type);
         notification.setContent(content);
         notification.setIsRead(false);
+        notification.setIsDeleted(false);
         notificationRepository.save(notification);
     }
 

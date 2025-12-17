@@ -24,10 +24,12 @@ import java.util.UUID;
 @Service
 public class EventSearchService {
     private final EventRepository eventRepository;
+    private final EventLikeRepository eventLikeRepository;
 
     @Autowired
-    public EventSearchService(EventRepository eventRepository) {
+    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository) {
         this.eventRepository = eventRepository;
+        this.eventLikeRepository = eventLikeRepository;
     }
 
     private EventSearchDTO mapToEventSearchDTO (Event event, Account account, UserInfo userInfo) {

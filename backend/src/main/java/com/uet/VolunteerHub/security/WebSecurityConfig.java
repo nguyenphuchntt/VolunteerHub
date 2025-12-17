@@ -66,6 +66,7 @@ public class WebSecurityConfig {
                         authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
                                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                                 .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "ADMIN")
+                                .requestMatchers("/api/posts/**").permitAll()
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/api/events/search-public").permitAll()

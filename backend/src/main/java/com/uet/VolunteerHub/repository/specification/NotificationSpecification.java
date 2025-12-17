@@ -33,4 +33,9 @@ public class NotificationSpecification {
         return (root, query, cb) ->
                 isRead == null ? null : cb.equal(root.get("isRead"), isRead);
     }
+
+    public Specification<Notification> isDeleted(Boolean isDeleted) {
+        return (root, query, cb) ->
+                isDeleted == null ? null : cb.equal(root.get("isDeleted"), isDeleted);
+    }
 }

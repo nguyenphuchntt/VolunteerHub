@@ -13,10 +13,10 @@ import java.util.UUID;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long>, JpaSpecificationExecutor<Notification> {
 
-    long countByReceiverAccount_AccountIdAndIsReadFalse(UUID receiverId);
+    long countByReceiverAccount_AccountIdAndIsReadFalseAndIsDeletedFalse(UUID receiverId);
 
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true " +
-            "WHERE n.receiverAccount.accountId = :receiverId AND n.isRead = false")
+            "WHERE n.receiverAccount.accountId = :receiverId AND n.isRead = false AND n.isDeleted = false")
     void markAllAsReadByReceiverId(@Param("receiverId") UUID receiverId);
 }
