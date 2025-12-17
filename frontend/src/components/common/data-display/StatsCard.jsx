@@ -12,6 +12,8 @@ const StatsCard = ({
   trend,
   trendValue,
   color = "primary",
+  sx,
+  ...other
 }) => {
   const colorMap = {
     primary: { main: "#88b28b", light: "rgba(136, 178, 139, 0.1)" },
@@ -48,7 +50,9 @@ const StatsCard = ({
           boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
           transform: "translateY(-2px)",
         },
+        ...sx,
       }}
+      {...other}
     >
       <CardContent sx={{ p: 3 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>

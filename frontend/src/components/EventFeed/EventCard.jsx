@@ -120,6 +120,19 @@ const EventCard = ({ event }) => {
   const statusConfig = getStatusConfig(event.status);
 
 
+  // Participation Status Config
+  const getParticipationConfig = (status) => {
+    const configs = {
+      APPROVED: { label: "Đã tham gia", bg: "#e8f5e9", color: "#2e7d32" },
+      PENDING: { label: "Chờ duyệt", bg: "#fff3e0", color: "#ef6c00" },
+      REJECTED: { label: "Bị từ chối", bg: "#ffebee", color: "#c62828" },
+      FINISHED: { label: "Đã hoàn thành", bg: "#f3e5f5", color: "#6a1b9a" },
+    };
+    return configs[status?.toUpperCase()] || null;
+  };
+
+  const participationConfig = getParticipationConfig(event.participationStatus);
+
   return (
     <Card
       onClick={handleCardClick}
@@ -176,16 +189,31 @@ const EventCard = ({ event }) => {
             justifyContent: "space-between",
           }}
         >
-          <Chip
-            label={statusConfig.label}
-            size="small"
-            sx={{
-              backgroundColor: statusConfig.bg,
-              color: statusConfig.color,
-              fontWeight: 600,
-              fontSize: "11px",
-            }}
-          />
+          <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Chip
+              label={statusConfig.label}
+              size="small"
+              sx={{
+                backgroundColor: statusConfig.bg,
+                color: statusConfig.color,
+                fontWeight: 600,
+                fontSize: "11px",
+              }}
+            />
+            {participationConfig && (
+              <Chip
+                label={participationConfig.label}
+                size="small"
+                sx={{
+                  backgroundColor: participationConfig.bg,
+                  color: participationConfig.color,
+                  fontWeight: 700,
+                  fontSize: "11px",
+                  border: `1px solid ${participationConfig.color}40`
+                }}
+              />
+            )}
+          </Box>
 
           {event.category && (
             <Chip
@@ -202,6 +230,7 @@ const EventCard = ({ event }) => {
       </Box>
 
       <CardContent sx={{ p: 2.5 }}>
+
         {/* Title */}
         <Typography
           variant="h6"

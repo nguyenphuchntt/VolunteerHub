@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
+import ConfirmJoinDialog from "../components/events/ConfirmJoinDialog";
 import WritePost from "../components/SocialFeed/WritePost";
 import PostCard from "../components/SocialFeed/PostCard";
-import { ThreeColumnLayout } from "../components/common";
+import { ThreeColumnLayout, ConfirmDialog } from "../components/common";
 import { eventService, myEventsService, postService, eventUserService } from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -17,6 +18,7 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import {
   Forum,
@@ -41,6 +43,10 @@ const EventDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [registering, setRegistering] = useState(false);
+  const [confirmJoinOpen, setConfirmJoinOpen] = useState(false);
+  const [confirmUnregisterOpen, setConfirmUnregisterOpen] = useState(false);
+  const [participationStatus, setParticipationStatus] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   // Fetch event data
   const fetchEvent = useCallback(async () => {
@@ -85,30 +91,79 @@ const EventDetail = () => {
     }
   }, [eventId, isManager]);
 
+  // Fetch participation status for current user
+  const fetchParticipationStatus = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const data = await myEventsService.getMyEvent(eventId);
+      if (data && data.status) {
+        setParticipationStatus(data.status);
+      } else {
+        setParticipationStatus(null);
+      }
+    } catch (err) {
+      if (err.response?.status !== 404) {
+         console.error("Failed to fetch participation status:", err);
+      }
+      setParticipationStatus(null);
+    }
+  }, [eventId, isAuthenticated]);
+
   useEffect(() => {
     fetchEvent();
     fetchPosts();
     fetchParticipants();
-  }, [fetchEvent, fetchPosts, fetchParticipants]);
+    fetchParticipationStatus();
+  }, [fetchEvent, fetchPosts, fetchParticipants, fetchParticipationStatus]);
 
 
-  // Handle event registration
-  const handleRegister = async () => {
+  // Handle register click - open dialog
+  const handleRegisterClick = () => {
     if (!isAuthenticated) {
       navigate("/signin", { state: { from: { pathname: `/events/${eventId}` } } });
       return;
     }
-    
+    setConfirmJoinOpen(true);
+  };
+
+  // Handle confirm register
+  const handleConfirmRegister = async () => {
     setRegistering(true);
     try {
       await myEventsService.registerForEvent(eventId, {});
-      alert("Đăng ký thành công!");
+      setConfirmJoinOpen(false);
+      setSnackbar({ open: true, message: "Đăng ký thành công!", severity: "success" });
+      fetchParticipationStatus();
       fetchParticipants();
     } catch (err) {
       console.error("Registration failed:", err);
-      alert(err.response?.data?.message || "Đăng ký thất bại.");
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Đăng ký thất bại.", 
+        severity: "error" 
+      });
+      setConfirmJoinOpen(false);
     } finally {
       setRegistering(false);
+    }
+  };
+
+  // Handle unregister
+  const handleUnregister = async () => {
+    try {
+      await myEventsService.unregisterFromEvent(eventId);
+      setSnackbar({ open: true, message: "Đã hủy tham gia sự kiện.", severity: "success" });
+      setParticipationStatus(null);
+      fetchParticipants();
+    } catch (err) {
+      console.error("Unregister failed:", err);
+      setSnackbar({ 
+        open: true, 
+        message: err.response?.data?.message || "Không thể hủy tham gia.", 
+        severity: "error" 
+      });
+    } finally {
+      setConfirmUnregisterOpen(false);
     }
   };
 
@@ -124,6 +179,19 @@ const EventDetail = () => {
       minute: "2-digit",
     });
   };
+
+  // Status Chip config
+  const getParticipationConfig = (status) => {
+    const configs = {
+      APPROVED: { label: "Đã tham gia", bg: "#e8f5e9", color: "#2e7d32" },
+      PENDING: { label: "Chờ duyệt", bg: "#fff3e0", color: "#f57c00" },
+      REJECTED: { label: "Bị từ chối", bg: "#ffebee", color: "#c62828" },
+      FINISHED: { label: "Đã hoàn thành", bg: "#f3e5f5", color: "#7b1fa2" },
+    };
+    return configs[status] || null;
+  };
+  
+  const participationConfig = getParticipationConfig(participationStatus);
 
   // Loading state
   if (loading) {
@@ -219,17 +287,105 @@ const EventDetail = () => {
           {statusDisplay && <Chip label={statusDisplay} size="small" variant="outlined" />}
         </Box>
         
-        <Box sx={{ mt: 2, display: "flex", gap: 1 }}>
-          <Button 
-            variant="contained" 
-            fullWidth 
-            onClick={handleRegister}
-            disabled={registering}
-            sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
-          >
-            {registering ? <CircularProgress size={20} /> : "Đăng ký tham gia"}
-          </Button>
+        {/* Participation Status or Register Button */}
+        <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+          {participationStatus ? (
+             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+               <Box sx={{ 
+                 p: 2, 
+                 borderRadius: "12px", 
+                 backgroundColor: participationConfig?.bg || "grey.100",
+                 border: "1px solid",
+                 borderColor: participationConfig?.color ? `${participationConfig.color}40` : "grey.300",
+                 display: "flex",
+                 alignItems: "center",
+                 justifyContent: "space-between",
+                 gap: 2
+               }}>
+                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                   <Chip 
+                     label={participationConfig?.label || participationStatus} 
+                     sx={{ 
+                       fontWeight: 700, 
+                       backgroundColor: participationConfig?.color, 
+                       color: "white" 
+                     }} 
+                   />
+                   <Typography variant="body2" fontWeight={500} sx={{ color: participationConfig?.color }}>
+                     {participationStatus === "PENDING" 
+                       ? "Đang chờ duyệt."
+                       : participationStatus === "APPROVED"
+                       ? "Bạn đã tham gia sự kiện này."
+                       : ""}
+                   </Typography>
+                 </Box>
+                 
+                 {(participationStatus === "PENDING" || participationStatus === "APPROVED") && 
+                 event.status !== "FINISHED" && 
+                 event.status !== "CANCELLED" && (
+                   <Button 
+                     size="small" 
+                     color="error"
+                     sx={{ textTransform: "none", minWidth: "auto" }}
+                     onClick={() => setConfirmUnregisterOpen(true)}
+                   >
+                     Hủy tham gia
+                   </Button>
+                 )}
+               </Box>
+             </Box>
+          ) : (
+            <Button 
+              variant="contained" 
+              fullWidth 
+              onClick={handleRegisterClick}
+              disabled={registering || event.status === "FINISHED" || event.status === "CANCELLED"}
+              sx={{ 
+                borderRadius: "9999px", 
+                textTransform: "none", 
+                fontWeight: 600,
+                height: 48,
+                fontSize: 16
+              }}
+            >
+              Đăng ký tham gia
+            </Button>
+          )}
         </Box>
+        
+        {/* Confirm Dialogs */}
+        <ConfirmJoinDialog
+          open={confirmJoinOpen}
+          onClose={() => setConfirmJoinOpen(false)}
+          onConfirm={handleConfirmRegister}
+          event={event}
+          loading={registering}
+        />
+
+        <ConfirmDialog
+          open={confirmUnregisterOpen}
+          onClose={() => setConfirmUnregisterOpen(false)}
+          onConfirm={handleUnregister}
+          title="Hủy tham gia?"
+          message={`Bạn có chắc chắn muốn hủy tham gia sự kiện "${event.title}" không?`}
+          confirmLabel="Hủy tham gia"
+          variant="danger"
+        />
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <Alert 
+            onClose={() => setSnackbar({ ...snackbar, open: false })} 
+            severity={snackbar.severity}
+            sx={{ width: "100%", fontWeight: 500, borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
 
       {/* Tabs */}

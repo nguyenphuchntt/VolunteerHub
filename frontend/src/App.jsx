@@ -10,6 +10,9 @@ import EventDetail from "./pages/EventDetail";
 // Volunteer Pages
 import { VolunteerDashboard, Notifications } from "./pages/volunteer";
 
+// Settings Pages
+import { Settings, ChangePassword, ProfileSettings } from "./pages/settings";
+
 // Manager Pages
 import {
   ManagerDashboard,
@@ -50,14 +53,26 @@ function App() {
               <Notifications />
             </ProtectedRoute>
           } />
-          <Route path="/my-events" element={
-            <ProtectedRoute>
-              <VolunteerDashboard />
-            </ProtectedRoute>
-          } />
           <Route path="/profiles/:username" element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          } />
+
+          {/* Settings Routes */}
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings/profile" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings/change-password" element={
+            <ProtectedRoute>
+              <Settings />
             </ProtectedRoute>
           } />
 

@@ -220,11 +220,11 @@ const Profile = () => {
               </Typography>
             </Box>
             <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Typography variant="body2" fontWeight={700}>
-                {profileUser.role || "USER"}
-              </Typography>
               <Typography variant="body2" color="text.secondary">
                 vai trò
+              </Typography>
+              <Typography variant="body2" fontWeight={700}>
+                {profileUser.role || "USER"}
               </Typography>
             </Box>
           </Box>

@@ -42,7 +42,7 @@ const NAV_WIDTH = 280;
  * X-style Left Navigation component
  * Now uses AuthContext directly for user and role info
  */
-const LeftNav = () => {
+const LeftNav = ({ isMobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
@@ -50,16 +50,16 @@ const LeftNav = () => {
   // Get user and auth state from context
   const { user, isAuthenticated, isAdmin, isManager, logout } = useAuth();
 
+  // Get display name from API format
+  const displayName = user?.firstName && user?.lastName 
+    ? `${user.firstName} ${user.lastName}` 
+    : user?.username || "Người dùng";
+
   const isActive = (path) => {
     if (path === "/explore") return location.pathname === "/explore" || location.pathname.startsWith("/events/");
     return location.pathname.startsWith(path);
   };
 
-
-  // Get display name from API format
-  const displayName = user?.firstName && user?.lastName 
-    ? `${user.firstName} ${user.lastName}` 
-    : user?.username || "Người dùng";
 
   // Determine role string for display
   const getRoleForDisplay = () => {
@@ -92,13 +92,6 @@ const LeftNav = () => {
       activeIcon: <Notifications />,
       show: isAuthenticated,
       badge: 3,
-    },
-    {
-      label: "Sự kiện của tôi",
-      path: "/my-events",
-      icon: <EventNoteOutlined />,
-      activeIcon: <EventNote />,
-      show: isAuthenticated,
     },
     {
       label: "Hồ sơ",
@@ -140,11 +133,11 @@ const LeftNav = () => {
   return (
     <Box
       sx={{
-        width: NAV_WIDTH,
-        height: "100vh",
-        position: "sticky",
+        width: isMobile ? "100%" : NAV_WIDTH,
+        height: isMobile ? "100%" : "100vh",
+        position: isMobile ? "static" : "sticky",
         top: 0,
-        borderRight: "1px solid",
+        borderRight: isMobile ? "none" : "1px solid",
         borderColor: "grey.200",
         display: "flex",
         flexDirection: "column",
