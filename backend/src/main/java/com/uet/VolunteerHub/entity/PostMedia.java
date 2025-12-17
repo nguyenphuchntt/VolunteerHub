@@ -28,7 +28,7 @@ public class PostMedia {
     @JoinColumn(name = "media_id", nullable = false, insertable = false, updatable = false)
     private Media media;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "post_id", nullable = false, insertable = false, updatable = false)
     private Post post;
 }

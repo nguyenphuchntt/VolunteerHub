@@ -174,3 +174,8 @@ CREATE INDEX idx_comment_post_id ON comment(post_id);
 CREATE INDEX idx_comment_created_by ON comment(created_by_account_id);
 CREATE INDEX idx_notification_receiver_unread ON notification(receiver_account_id, is_read);
 CREATE INDEX idx_media_uploaded_by ON media(uploaded_by);
+CREATE INDEX idx_media_file_type ON media(file_type);
+CREATE INDEX idx_media_uploaded_at ON media(uploaded_at);
+CREATE INDEX idx_account_media_media_id ON account_media(media_id);
+CREATE INDEX idx_event_media_media_id ON event_media(media_id);
+CREATE INDEX idx_post_media_media_id ON post_media(media_id);

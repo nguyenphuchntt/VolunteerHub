@@ -1,6 +1,5 @@
 package com.uet.VolunteerHub.exception;
 
-
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,9 +45,30 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(BadCredentialsException.class)
     ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
-        return super.handleExceptionInternal(ex, "Wrong login details", new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
+        return super.handleExceptionInternal(ex, "Wrong login details", new HttpHeaders(), HttpStatus.UNAUTHORIZED,
+                request);
     }
 
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(FileStorageException.class)
+    ResponseEntity<Object> handleFileStorageException(FileStorageException ex, WebRequest request) {
+        String bodyOfResponse = ex.getMessage();
+        return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR,
+                request);
+    }
 
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidFileException.class)
+    ResponseEntity<Object> handleInvalidFileException(InvalidFileException ex, WebRequest request) {
+        String bodyOfResponse = ex.getMessage();
+        return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(ForbiddenException.class)
+    ResponseEntity<Object> handleForbiddenException(ForbiddenException ex, WebRequest request) {
+        String bodyOfResponse = ex.getMessage();
+        return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+    }
 
 }
