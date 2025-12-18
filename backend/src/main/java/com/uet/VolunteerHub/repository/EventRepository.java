@@ -48,6 +48,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
 
     List<Event> findAllByStatus(EventStatus status);
 
+    List<Event> getAllEvents();
+
     @Query("""
         SELECT e FROM Event e
         WHERE e.status IN ('SCHEDULED', 'STARTED')

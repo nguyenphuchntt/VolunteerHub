@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -125,4 +126,36 @@ public class EventUserSearchService {
         });
     }
 
+    @Transactional
+    public List<EventUserSearchDTO> findAllEventUsers() {
+        List<EventUser> eventUsers = eventUserRepository.getAllEventUsers();
+        return eventUsers.stream().map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        }).toList();
+    }
+
+    @Transactional
+    public List<EventUserSearchDTO> findAllEventUsersByEventId(Long eventId) {
+        List<EventUser> eventUsers = eventUserRepository.getAllEventUsersByEventId(eventId);
+        return eventUsers.stream().map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        }).toList();
+    }
+
+    @Transactional
+    public List<EventUserSearchDTO> findAllEventUsersByAccountId(UUID accountId) {
+        List<EventUser> eventUsers = eventUserRepository.getAllEventUsersByAccountId(accountId);
+        return eventUsers.stream().map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        }).toList();
+    }
 }

@@ -55,4 +55,11 @@ public interface EventUserRepository extends JpaRepository<EventUser, EventUserI
 
     @Query("SELECT eu.account, COUNT(eu) as count FROM EventUser eu GROUP BY eu.account ORDER BY count DESC")
     List<Object[]> findTopActiveUsers(Pageable pageable);
+
+    List<EventUser> getAllEventUsersByEventId(Long eventId);
+
+    List<EventUser> getAllEventUsersByAccountId(UUID accountId);
+
+    List<EventUser> getAllEventUsers();
+
 }

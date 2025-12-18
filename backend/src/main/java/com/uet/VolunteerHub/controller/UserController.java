@@ -82,7 +82,7 @@ public class UserController {
         return ResponseEntity.ok(followUserDTOPage);
     }
 
-    @GetMapping("/{id}/follow")
+    @PostMapping("/{id}/follow")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<FollowUserDTO> followUser(@PathVariable("id") UUID toBeFollowedAccountId,
                                                     @AuthenticationPrincipal Account account) {

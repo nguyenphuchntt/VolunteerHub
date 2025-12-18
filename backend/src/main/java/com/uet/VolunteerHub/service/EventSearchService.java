@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -122,6 +123,23 @@ public class EventSearchService {
     }
 
     @Transactional
+    public List<EventSearchDTO> findTop5EventsByLikeCount() {
+        List<Event> events = eventRepository.findTop5ByOrderByLikeCountDesc();
+        return events.stream().map(event -> {
+            Account account = event.getCreatedBy();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            return mapToEventSearchDTO(event, account, userInfo);
+        }).toList();
+    }
+
+    @Transactional
+    public List<EventSearchDTO> findAllEvents() {
+        List<Event> events = eventRepository.getAllEvents();
+        return events.stream().map(event -> {
+            Account account = event.getCreatedBy();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            return mapToEventSearchDTO(event, account, userInfo);
+        }).toList();
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
         java.time.OffsetDateTime threeDaysAgo = java.time.OffsetDateTime.now().minusDays(3);
         
