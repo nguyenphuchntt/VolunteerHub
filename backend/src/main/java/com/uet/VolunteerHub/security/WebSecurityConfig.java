@@ -70,6 +70,7 @@ public class WebSecurityConfig {
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/api/events/search-public").permitAll()
+                                .requestMatchers("/api/events/hot").permitAll()
                                 .requestMatchers("/api/media/download/**").permitAll()
                                 .requestMatchers("/api-docs/**").permitAll()
                                 .anyRequest().authenticated())
