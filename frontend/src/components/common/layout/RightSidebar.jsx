@@ -145,7 +145,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
                         {event.category || "Sự kiện"} · #{index + 1} Trending
                       </Typography>
                       <Typography variant="body2" fontWeight={700} noWrap>
-                        {event.name}
+                        {event.title}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {event.attendeeCount || 0} người tham gia
@@ -155,7 +155,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
                       <Box
                         component="img"
                         src={event.coverImageUrl}
-                        alt={event.name}
+                        alt={event.title}
                         sx={{
                           width: 56,
                           height: 56,
@@ -175,19 +175,6 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
               Chưa có sự kiện nổi bật
             </Typography>
           )}
-
-          <Typography
-            variant="body2"
-            color="primary.main"
-            sx={{
-              mt: 1,
-              cursor: "pointer",
-              "&:hover": { textDecoration: "underline" },
-            }}
-            onClick={() => navigate("/events")}
-          >
-            Xem thêm
-          </Typography>
         </CardContent>
       </Card>
 
@@ -225,7 +212,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
                   }}
                 >
                   <Typography variant="body2" fontWeight={600} noWrap>
-                    {event.name}
+                    {event.title}
                   </Typography>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
                     <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
@@ -263,19 +250,6 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
               Chưa có sự kiện sắp tới
             </Typography>
           )}
-
-          <Typography
-            variant="body2"
-            color="primary.main"
-            sx={{
-              mt: 1,
-              cursor: "pointer",
-              "&:hover": { textDecoration: "underline" },
-            }}
-            onClick={() => navigate("/events")}
-          >
-            Xem tất cả sự kiện
-          </Typography>
         </CardContent>
       </Card>
 
