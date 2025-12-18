@@ -34,7 +34,7 @@ public class EventSearchService {
         this.eventLikeRepository = eventLikeRepository;
     }
 
-    private EventSearchDTO mapToEventSearchDTO (Event event, Account account, UserInfo userInfo) {
+    private EventSearchDTO mapToEventSearchDTO(Event event, Account account, UserInfo userInfo) {
         var builder = EventSearchDTO.builder()
                 .eventId(event.getEventId())
                 .title(event.getTitle())
@@ -67,7 +67,8 @@ public class EventSearchService {
     public Optional<EventSearchDTO> findByEventID(Long eventID, UUID accountId) {
         Optional<Event> event = eventRepository.findById(eventID);
         if (event.isPresent() && !event.get().getCreatedBy().getAccountId().equals(accountId)) {
-            if (event.get().getStatus() != null && (event.get().getStatus().equals(EventStatus.PENDING) || event.get().getStatus().equals(EventStatus.CANCELLED))) {
+            if (event.get().getStatus() != null && (event.get().getStatus().equals(EventStatus.PENDING)
+                    || event.get().getStatus().equals(EventStatus.CANCELLED))) {
                 return Optional.empty();
             }
         }
@@ -82,7 +83,7 @@ public class EventSearchService {
     public Page<EventSearchDTO> findEventBySpecification(EventSearchCriteriaDTO criteria, Pageable pageable) {
         Specification<Event> spec = EventSpecification.fromCriteria(criteria);
         Page<Event> eventPage = eventRepository.findAll(spec, pageable);
-        return eventPage.map( event -> {
+        return eventPage.map(event -> {
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
@@ -92,7 +93,7 @@ public class EventSearchService {
     @Transactional
     public Page<EventSearchDTO> findEventsByAccountId(UUID accountId, Pageable pageable) {
         Page<Event> eventPage = eventRepository.findAllByCreatedBy_AccountId(accountId, pageable);
-        return eventPage.map( event -> {
+        return eventPage.map(event -> {
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
@@ -134,7 +135,7 @@ public class EventSearchService {
 
     @Transactional
     public List<EventSearchDTO> findAllEvents() {
-        List<Event> events = eventRepository.getAllEvents();
+        List<Event> events = eventRepository.findAll();
         return events.stream().map(event -> {
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
@@ -144,7 +145,7 @@ public class EventSearchService {
 
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
         java.time.OffsetDateTime threeDaysAgo = java.time.OffsetDateTime.now().minusDays(3);
-        
+
         Page<Event> eventPage = eventRepository.findHotEvents(threeDaysAgo, pageable);
         return eventPage.map(event -> {
             Account account = event.getCreatedBy();
