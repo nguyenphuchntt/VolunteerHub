@@ -252,7 +252,7 @@ const VolunteerDashboard = () => {
         PaperProps={{ sx: { borderRadius: "16px" } }}
       >
         <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography variant="h6" fontWeight={700}>Tất cả sự kiện đã đăng ký</Typography>
+          <Box component="span" sx={{ fontWeight: 700, fontSize: "1.25rem" }}>Tất cả sự kiện đã đăng ký</Box>
           <IconButton onClick={() => setViewAllOpen(false)} size="small">
             <Close />
           </IconButton>
@@ -289,9 +289,9 @@ const VolunteerDashboard = () => {
         {previewEvent && (
           <>
             <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <Typography variant="h6" fontWeight={700} noWrap sx={{ maxWidth: "85%" }}>
+              <Box component="span" sx={{ fontWeight: 700, fontSize: "1.25rem", maxWidth: "85%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {previewEvent.title || `Sự kiện #${previewEvent.eventId}`}
-              </Typography>
+              </Box>
               <IconButton onClick={() => setPreviewEvent(null)} size="small">
                 <Close />
               </IconButton>

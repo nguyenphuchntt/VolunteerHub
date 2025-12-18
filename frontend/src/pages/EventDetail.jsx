@@ -418,9 +418,10 @@ const EventDetail = () => {
                    </Typography>
                  </Box>
                  
-                 {(participationStatus === "PENDING" || participationStatus === "APPROVED") && 
+                {(participationStatus === "PENDING" || participationStatus === "APPROVED") && 
                  event.status !== "FINISHED" && 
-                 event.status !== "CANCELLED" && (
+                 event.status !== "CANCELLED" && 
+                 new Date(event.startAt) > new Date() && (
                    <Button 
                      size="small" 
                      color="error"

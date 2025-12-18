@@ -106,6 +106,10 @@ public class EventUserWriteService {
         if (account.getAccountId().equals(event.getCreatedBy().getAccountId())) {
             builder.role(EventUserRole.MANAGER)
                     .status(EventUserStatus.APPROVED);
+            
+            // Increment attendeeCount for manager (creator)
+            event.setAttendeeCount(event.getAttendeeCount() + 1);
+            eventRepository.save(event);
         } else {
             builder.role(EventUserRole.ATTENDEE)
                     .status(EventUserStatus.PENDING);
@@ -122,7 +126,20 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
-        eventUserRepository.deleteByAccountIdAndEventId(account.getAccountId(), eventId);
+        EventUserId eventUserId = new EventUserId();
+        eventUserId.setAccountId(account.getAccountId());
+        eventUserId.setEventId(eventId);
+        EventUser eventUser = eventUserRepository.findById(eventUserId).orElse(null);
+        
+        if (eventUser != null) {
+            // Decrement attendeeCount if deleted user was APPROVED
+            if (eventUser.getStatus() == EventUserStatus.APPROVED) {
+                Event event = eventUser.getEvent();
+                event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
+                eventRepository.save(event);
+            }
+            eventUserRepository.delete(eventUser);
+        }
     }
 
     @Transactional
@@ -233,8 +250,24 @@ public class EventUserWriteService {
     @Transactional
     public EventUserSearchDTO updateStatus(UUID accountId, Long eventId, EventUserStatusUpdateDTO status) {
         EventUser eventUser = findEventUser(accountId, eventId);
-        if (status.getStatus() != null) {
-            eventUser.setStatus(status.getStatus());
+        EventUserStatus oldStatus = eventUser.getStatus();
+        EventUserStatus newStatus = status.getStatus();
+        
+        if (newStatus != null && newStatus != oldStatus) {
+            eventUser.setStatus(newStatus);
+            
+            // Update attendeeCount when status changes to/from APPROVED
+            Event event = eventUser.getEvent();
+            
+            if (newStatus == EventUserStatus.APPROVED && oldStatus != EventUserStatus.APPROVED) {
+                // User newly approved - increment count
+                event.setAttendeeCount(event.getAttendeeCount() + 1);
+                eventRepository.save(event);
+            } else if (oldStatus == EventUserStatus.APPROVED && newStatus != EventUserStatus.APPROVED) {
+                // User was approved but now is not - decrement count
+                event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
+                eventRepository.save(event);
+            }
         }
         eventUserRepository.save(eventUser);
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());

@@ -93,6 +93,26 @@ const EventForm = () => {
     setLoading(true);
     setError(null);
 
+    // Validate dates
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Start of today
+    const startDate = new Date(formData.startAt);
+    const endDate = formData.endAt ? new Date(formData.endAt) : null;
+
+    // 1. startAt must be >= today
+    if (startDate < now) {
+      setError("Thời gian bắt đầu phải từ hôm nay trở đi.");
+      setLoading(false);
+      return;
+    }
+
+    // 2. endAt must be >= startAt (if endAt is provided)
+    if (endDate && endDate < startDate) {
+      setError("Thời gian kết thúc phải sau thời gian bắt đầu.");
+      setLoading(false);
+      return;
+    }
+
     try {
       // Prepare event data with attendeeCount = 0 (auto set)
       const eventData = {

@@ -344,6 +344,7 @@ const RequestManagement = () => {
             searchPlaceholder="Tìm kiếm yêu cầu..."
             actions={actions}
             emptyMessage="Không có yêu cầu nào"
+            rowKey="requestId"
           />
         )}
       </Box>

@@ -220,7 +220,7 @@ const ParticipantManagement = () => {
         ) : error ? (
           <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
         ) : participants.length > 0 ? (
-          <DataTable columns={columns} data={participants} searchable searchPlaceholder="Tìm kiếm..." actions={actions} />
+          <DataTable columns={columns} data={participants} searchable searchPlaceholder="Tìm kiếm..." actions={actions} rowKey="username" />
         ) : (
           <EmptyState title="Chưa có đăng ký" description="Chưa có ai đăng ký tham gia." />
         )}
