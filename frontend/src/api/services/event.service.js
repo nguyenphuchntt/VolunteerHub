@@ -53,5 +53,11 @@ export const eventService = {
   async likeEvent(eventId) {
     const response = await api.post(`/events/${eventId}/like`);
     return response.data;
+  },
+
+  // POST /api/events/{eventId}/liked - Check if user liked event
+  async isEventLiked(eventId) {
+    const response = await api.post(`/events/${eventId}/liked`);
+    return response.data;
   }
 };

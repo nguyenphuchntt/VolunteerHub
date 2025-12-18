@@ -24,5 +24,18 @@ export const commentService = {
   // DELETE /api/comments/{commentId}
   async deleteComment(commentId) {
     await api.delete(`/comments/${commentId}`);
+  },
+
+  // POST /api/comments - Create new comment (supports nested replies via parentCommentId)
+  async createComment(data) {
+    // data: { postId, content, parentCommentId? }
+    const response = await api.post('/comments', data);
+    return response.data;
+  },
+
+  // PATCH /api/comments/{commentId}/content - Update comment content
+  async updateComment(commentId, content) {
+    const response = await api.patch(`/comments/${commentId}/content`, { content });
+    return response.data;
   }
 };

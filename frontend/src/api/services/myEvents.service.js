@@ -29,5 +29,11 @@ export const myEventsService = {
   async updateParticipation(eventId, data) {
     const response = await api.patch(`/me/events/${eventId}/update`, data);
     return response.data;
+  },
+
+  // GET /api/me/events/liked
+  async getMyLikedEvents(page = 0, size = 10) {
+    const response = await api.get('/me/events/liked', { params: { page, size } });
+    return response.data;
   }
 };

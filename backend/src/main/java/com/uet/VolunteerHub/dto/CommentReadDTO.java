@@ -24,4 +24,6 @@ public class CommentReadDTO {
     private String ownerUsername;
     private String ownerFirstName;
     private String ownerLastName;
+    
+    private Long replyCount; // Number of replies to this comment
 }

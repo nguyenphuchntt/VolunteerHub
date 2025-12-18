@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ThreeColumnLayout } from "../components/common";
-import { profileService, userService, myEventsService } from "../api";
+import { profileService, userService, myEventsService, postService } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 import {
@@ -25,6 +25,8 @@ const Profile = () => {
   // API states
   const [profileUser, setProfileUser] = useState(null);
   const [participatedEvents, setParticipatedEvents] = useState([]);
+  const [likedEvents, setLikedEvents] = useState([]);
+  const [likedPosts, setLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -70,6 +72,28 @@ const Profile = () => {
     }
   }, [isOwnProfile]);
 
+  // Fetch liked events (only for own profile)
+  const fetchLikedEvents = useCallback(async () => {
+    if (!isOwnProfile) return;
+    try {
+      const response = await myEventsService.getMyLikedEvents();
+      setLikedEvents(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch liked events:", err);
+    }
+  }, [isOwnProfile]);
+
+  // Fetch liked posts (only for own profile)
+  const fetchLikedPosts = useCallback(async () => {
+    if (!isOwnProfile) return;
+    try {
+      const response = await postService.getMyLikedPosts();
+      setLikedPosts(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch liked posts:", err);
+    }
+  }, [isOwnProfile]);
+
 
 
   useEffect(() => {
@@ -79,8 +103,10 @@ const Profile = () => {
   useEffect(() => {
     if (isOwnProfile && isAuthenticated) {
       fetchEvents();
+      fetchLikedEvents();
+      fetchLikedPosts();
     }
-  }, [isOwnProfile, isAuthenticated, fetchEvents]);
+  }, [isOwnProfile, isAuthenticated, fetchEvents, fetchLikedEvents, fetchLikedPosts]);
 
 
   const handleTabChange = (event, newValue) => {
@@ -248,6 +274,8 @@ const Profile = () => {
         >
           <Tab label="Lịch sử tham gia" />
           <Tab label="Thông tin" />
+          {isOwnProfile && <Tab label="Sự kiện đã thích" />}
+          {isOwnProfile && <Tab label="Bài viết đã thích" />}
         </Tabs>
       </Box>
 
@@ -338,6 +366,115 @@ const Profile = () => {
               <strong>Trạng thái:</strong> {profileUser.status || "ACTIVE"}
             </Typography>
           </Box>
+        </Box>
+      )}
+
+      {/* Liked Events Tab */}
+      {activeTab === 2 && isOwnProfile && (
+        <Box>
+          {likedEvents.length > 0 ? (
+            likedEvents.map((event) => (
+              <Box
+                key={event.eventId || event.id}
+                onClick={() => navigate(`/events/${event.eventId || event.id}`)}
+                sx={{
+                  p: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "grey.200",
+                  cursor: "pointer",
+                  "&:hover": { backgroundColor: "grey.50" },
+                }}
+              >
+                <Box sx={{ display: "flex", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: "12px",
+                      backgroundColor: "#e0e0e0",
+                      backgroundImage: event.coverImage ? `url(${event.coverImage})` : "none",
+                      backgroundSize: "cover",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {!event.coverImage && <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />}
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body1" fontWeight={600}>
+                      {event.title || `Sự kiện #${event.eventId || event.id}`}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                      {event.category || "Sự kiện"}
+                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                      <LocationOn sx={{ fontSize: 14, color: "text.secondary" }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {event.location || "Chưa xác định"}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                      <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(event.startAt)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            ))
+          ) : (
+            <Box sx={{ textAlign: "center", py: 8 }}>
+              <Typography variant="h2" sx={{ mb: 2 }}>❤️</Typography>
+              <Typography variant="body1" color="text.secondary">
+                Chưa thích sự kiện nào
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* Liked Posts Tab */}
+      {activeTab === 3 && isOwnProfile && (
+        <Box>
+          {likedPosts.length > 0 ? (
+            likedPosts.map((post) => (
+              <Box
+                key={post.postId || post.id}
+                sx={{
+                  p: 2,
+                  borderBottom: "1px solid",
+                  borderColor: "grey.200",
+                }}
+              >
+                <Box sx={{ display: "flex", gap: 1.5 }}>
+                  <Avatar sx={{ width: 40, height: 40 }}>
+                    {(post.ownerUsername || "?").charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      {post.ownerUsername || "Người dùng"}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.5 }}>
+                      {post.content?.substring(0, 200)}
+                      {post.content?.length > 200 && "..."}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                      {formatDate(post.createdAt)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            ))
+          ) : (
+            <Box sx={{ textAlign: "center", py: 8 }}>
+              <Typography variant="h2" sx={{ mb: 2 }}>💬</Typography>
+              <Typography variant="body1" color="text.secondary">
+                Chưa thích bài viết nào
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
     </ThreeColumnLayout>

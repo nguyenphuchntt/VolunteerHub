@@ -173,17 +173,6 @@ const ProfileSettings = () => {
                   placeholder="Nhập số điện thoại"
                 />
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Giới thiệu bản thân"
-                  value={formData.bio}
-                  onChange={handleChange("bio")}
-                  multiline
-                  rows={3}
-                  placeholder="Viết vài dòng về bản thân..."
-                />
-              </Grid>
             </Grid>
 
             <Button

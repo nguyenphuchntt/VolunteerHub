@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Card,
@@ -33,6 +33,22 @@ const EventCard = ({ event }) => {
   // Handle both API format (eventId) and mock format (id)
   const eventId = event.eventId || event.id;
 
+  // Fetch initial like status when component mounts
+  useEffect(() => {
+    if (!isAuthenticated || !eventId) return;
+    
+    const checkLikeStatus = async () => {
+      try {
+        const isLiked = await eventService.isEventLiked(eventId);
+        setHasLiked(isLiked);
+      } catch (err) {
+        // Ignore error - user may not have liked this event
+      }
+    };
+    
+    checkLikeStatus();
+  }, [eventId, isAuthenticated]);
+
   const handleCardClick = () => {
     navigate(`/events/${eventId}`);
   };
@@ -47,14 +63,11 @@ const EventCard = ({ event }) => {
     
     setIsLiking(true);
     try {
-      await eventService.likeEvent(eventId);
-      // Optimistic update
-      if (hasLiked) {
-        setLikeCount(prev => Math.max(0, prev - 1));
-        setHasLiked(false);
-      } else {
-        setLikeCount(prev => prev + 1);
-        setHasLiked(true);
+      const result = await eventService.likeEvent(eventId);
+      if (result) {
+        // Backend returns: { eventId, accountId, liked, likesCount }
+        setHasLiked(result.liked);
+        setLikeCount(result.likesCount);
       }
     } catch (err) {
       console.error("Failed to like event:", err);

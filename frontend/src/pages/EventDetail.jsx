@@ -16,6 +16,7 @@ import {
   Grid,
   Avatar,
   Button,
+  IconButton,
   CircularProgress,
   Alert,
   Snackbar,
@@ -27,6 +28,8 @@ import {
   ArrowBack,
   CalendarMonth,
   LocationOn,
+  FavoriteBorder,
+  Favorite,
 } from "@mui/icons-material";
 
 const EventDetail = () => {
@@ -47,6 +50,11 @@ const EventDetail = () => {
   const [confirmUnregisterOpen, setConfirmUnregisterOpen] = useState(false);
   const [participationStatus, setParticipationStatus] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  
+  // Like event states
+  const [isEventLiked, setIsEventLiked] = useState(false);
+  const [eventLikeCount, setEventLikeCount] = useState(0);
+  const [likingEvent, setLikingEvent] = useState(false);
 
   // Fetch event data
   const fetchEvent = useCallback(async () => {
@@ -55,6 +63,17 @@ const EventDetail = () => {
     try {
       const eventData = await eventService.getEventById(eventId);
       setEvent(eventData);
+      setEventLikeCount(eventData.likeCount || 0);
+      
+      // Check if user liked this event
+      if (isAuthenticated) {
+        try {
+          const likedData = await eventService.isEventLiked(eventId);
+          setIsEventLiked(likedData || false);
+        } catch {
+          // Ignore error
+        }
+      }
     } catch (err) {
       console.error("Failed to fetch event:", err);
       if (err.response?.status === 404) {
@@ -65,7 +84,7 @@ const EventDetail = () => {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, isAuthenticated]);
 
   // Fetch event posts
   const fetchPosts = useCallback(async () => {
@@ -115,6 +134,33 @@ const EventDetail = () => {
     fetchParticipants();
     fetchParticipationStatus();
   }, [fetchEvent, fetchPosts, fetchParticipants, fetchParticipationStatus]);
+
+  // Handle like event
+  const handleLikeEvent = async () => {
+    if (!isAuthenticated) {
+      navigate("/signin", { state: { from: { pathname: `/events/${eventId}` } } });
+      return;
+    }
+    setLikingEvent(true);
+    try {
+      const result = await eventService.likeEvent(eventId);
+      if (result) {
+        // Backend returns: { eventId, accountId, liked, likesCount }
+        setIsEventLiked(result.liked);
+        setEventLikeCount(result.likesCount);
+      }
+    } catch (err) {
+      console.error("Failed to like event:", err);
+    } finally {
+      setLikingEvent(false);
+    }
+  };
+
+  // Handle post created callback
+  const handlePostCreated = (newPost) => {
+    setPosts(prev => [newPost, ...prev]);
+    setSnackbar({ open: true, message: "Đăng bài thành công!", severity: "success" });
+  };
 
 
   // Handle register click - open dialog
@@ -243,6 +289,20 @@ const EventDetail = () => {
               {attendeeCount} tình nguyện viên
             </Typography>
           </Box>
+          {/* Like Event Button */}
+          <IconButton
+            onClick={handleLikeEvent}
+            disabled={likingEvent}
+            sx={{
+              color: isEventLiked ? "error.main" : "text.secondary",
+              ml: "auto",
+            }}
+          >
+            {isEventLiked ? <Favorite /> : <FavoriteBorder />}
+          </IconButton>
+          <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+            {eventLikeCount}
+          </Typography>
         </Box>
       </Box>
 
@@ -421,11 +481,21 @@ const EventDetail = () => {
 
       {/* Feed Tab */}
       {activeTab === 0 && (
-        <Box>
-          {isAuthenticated && <WritePost currentUser={user} />}
+        <Box sx={{ p: 2 }}>
+          {isAuthenticated && (
+            <WritePost 
+              currentUser={user} 
+              eventId={parseInt(eventId)} 
+              onPostCreated={handlePostCreated} 
+            />
+          )}
           {posts.length > 0 ? (
             posts.map((post) => (
-              <PostCard key={post.postId || post.id} post={post} />
+              <PostCard 
+                key={post.postId || post.id} 
+                post={post} 
+                onPostUpdated={fetchPosts}
+              />
             ))
           ) : (
             <Box sx={{ textAlign: "center", py: 8 }}>

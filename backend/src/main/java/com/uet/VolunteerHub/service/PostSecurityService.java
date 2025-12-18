@@ -7,6 +7,7 @@ import com.uet.VolunteerHub.entity.EventUser;
 import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.PostRepository;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Log
 @Service("postSecurityService")
 public class PostSecurityService {
     private final PostReadService postReadService;
@@ -75,12 +77,16 @@ public class PostSecurityService {
     public boolean canCreatePost(Long eventId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Account account)) {
+            log.warning("canCreatePost: No authentication or invalid principal");
             return false;
         }
         if (eventId == null) {
+            log.warning("canCreatePost: eventId is null");
             return false;
         }
-        return isEventAttendee(account.getAccountId(), eventId);
+        boolean result = isEventAttendee(account.getAccountId(), eventId);
+        log.info("canCreatePost: accountId=" + account.getAccountId() + ", eventId=" + eventId + ", result=" + result);
+        return result;
     }
 
 
@@ -90,11 +96,14 @@ public class PostSecurityService {
                 eventId
         );
         if (eventUserOptional.isEmpty()) {
+            log.warning("isEventAttendee: No EventUser found for accountId=" + accountId + ", eventId=" + eventId);
             return false;
         }
         EventUser eventUser = eventUserOptional.get();
-        return eventUser.getRole().equals(EventUserRole.MANAGER) ||
+        boolean hasRole = eventUser.getRole().equals(EventUserRole.MANAGER) ||
                eventUser.getRole().equals(EventUserRole.ATTENDEE);
+        log.info("isEventAttendee: found EventUser with role=" + eventUser.getRole() + ", status=" + eventUser.getStatus() + ", hasRole=" + hasRole);
+        return hasRole;
     }
 }
 

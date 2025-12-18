@@ -117,8 +117,6 @@ public class PostController {
                 .build());
     }
 
-
-
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canCreatePost(#postCreateDTO.eventId)")
     @PostMapping
     public ResponseEntity<PostReadDTO> createPost(@RequestBody @Valid PostCreateDTO postCreateDTO) {

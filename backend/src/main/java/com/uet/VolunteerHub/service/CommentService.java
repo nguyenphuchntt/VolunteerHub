@@ -31,16 +31,25 @@ public class CommentService {
     private final PostRepository postRepository;
     private final AccountRepository accountRepository;
 
+    // Helper to map comment and add replyCount
+    private CommentReadDTO mapWithReplyCount(Comment comment) {
+        CommentReadDTO dto = commentMapper.toCommentReadDTO(comment);
+        Long replyCount = commentRepository.countByParentComment_CommentId(comment.getCommentId());
+        dto.setReplyCount(replyCount != null ? replyCount : 0L);
+        return dto;
+    }
+
     @Transactional(readOnly = true)
     public Page<CommentReadDTO> findAllByPost(Long postId, Pageable pageable) {
-        Page<Comment> comments = commentRepository.findByPost_PostId(postId, pageable);
-        return comments.map(commentMapper::toCommentReadDTO);
+        // Only return root comments (no parent), replies are fetched separately via getRepliesForComment
+        Page<Comment> comments = commentRepository.findByPost_PostIdAndParentCommentIsNull(postId, pageable);
+        return comments.map(this::mapWithReplyCount);
     }
 
     @Transactional(readOnly = true)
     public Page<CommentReadDTO> getRepliesForComment(Long parentCommentId, Pageable pageable) {
         Page<Comment> replies = commentRepository.findByParentComment_CommentId(parentCommentId, pageable);
-        return replies.map(commentMapper::toCommentReadDTO);
+        return replies.map(this::mapWithReplyCount);
     }
 
     @Transactional(readOnly = true)

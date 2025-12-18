@@ -71,6 +71,7 @@ public class MediaController {
     }
 
     @GetMapping("/download/{filename:.+}")
+    @PreAuthorize("permitAll()") 
     public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
         Resource resource = fileStorageService.loadFileAsResource(filename);
         String contentType = fileStorageService.getContentType(filename);
