@@ -4,7 +4,7 @@ import ConfirmJoinDialog from "../components/events/ConfirmJoinDialog";
 import WritePost from "../components/SocialFeed/WritePost";
 import PostCard from "../components/SocialFeed/PostCard";
 import { ThreeColumnLayout, ConfirmDialog } from "../components/common";
-import { eventService, myEventsService, postService, eventUserService } from "../api";
+import { eventService, myEventsService, postService, eventUserService, mediaService } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 import {
@@ -55,6 +55,9 @@ const EventDetail = () => {
   const [isEventLiked, setIsEventLiked] = useState(false);
   const [eventLikeCount, setEventLikeCount] = useState(0);
   const [likingEvent, setLikingEvent] = useState(false);
+  
+  // Event media for cover image
+  const [eventMedia, setEventMedia] = useState([]);
 
   // Fetch event data
   const fetchEvent = useCallback(async () => {
@@ -96,6 +99,16 @@ const EventDetail = () => {
     }
   }, [eventId]);
 
+  // Fetch event media for cover image
+  const fetchEventMedia = useCallback(async () => {
+    try {
+      const response = await mediaService.getMediaByEvent(eventId);
+      setEventMedia(response.content || []);
+    } catch (err) {
+      console.error("Failed to fetch event media:", err);
+    }
+  }, [eventId]);
+
   // Fetch participants (publicly visible approved participants)
   const fetchParticipants = useCallback(async () => {
     try {
@@ -130,7 +143,8 @@ const EventDetail = () => {
     fetchPosts();
     fetchParticipants();
     fetchParticipationStatus();
-  }, [fetchEvent, fetchPosts, fetchParticipants, fetchParticipationStatus]);
+    fetchEventMedia();
+  }, [fetchEvent, fetchPosts, fetchParticipants, fetchParticipationStatus, fetchEventMedia]);
 
   // Handle like event
   const handleLikeEvent = async () => {
@@ -263,7 +277,32 @@ const EventDetail = () => {
 
   // Get display values from API format
   const attendeeCount = event.attendeeCount || participants.length || 0;
-  const coverImage = event.coverImage || "/images/default-event.jpg";
+  
+  // Determine cover image: 1) Event media, 2) Latest post with image, 3) Default
+  const getCoverImage = () => {
+    // First priority: Event media (cover images uploaded by organizer)
+    if (eventMedia.length > 0 && eventMedia[0].url) {
+      return eventMedia[0].url;
+    }
+    // Fallback: Use first post's media if available
+    const postWithImage = posts.find(post => {
+      if (post.mediaUrls && post.mediaUrls.length > 0) return true;
+      if (post.media && post.media.length > 0) return true;
+      return false;
+    });
+    if (postWithImage) {
+      if (postWithImage.mediaUrls && postWithImage.mediaUrls.length > 0) {
+        return postWithImage.mediaUrls[0];
+      }
+      if (postWithImage.media && postWithImage.media.length > 0) {
+        return postWithImage.media[0].url || postWithImage.media[0];
+      }
+    }
+    // Final fallback: default placeholder
+    return "/images/default-event.jpg";
+  };
+  
+  const coverImage = getCoverImage();
   const statusDisplay = (event.status || "").toString();
 
   return (

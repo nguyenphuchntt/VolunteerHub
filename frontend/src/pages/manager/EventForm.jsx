@@ -1,43 +1,46 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
   TextField,
   Button,
-  Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Alert,
+  Paper,
+  IconButton,
   CircularProgress,
+  Alert,
   Snackbar,
-  FormHelperText,
+  ImageList,
+  ImageListItem,
+  ImageListItemBar,
 } from "@mui/material";
-import { Save, ArrowBack, Image as ImageIcon } from "@mui/icons-material";
+import {
+  ArrowBack,
+  CloudUpload,
+  DeleteOutline,
+  Add,
+} from "@mui/icons-material";
 import { ThreeColumnLayout } from "../../components/common";
 import { eventService, mediaService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
-// Backend uses English values: ENVIRONMENT, EDUCATION, HEALTHCARE, COMMUNITY, CHARITY, OTHER
-// We map them to Vietnamese labels
-const eventCategories = [
-  { id: "ENVIRONMENT", name: "Môi trường" },
-  { id: "EDUCATION", name: "Giáo dục" },
-  { id: "HEALTHCARE", name: "Sức khỏe" },
-  { id: "COMMUNITY", name: "Cộng đồng" },
-  { id: "CHARITY", name: "Từ thiện" },
-  { id: "OTHER", name: "Khác" },
+const categories = [
+  "Environment",
+  "Community Service", 
+  "Education",
+  "Health & Wellness",
+  "Animal Welfare",
+  "Other",
 ];
 
 const EventForm = () => {
   const navigate = useNavigate();
-  const { eventId } = useParams();
-  const { user, isAdmin } = useAuth(); // Get isAdmin to allow admins to edit
-  const isEdit = !!eventId;
-
-  // Form state
+  const { user, isAdmin } = useAuth();
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -45,121 +48,69 @@ const EventForm = () => {
     endAt: "",
     location: "",
     category: "",
-    coverImage: "",
-    maxParticipants: "",
   });
-
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState("");
+  
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [fetchingEvent, setFetchingEvent] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  const [isOwner, setIsOwner] = useState(true);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
-  const [uploading, setUploading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setSnackbar({ open: true, message: "Kích thước tệp quá lớn (tối đa 5MB)", severity: "error" });
-      return;
-    }
-
-    setSelectedFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setFilePreview(objectUrl);
-      
-    // Cleanup previous object URL to avoid memory leaks
-    return () => URL.revokeObjectURL(objectUrl);
-  };
-  
-  // Cleanup preview URL on unmount or new selection
-  useEffect(() => {
-    return () => {
-      if (filePreview) URL.revokeObjectURL(filePreview);
-    };
-  }, [filePreview]);
-
-  // Existing coverImage logic remains for "Edit" mode initial display or if we choose not to change it.
-  // Display priority: filePreview (new selection) > formData.coverImage (existing)
-
-  const handleChange = (field) => (event) => {
-    setFormData({ ...formData, [field]: event.target.value });
-    if (errors[field]) setErrors({ ...errors, [field]: "" });
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    // Add new files to selected images
+    setSelectedImages(prev => [...prev, ...files]);
+    
+    // Generate preview URLs
+    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+    setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.title || formData.title.length < 5) {
-      newErrors.title = "Tên sự kiện phải có ít nhất 5 ký tự";
-    }
-    if (!formData.description || formData.description.length < 20) {
-      newErrors.description = "Mô tả phải có ít nhất 20 ký tự";
-    }
-    if (!formData.startAt) {
-      newErrors.startAt = "Thời gian bắt đầu là bắt buộc";
-    }
-    if (!formData.endAt) {
-      newErrors.endAt = "Thời gian kết thúc là bắt buộc";
-    }
-    if (formData.startAt && formData.endAt && new Date(formData.startAt) >= new Date(formData.endAt)) {
-      newErrors.endAt = "Thời gian kết thúc phải sau thời gian bắt đầu";
-    }
-    if (!formData.location) {
-      newErrors.location = "Địa điểm là bắt buộc";
-    }
-    if (!formData.category) {
-      newErrors.category = "Danh mục là bắt buộc";
-    }
-    // coverImage validation removed
-    if (!formData.maxParticipants) {
-      newErrors.maxParticipants = "Số lượng TNV là bắt buộc";
-    } else if (isNaN(formData.maxParticipants) || parseInt(formData.maxParticipants) <= 0) {
-      newErrors.maxParticipants = "Số lượng TNV phải là số dương";
-    }
+  const handleRemoveImage = (index) => {
+    // Revoke the object URL to free memory
+    URL.revokeObjectURL(imagePreviewUrls[index]);
+    
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const formatDateForApi = (dateTimeLocal) => {
+    if (!dateTimeLocal) return null;
+    // Convert from datetime-local format to ISO 8601 with timezone
+    return new Date(dateTimeLocal).toISOString();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitError("");
-    
-    if (!validateForm()) return;
-
     setLoading(true);
+    setError(null);
+
     try {
+      // Prepare event data with attendeeCount = 0 (auto set)
       const eventData = {
         title: formData.title,
         description: formData.description,
-        startAt: formData.startAt ? new Date(formData.startAt).toISOString() : null,
-        endAt: formData.endAt ? new Date(formData.endAt).toISOString() : null,
+        startAt: formatDateForApi(formData.startAt),
+        endAt: formatDateForApi(formData.endAt),
         location: formData.location,
         category: formData.category,
-        maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
-        // coverImage field is no longer sent in create/update payload directly, handled via separate upload
+        attendeeCount: 0, // Auto set to 0
       };
 
-      // Rename maxParticipants to attendeeCount for API compatibility if needed
-      if (eventData.maxParticipants !== null) {
-        eventData.attendeeCount = eventData.maxParticipants;
-        delete eventData.maxParticipants;
-      }
-
-      let eventIdToUse = eventId;
-
-      if (isEdit) {
-        await eventService.updateEvent(eventId, eventData);
-        setSnackbar({ open: true, message: "Cập nhật thông tin sự kiện thành công!", severity: "success" });
+      // Step 1: Create the event
+      let createdEvent;
+      if (isAdmin) {
+        createdEvent = await eventService.createEvent(eventData);
       } else {
-        const newEvent = await eventService.registerEvent(eventData);
-        eventIdToUse = newEvent.eventId;
-        setSnackbar({ open: true, message: "Tạo sự kiện thành công!", severity: "success" });
+        createdEvent = await eventService.registerEvent(eventData);
       }
 
       // Step 2: Upload image if selected
@@ -180,250 +131,241 @@ const EventForm = () => {
         }
       }
       
-      // Navigate after short delay
-      setTimeout(() => navigate("/manage/events"), 1500);
+      const eventId = createdEvent.eventId;
+      
+      // Step 2: Upload images if any
+      if (selectedImages.length > 0 && eventId) {
+        setUploadingImages(true);
+        
+        for (const imageFile of selectedImages) {
+          try {
+            await mediaService.uploadEventMedia(imageFile, eventId);
+          } catch (uploadErr) {
+            console.error("Failed to upload image:", uploadErr);
+            // Continue uploading other images even if one fails
+          }
+        }
+        
+        setUploadingImages(false);
+      }
+
+      setSnackbar({ 
+        open: true, 
+        message: isAdmin ? "Tạo sự kiện thành công!" : "Đăng ký sự kiện thành công! Đang chờ phê duyệt.", 
+        severity: "success" 
+      });
+      
+      // Navigate to the event detail or management page
+      setTimeout(() => {
+        navigate(`/events/${eventId}`);
+      }, 1500);
+      
     } catch (err) {
-      console.error("Failed to save event:", err);
-      setSubmitError(err.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+      console.error("Failed to create event:", err);
+      setError(err.response?.data?.message || "Không thể tạo sự kiện. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetchingEvent) {
-    return (
-      <ThreeColumnLayout user={user} role="manager" showRightSidebar={false} showSearch={false}>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-          <CircularProgress />
-        </Box>
-      </ThreeColumnLayout>
-    );
-  }
+  const isFormValid = formData.title && formData.startAt;
 
   return (
-    <>
-      <ThreeColumnLayout user={user} role="manager" showRightSidebar={false} showSearch={false}>
-        {/* Header */}
-        <Box sx={{ borderBottom: "1px solid", borderColor: "grey.200" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 2 }}>
-            <Button
-              variant="text"
-              startIcon={<ArrowBack />}
-              onClick={() => navigate("/manage/events")}
-              sx={{ minWidth: "auto", p: 1 }}
+    <ThreeColumnLayout user={user} role="manager" showRightSidebar={false}>
+      {/* Header */}
+      <Box sx={{ borderBottom: "1px solid", borderColor: "grey.200", position: "sticky", top: 0, backgroundColor: "#fff", zIndex: 10 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 1.5 }}>
+          <IconButton onClick={() => navigate(-1)}>
+            <ArrowBack />
+          </IconButton>
+          <Typography variant="h6" fontWeight={700}>
+            Tạo sự kiện mới
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Form */}
+      <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+            {error}
+          </Alert>
+        )}
+
+        {/* Basic Info */}
+        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: "16px", border: "1px solid", borderColor: "grey.200" }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+            Thông tin cơ bản
+          </Typography>
+          
+          <TextField
+            name="title"
+            label="Tên sự kiện *"
+            value={formData.title}
+            onChange={handleChange}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+          
+          <TextField
+            name="description"
+            label="Mô tả sự kiện"
+            value={formData.description}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={4}
+            sx={{ mb: 2 }}
+          />
+          
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Danh mục</InputLabel>
+            <Select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              label="Danh mục"
+            >
+              {categories.map(cat => (
+                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Paper>
+
+        {/* Date & Location */}
+        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: "16px", border: "1px solid", borderColor: "grey.200" }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
+            Thời gian & Địa điểm
+          </Typography>
+          
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              name="startAt"
+              label="Thời gian bắt đầu *"
+              type="datetime-local"
+              value={formData.startAt}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
             />
-            <Typography variant="h6" fontWeight={700}>
-              {isEdit ? "Chỉnh sửa sự kiện" : "Tạo sự kiện mới"}
-            </Typography>
+            <TextField
+              name="endAt"
+              label="Thời gian kết thúc"
+              type="datetime-local"
+              value={formData.endAt}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
           </Box>
-        </Box>
+          
+          <TextField
+            name="location"
+            label="Địa điểm"
+            value={formData.location}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Paper>
 
-        <Box sx={{ p: 3 }}>
-          <form onSubmit={handleSubmit}>
-            {submitError && <Alert severity="error" sx={{ mb: 2 }}>{submitError}</Alert>}
-
-            <TextField
-              fullWidth
-              label="Tên sự kiện"
-              value={formData.title}
-              onChange={handleChange("title")}
-              error={!!errors.title}
-              helperText={errors.title}
-              sx={{ mb: 2 }}
+        {/* Cover Images */}
+        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: "16px", border: "1px solid", borderColor: "grey.200" }}>
+          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 1 }}>
+            Ảnh bìa
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Tải lên một hoặc nhiều ảnh bìa cho sự kiện (không bắt buộc)
+          </Typography>
+          
+          {/* Image Previews */}
+          {imagePreviewUrls.length > 0 && (
+            <ImageList sx={{ mb: 2 }} cols={3} rowHeight={120}>
+              {imagePreviewUrls.map((url, index) => (
+                <ImageListItem key={index}>
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    loading="lazy"
+                    style={{ height: "100%", objectFit: "cover", borderRadius: "8px" }}
+                  />
+                  <ImageListItemBar
+                    sx={{ background: "transparent" }}
+                    position="top"
+                    actionIcon={
+                      <IconButton
+                        sx={{ color: "white", backgroundColor: "rgba(0,0,0,0.5)", m: 0.5, "&:hover": { backgroundColor: "rgba(0,0,0,0.7)" } }}
+                        size="small"
+                        onClick={() => handleRemoveImage(index)}
+                      >
+                        <DeleteOutline fontSize="small" />
+                      </IconButton>
+                    }
+                    actionPosition="right"
+                  />
+                </ImageListItem>
+              ))}
+            </ImageList>
+          )}
+          
+          {/* Upload Button */}
+          <Button
+            component="label"
+            variant="outlined"
+            startIcon={imagePreviewUrls.length > 0 ? <Add /> : <CloudUpload />}
+            sx={{ borderRadius: "9999px", textTransform: "none" }}
+          >
+            {imagePreviewUrls.length > 0 ? "Thêm ảnh" : "Chọn ảnh"}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={handleImageSelect}
             />
+          </Button>
+        </Paper>
 
-            <TextField
-              fullWidth
-              label="Mô tả"
-              value={formData.description}
-              onChange={handleChange("description")}
-              error={!!errors.description}
-              helperText={errors.description}
-              multiline
-              rows={4}
-              sx={{ mb: 2 }}
-            />
-
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Thời gian bắt đầu"
-                  type="datetime-local"
-                  value={formData.startAt}
-                  onChange={handleChange("startAt")}
-                  error={!!errors.startAt}
-                  helperText={errors.startAt}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Thời gian kết thúc"
-                  type="datetime-local"
-                  value={formData.endAt}
-                  onChange={handleChange("endAt")}
-                  error={!!errors.endAt}
-                  helperText={errors.endAt}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-            </Grid>
-
-            <TextField
-              fullWidth
-              label="Địa điểm"
-              value={formData.location}
-              onChange={handleChange("location")}
-              error={!!errors.location}
-              helperText={errors.location}
-              sx={{ mb: 2 }}
-            />
-
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={6}>
-                <FormControl fullWidth error={!!errors.category}>
-                  <InputLabel>Danh mục</InputLabel>
-                  <Select 
-                    value={formData.category} 
-                    onChange={handleChange("category")} 
-                    label="Danh mục"
-                  >
-                    {eventCategories.map((cat) => (
-                      <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-                    ))}
-                  </Select>
-                  {errors.category && <FormHelperText>{errors.category}</FormHelperText>}
-                </FormControl>
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Số TNV tối đa"
-                  type="number"
-                  value={formData.maxParticipants}
-                  onChange={handleChange("maxParticipants")}
-                  error={!!errors.maxParticipants}
-                  helperText={errors.maxParticipants}
-                  InputProps={{ inputProps: { min: 1 } }}
-                />
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mb: 3 }}>
-              <InputLabel sx={{ mb: 1 }}>Ảnh bìa sự kiện</InputLabel>
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
-                <Box 
-                  sx={{ 
-                    position: "relative",
-                    width: 200, 
-                    height: 120, 
-                    borderRadius: "12px", 
-                    overflow: "hidden",
-                    border: "1px dashed",
-                    borderColor: "grey.300",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "grey.50",
-                  }}
-                >
-                  {(filePreview || formData.coverImage) ? (
-                    <Box
-                      component="img"
-                      src={filePreview || formData.coverImage}
-                      alt="Cover preview"
-                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <ImageIcon sx={{ color: "grey.400", fontSize: 40 }} />
-                  )}
-                  
-                  {uploading && (
-                    <Box 
-                      sx={{ 
-                        position: "absolute", 
-                        top: 0, 
-                        left: 0, 
-                        right: 0, 
-                        bottom: 0, 
-                        backgroundColor: "rgba(255,255,255,0.7)", 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center" 
-                      }}
-                    >
-                      <CircularProgress size={24} />
-                    </Box>
-                  )}
-                </Box>
-                
-                <Box>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    startIcon={<ImageIcon />}
-                    disabled={uploading}
-                    sx={{ mb: 1, textTransform: "none", borderRadius: "8px" }}
-                  >
-                    Chọn ảnh
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                    />
-                  </Button>
-                  <Typography variant="caption" display="block" color="text.secondary">
-                    Hỗ trợ định dạng JPG, PNG. Kích thước tối đa 5MB.
-                  </Typography>
-                </Box>
-              </Box>
-              {errors.coverImage && <FormHelperText error>{errors.coverImage}</FormHelperText>}
-            </Box>
-
-            <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
-              <Button 
-                variant="outlined" 
-                onClick={() => navigate("/manage/events")} 
-                disabled={loading} 
-                sx={{ borderRadius: "9999px", textTransform: "none" }}
-              >
-                Hủy
-              </Button>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <Save />} 
-                disabled={loading || !isOwner} 
-                sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
-              >
-                {loading ? "Đang lưu..." : isEdit ? "Cập nhật" : "Tạo sự kiện"}
-              </Button>
-            </Box>
-          </form>
-        </Box>
-      </ThreeColumnLayout>
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={loading || !isFormValid}
+          sx={{ 
+            borderRadius: "9999px", 
+            textTransform: "none", 
+            fontWeight: 600, 
+            height: 48,
+            fontSize: 16 
+          }}
+        >
+          {loading ? (
+            <>
+              <CircularProgress size={20} sx={{ mr: 1, color: "white" }} />
+              {uploadingImages ? "Đang tải ảnh..." : "Đang tạo sự kiện..."}
+            </>
+          ) : (
+            isAdmin ? "Tạo sự kiện" : "Gửi yêu cầu tạo sự kiện"
+          )}
+        </Button>
+      </Box>
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={3000}
+        autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert 
           onClose={() => setSnackbar({ ...snackbar, open: false })} 
           severity={snackbar.severity}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", fontWeight: 500, borderRadius: "8px" }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
+    </ThreeColumnLayout>
   );
 };
 

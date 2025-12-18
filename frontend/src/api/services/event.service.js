@@ -65,5 +65,20 @@ export const eventService = {
   async isEventLiked(eventId) {
     const response = await api.post(`/events/${eventId}/liked`);
     return response.data;
+  },
+
+  // GET /api/events/hot - Lấy sự kiện nổi bật
+  async getHotEvents(page = 0, size = 10) {
+    const response = await api.get('/events/hot', { params: { page, size } });
+    return response.data; // Page<EventSearchDTO>
+  },
+
+  // GET /api/events/search-public - Lấy sự kiện sắp diễn ra (gần nhất)
+  async getUpcomingEvents(page = 0, size = 10) {
+    const now = new Date().toISOString();
+    const response = await api.get('/events/search-public', { 
+      params: { page, size, startAtFrom: now, sort: 'startAt,asc' } 
+    });
+    return response.data; // Page<EventSearchDTO>
   }
 };

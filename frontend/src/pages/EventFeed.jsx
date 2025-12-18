@@ -3,7 +3,7 @@ import { EventFilter, EventCard } from "../components/EventFeed";
 import { ThreeColumnLayout } from "../components/common";
 import { eventService, myEventsService } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { Box, Typography, Button, Grid, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, Button, CircularProgress, Alert } from "@mui/material";
 import { SearchOff } from "@mui/icons-material";
 
 const EventFeed = () => {
@@ -14,10 +14,9 @@ const EventFeed = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [viewMode, setViewMode] = useState("hot"); // "hot" or "newest"
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("date-asc");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
@@ -34,7 +33,6 @@ const EventFeed = () => {
   const fetchUserStatuses = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      // Fetch user's events (assuming page size 50 covers most active ones)
       const output = await myEventsService.getMyEvents(0, 50);
       const statusMap = {};
       if (output && output.content) {
@@ -50,7 +48,7 @@ const EventFeed = () => {
     }
   }, [isAuthenticated]);
 
-  // Fetch events from API
+  // Fetch events from API based on viewMode
   const fetchEvents = useCallback(async (pageIndex = 0) => {
     if (pageIndex === 0) {
       setLoading(true);
@@ -58,19 +56,29 @@ const EventFeed = () => {
       setLoadingMore(true);
     }
     setError(null);
+    
     try {
-      const params = { page: pageIndex, size: 10 }; // Default size 10
-      if (selectedCategory !== "all") {
-        params.category = selectedCategory;
-      }
-      if (selectedStatus !== "all") {
-        params.status = selectedStatus;
-      }
-      if (debouncedSearchQuery.trim()) {
-        params.title = debouncedSearchQuery;
+      let response;
+      
+      if (viewMode === "hot") {
+        // Fetch hot events
+        response = await eventService.getHotEvents(pageIndex, 10);
+      } else {
+        // Fetch newest events sorted by startAt desc
+        const params = { 
+          page: pageIndex, 
+          size: 10, 
+          sort: "startAt,desc" 
+        };
+        if (selectedCategory !== "all") {
+          params.category = selectedCategory;
+        }
+        if (debouncedSearchQuery.trim()) {
+          params.title = debouncedSearchQuery;
+        }
+        response = await eventService.searchEvents(params);
       }
       
-      const response = await eventService.searchEvents(params);
       const newEvents = response.content || [];
       
       if (pageIndex === 0) {
@@ -79,7 +87,6 @@ const EventFeed = () => {
         setEvents(prev => [...prev, ...newEvents]);
       }
       
-      // Stop fetching if no events returned OR response indicates last page
       const isEndOfPage = newEvents.length === 0 || response.last;
       setHasMore(!isEndOfPage);
       setPage(pageIndex);
@@ -97,16 +104,13 @@ const EventFeed = () => {
          fetchUserStatuses();
       }
     }
-  }, [selectedCategory, selectedStatus, debouncedSearchQuery, fetchUserStatuses]);
+  }, [selectedCategory, viewMode, debouncedSearchQuery, fetchUserStatuses]);
 
   // Initial fetch and refetch when filters change (reset to page 0)
   useEffect(() => {
     setPage(0);
     fetchEvents(0);
-  }, [selectedCategory, selectedStatus, debouncedSearchQuery]); // Removing fetchEvents from dep to avoid loop if not memoized correctly, but it is useCallback with these deps.
-  // Actually, fetchEvents depends on these deps. So it changes when they change.
-  // We want to run ONLY when these change.
-  // Correct usage: useEffect(() => { fetchEvents(0); }, [fetchEvents]); -> fetchEvents updates when filters update.
+  }, [selectedCategory, viewMode, debouncedSearchQuery]);
   
   // Infinite Scroll with Intersection Observer
   const observerTarget = useRef(null);
@@ -134,44 +138,16 @@ const EventFeed = () => {
     };
   }, [loading, loadingMore, hasMore, page, fetchEvents]);
 
-  // Sort and filter events - hide PENDING and CANCELLED from public view
+  // Filter out PENDING and CANCELLED events for public view
   const filteredEvents = useMemo(() => {
-    // Filter out PENDING and CANCELLED events for public explore page
-    // Note: server side filtering is preferred but we already fetched pages. 
-    // If a page has only PENDING events, user might see empty space until scroll.
-    // For now we assume server returns mostly public events or we accept this.
-    let publicEvents = events.filter(event => {
+    return events.filter(event => {
       const status = (event.status || "").toUpperCase();
       return status !== "PENDING" && status !== "CANCELLED";
     });
-    
-    // ... sorting logic ...
-
-
-    // Sort events locally
-    publicEvents.sort((a, b) => {
-      switch (sortBy) {
-        case "date-asc":
-          return new Date(a.startAt) - new Date(b.startAt);
-        case "date-desc":
-          return new Date(b.startAt) - new Date(a.startAt);
-        case "popular":
-          return (b.likeCount || 0) - (a.likeCount || 0);
-        case "participants":
-          return (b.attendeeCount || 0) - (a.attendeeCount || 0);
-        default:
-          return 0;
-      }
-    });
-
-    return publicEvents;
-  }, [events, sortBy]);
-
-
+  }, [events]);
 
   const handleClearFilters = () => {
     setSelectedCategory("all");
-    setSelectedStatus("all");
     setSearchQuery("");
   };
 
@@ -199,12 +175,8 @@ const EventFeed = () => {
         <EventFilter
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
-          selectedStatus={selectedStatus}
-          onStatusChange={setSelectedStatus}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         {/* Results Header */}
@@ -216,9 +188,7 @@ const EventFeed = () => {
             mb: 3,
           }}
         >
-          {(selectedCategory !== "all" ||
-            selectedStatus !== "all" ||
-            searchQuery) && (
+          {(selectedCategory !== "all" || searchQuery) && (
             <Button
               variant="text"
               size="small"
@@ -265,7 +235,7 @@ const EventFeed = () => {
                 <CircularProgress size={24} />
               </Box>
             )}
-            {/* Sentinel element for infinite scroll - only render when more data available */}
+            {/* Sentinel element for infinite scroll */}
             {hasMore && (
               <div ref={observerTarget} style={{ height: "10px", width: "100%" }} />
             )}

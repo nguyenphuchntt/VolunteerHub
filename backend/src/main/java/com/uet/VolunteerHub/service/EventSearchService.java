@@ -7,6 +7,7 @@ import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.EventLikeRepository;
+import com.uet.VolunteerHub.repository.EventMediaRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
 import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
@@ -27,14 +28,21 @@ import java.util.UUID;
 public class EventSearchService {
     private final EventRepository eventRepository;
     private final EventLikeRepository eventLikeRepository;
+    private final EventMediaRepository eventMediaRepository;
 
     @Autowired
-    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository) {
+    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository, EventMediaRepository eventMediaRepository) {
         this.eventRepository = eventRepository;
         this.eventLikeRepository = eventLikeRepository;
+        this.eventMediaRepository = eventMediaRepository;
     }
 
     private EventSearchDTO mapToEventSearchDTO(Event event, Account account, UserInfo userInfo) {
+        // Get cover image URL from first event media
+        String coverImageUrl = eventMediaRepository.findFirstByEvent_EventIdOrderByMedia_UploadedAtAsc(event.getEventId())
+                .map(em -> em.getMedia().getUrl())
+                .orElse(null);
+        
         var builder = EventSearchDTO.builder()
                 .eventId(event.getEventId())
                 .title(event.getTitle())
@@ -46,14 +54,8 @@ public class EventSearchService {
                 .endAt(event.getEndAt())
                 .category(event.getCategory())
                 .location(event.getLocation())
-                .likeCount(event.getLikeCount());
-        if (event.getMedia() != null && !event.getMedia().isEmpty()) {
-             event.getMedia().stream()
-                 .map(com.uet.VolunteerHub.entity.EventMedia::getMedia)
-                 .max((m1, m2) -> m1.getUploadedAt().compareTo(m2.getUploadedAt()))
-                 .ifPresent(latestMedia -> builder.coverImage(latestMedia.getUrl()));
-        }
-
+                .likeCount(event.getLikeCount())
+                .coverImageUrl(coverImageUrl);
         if (account != null) {
             builder.accountId(account.getAccountId());
         }
@@ -150,10 +152,9 @@ public class EventSearchService {
         }).toList();
     }
 
+    @Transactional
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
-        java.time.OffsetDateTime threeDaysAgo = java.time.OffsetDateTime.now().minusDays(3);
-
-        Page<Event> eventPage = eventRepository.findHotEvents(threeDaysAgo, pageable);
+        Page<Event> eventPage = eventRepository.findHotEvents(pageable);
         return eventPage.map(event -> {
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
