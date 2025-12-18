@@ -14,6 +14,12 @@ export const eventService = {
     return response.data;
   },
 
+  // GET /api/events/{eventId}/participants (public)
+  async getEventParticipants(eventId, params = {}) {
+    const response = await api.get(`/events/${eventId}/participants`, { params });
+    return response.data;
+  },
+
   // GET /api/events/accounts/{accountId} (public)
   async getEventsByAccountId(accountId, params = {}) {
     const response = await api.get(`/events/accounts/${accountId}`, { params });

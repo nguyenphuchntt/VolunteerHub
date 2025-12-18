@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import Comment from "./Comment";
+import MediaGallery from "./MediaGallery";
 import {
   Card,
   CardHeader,
@@ -305,14 +306,9 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
           </Typography>
         </CardContent>
 
-        {/* Post Media */}
-        {primaryMedia && (
-          <CardMedia
-            component="img"
-            image={primaryMedia.url || `/api/media/download/${primaryMedia.filename}`}
-            alt="Post media"
-            sx={{ maxHeight: 400, objectFit: "cover" }}
-          />
+        {/* Post Media Gallery */}
+        {mediaItems.length > 0 && (
+          <MediaGallery items={mediaItems} />
         )}
 
         {/* Stats */}
@@ -339,22 +335,30 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
           >
             Bình luận
           </Button>
-          <IconButton
-            size="small"
-            onClick={handleLike}
-            disabled={!isAuthenticated || loadingLike}
-            sx={{
-              color: isLiked ? "error.main" : "text.secondary",
-            }}
-          >
-            {loadingLike ? (
-              <CircularProgress size={18} />
-            ) : isLiked ? (
-              <Favorite />
-            ) : (
-              <FavoriteBorder />
-            )}
-          </IconButton>
+          {/* Only show like button when authenticated */}
+          {isAuthenticated ? (
+            <IconButton
+              size="small"
+              onClick={handleLike}
+              disabled={loadingLike}
+              sx={{
+                color: isLiked ? "error.main" : "text.secondary",
+              }}
+            >
+              {loadingLike ? (
+                <CircularProgress size={18} />
+              ) : isLiked ? (
+                <Favorite />
+              ) : (
+                <FavoriteBorder />
+              )}
+            </IconButton>
+          ) : (
+            /* Guest view: just show like icon without interaction */
+            <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
+              <FavoriteBorder sx={{ fontSize: 18, color: "text.secondary", mr: 0.5 }} />
+            </Box>
+          )}
         </CardActions>
 
         {/* Comments Section */}

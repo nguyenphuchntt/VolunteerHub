@@ -30,6 +30,12 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Followers/Following states
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+
   const isOwnProfile = currentUser?.username === username;
 
   // Fetch profile data
@@ -94,11 +100,66 @@ const Profile = () => {
     }
   }, [isOwnProfile]);
 
+  // Fetch followers/following counts
+  const fetchFollowData = useCallback(async () => {
+    if (!profileUser?.accountID) return;
+    try {
+      const [followers, following] = await Promise.all([
+        userService.getFollowersCount(profileUser.accountID),
+        userService.getFollowingCount(profileUser.accountID)
+      ]);
+      setFollowersCount(followers || 0);
+      setFollowingCount(following || 0);
 
+      // Check if current user is following this profile
+      if (isAuthenticated && !isOwnProfile) {
+        try {
+          const isFollow = await userService.isFollowing(profileUser.accountID);
+          setIsFollowing(isFollow);
+        } catch {
+          // User not authenticated or error
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch follow data:", err);
+    }
+  }, [profileUser?.accountID, isAuthenticated, isOwnProfile]);
+
+  // Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    if (!isAuthenticated) {
+      navigate("/signin");
+      return;
+    }
+    if (!profileUser?.accountID || followLoading) return;
+    
+    setFollowLoading(true);
+    try {
+      if (isFollowing) {
+        await userService.unfollowUser(profileUser.accountID);
+        setIsFollowing(false);
+        setFollowersCount(prev => Math.max(0, prev - 1));
+      } else {
+        await userService.followUser(profileUser.accountID);
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error("Failed to toggle follow:", err);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  useEffect(() => {
+    if (profileUser?.accountID) {
+      fetchFollowData();
+    }
+  }, [profileUser?.accountID, fetchFollowData]);
 
   useEffect(() => {
     if (isOwnProfile && isAuthenticated) {
@@ -208,15 +269,18 @@ const Profile = () => {
             </Button>
           ) : (
             <Button
-              variant="contained"
+              variant={isFollowing ? "outlined" : "contained"}
+              onClick={handleFollowToggle}
+              disabled={followLoading}
               sx={{
                 borderRadius: "9999px",
                 textTransform: "none",
                 fontWeight: 700,
                 mt: 1,
+                minWidth: 100,
               }}
             >
-              Theo dõi
+              {followLoading ? <CircularProgress size={20} /> : isFollowing ? "Đang theo dõi" : "Theo dõi"}
             </Button>
           )}
         </Box>
@@ -237,20 +301,28 @@ const Profile = () => {
 
           {/* Stats */}
           <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
+            <Box sx={{ display: "flex", gap: 0.5, cursor: "pointer" }}>
+              <Typography variant="body2" fontWeight={700}>
+                {followersCount}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                người theo dõi
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", gap: 0.5, cursor: "pointer" }}>
+              <Typography variant="body2" fontWeight={700}>
+                {followingCount}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                đang theo dõi
+              </Typography>
+            </Box>
             <Box sx={{ display: "flex", gap: 0.5 }}>
               <Typography variant="body2" fontWeight={700}>
                 {participatedEvents.length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 sự kiện
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Typography variant="body2" color="text.secondary">
-                vai trò
-              </Typography>
-              <Typography variant="body2" fontWeight={700}>
-                {profileUser.role || "USER"}
               </Typography>
             </Box>
           </Box>
@@ -275,7 +347,6 @@ const Profile = () => {
           <Tab label="Lịch sử tham gia" />
           <Tab label="Thông tin" />
           {isOwnProfile && <Tab label="Sự kiện đã thích" />}
-          {isOwnProfile && <Tab label="Bài viết đã thích" />}
         </Tabs>
       </Box>
 
@@ -429,49 +500,6 @@ const Profile = () => {
               <Typography variant="h2" sx={{ mb: 2 }}>❤️</Typography>
               <Typography variant="body1" color="text.secondary">
                 Chưa thích sự kiện nào
-              </Typography>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      {/* Liked Posts Tab */}
-      {activeTab === 3 && isOwnProfile && (
-        <Box>
-          {likedPosts.length > 0 ? (
-            likedPosts.map((post) => (
-              <Box
-                key={post.postId || post.id}
-                sx={{
-                  p: 2,
-                  borderBottom: "1px solid",
-                  borderColor: "grey.200",
-                }}
-              >
-                <Box sx={{ display: "flex", gap: 1.5 }}>
-                  <Avatar sx={{ width: 40, height: 40 }}>
-                    {(post.ownerUsername || "?").charAt(0).toUpperCase()}
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      {post.ownerUsername || "Người dùng"}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 0.5, lineHeight: 1.5 }}>
-                      {post.content?.substring(0, 200)}
-                      {post.content?.length > 200 && "..."}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
-                      {formatDate(post.createdAt)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            ))
-          ) : (
-            <Box sx={{ textAlign: "center", py: 8 }}>
-              <Typography variant="h2" sx={{ mb: 2 }}>💬</Typography>
-              <Typography variant="body1" color="text.secondary">
-                Chưa thích bài viết nào
               </Typography>
             </Box>
           )}
