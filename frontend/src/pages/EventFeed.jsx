@@ -79,7 +79,9 @@ const EventFeed = () => {
         setEvents(prev => [...prev, ...newEvents]);
       }
       
-      setHasMore(!response.last);
+      // Stop fetching if no events returned OR response indicates last page
+      const isEndOfPage = newEvents.length === 0 || response.last;
+      setHasMore(!isEndOfPage);
       setPage(pageIndex);
 
     } catch (err) {
@@ -263,8 +265,18 @@ const EventFeed = () => {
                 <CircularProgress size={24} />
               </Box>
             )}
-            {/* Sentinel element for infinite scroll */}
-            <div ref={observerTarget} style={{ height: "10px", width: "100%" }} />
+            {/* Sentinel element for infinite scroll - only render when more data available */}
+            {hasMore && (
+              <div ref={observerTarget} style={{ height: "10px", width: "100%" }} />
+            )}
+            {/* End of list message */}
+            {!hasMore && filteredEvents.length > 0 && (
+              <Box sx={{ textAlign: "center", py: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  — Đã hết sự kiện —
+                </Typography>
+              </Box>
+            )}
           </Box>
 
         ) : !loading && !error && (

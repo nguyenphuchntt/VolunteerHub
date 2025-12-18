@@ -102,6 +102,18 @@ public class EventUserSearchService {
     }
 
     @Transactional
+    public Page<EventUserSearchDTO> findApprovedByEventId(Long eventId, Pageable pageable) {
+        // Only return APPROVED participants (for public access)
+        Page<EventUser> eventUserPage = eventUserRepository.findByEventIdAndStatus(eventId, EventUserStatus.APPROVED, pageable);
+        return eventUserPage.map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        });
+    }
+
+    @Transactional
     public Page<EventUserSearchDTO> findEventUsersBySpecification(EventUserSearchCriteriaDTO criteria, Pageable pageable) {
         Specification<EventUser> spec = EventUserSpecification.fromCriteria(criteria);
         Page<EventUser> eventUserPage = eventUserRepository.findAll(spec, pageable);

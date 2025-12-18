@@ -16,45 +16,76 @@ import { postService, mediaService } from "../../api";
 
 const WritePost = ({ currentUser, eventId, onPostCreated }) => {
   const [postContent, setPostContent] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]); // Array of files
+  const [previewUrls, setPreviewUrls] = useState([]); // Array of preview URLs
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
+  const MAX_FILES = 10; // Maximum number of files
+
   const handleFileSelect = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      // Validate file type (images and videos)
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    // Check total count
+    const totalCount = selectedFiles.length + files.length;
+    if (totalCount > MAX_FILES) {
+      setError(`Tối đa ${MAX_FILES} files. Bạn đã chọn ${selectedFiles.length}, thêm ${files.length} sẽ vượt quá.`);
+      return;
+    }
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm'];
+    const validFiles = [];
+    const newPreviews = [];
+
+    for (const file of files) {
+      // Validate file type
       if (!validTypes.includes(file.type)) {
-        setError("Chỉ hỗ trợ file ảnh (JPEG, PNG, GIF, WebP) hoặc video (MP4, WebM)");
-        return;
+        setError(`File "${file.name}" không hỗ trợ. Chỉ hỗ trợ ảnh (JPEG, PNG, GIF, WebP) hoặc video (MP4, WebM)`);
+        continue;
       }
       // Validate file size (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        setError("File không được vượt quá 10MB");
-        return;
+        setError(`File "${file.name}" vượt quá 10MB`);
+        continue;
       }
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setError(null);
+      validFiles.push(file);
+      newPreviews.push({ url: URL.createObjectURL(file), type: file.type });
+    }
+
+    if (validFiles.length > 0) {
+      setSelectedFiles(prev => [...prev, ...validFiles]);
+      setPreviewUrls(prev => [...prev, ...newPreviews]);
+      if (validFiles.length === files.length) {
+        setError(null);
+      }
     }
   };
 
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+  const handleRemoveFile = (index) => {
+    // Revoke the preview URL to free memory
+    URL.revokeObjectURL(previewUrls[index].url);
+    
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
+  };
+
+  const handleRemoveAllFiles = () => {
+    previewUrls.forEach(p => URL.revokeObjectURL(p.url));
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
   const handlePost = async () => {
-    if (!postContent.trim() && !selectedFile) return;
+    if (!postContent.trim() && selectedFiles.length === 0) return;
     
     setLoading(true);
     setError(null);
@@ -64,27 +95,28 @@ const WritePost = ({ currentUser, eventId, onPostCreated }) => {
       const postData = {
         content: postContent,
         eventId: eventId,
-        postType: "DISCUSSION", // Use postType enum (DISCUSSION, ANNOUNCEMENT, etc.)
+        postType: "DISCUSSION",
         createByAccountId: currentUser?.accountID, 
       };
       
-      console.log("Creating post with data:", postData); // Debug log
+      console.log("Creating post with data:", postData);
       
       const newPost = await postService.createPost(postData);
       
-      // Step 2: Upload media if selected
-      if (selectedFile && newPost.postId) {
-        try {
-          await mediaService.uploadPostMedia(selectedFile, newPost.postId);
-        } catch (mediaError) {
-          console.error("Failed to upload media:", mediaError);
-          // Post was created, but media failed - still notify success with warning
-        }
+      // Step 2: Upload all media files
+      if (selectedFiles.length > 0 && newPost.postId) {
+        const uploadPromises = selectedFiles.map(file => 
+          mediaService.uploadPostMedia(file, newPost.postId).catch(err => {
+            console.error(`Failed to upload ${file.name}:`, err);
+            return null; // Continue with other files
+          })
+        );
+        await Promise.all(uploadPromises);
       }
       
       // Reset form
       setPostContent("");
-      handleRemoveFile();
+      handleRemoveAllFiles();
       
       // Notify parent component
       if (onPostCreated) {
@@ -92,7 +124,7 @@ const WritePost = ({ currentUser, eventId, onPostCreated }) => {
       }
     } catch (err) {
       console.error("Failed to create post:", err);
-      console.error("Error response:", err.response?.data); // Debug log
+      console.error("Error response:", err.response?.data);
       setError(err.response?.data?.message || err.response?.data?.error || "Không thể đăng bài. Vui lòng thử lại.");
     } finally {
       setLoading(false);
@@ -120,9 +152,13 @@ const WritePost = ({ currentUser, eventId, onPostCreated }) => {
       {/* Input Area */}
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <Avatar
-          src={currentUser?.avatar || "/images/google-icon.png"}
+          src={currentUser?.avatar}
           alt={currentUser?.name || currentUser?.username}
-          sx={{ width: 40, height: 40 }}
+          sx={{ 
+            width: 40, 
+            height: 40,
+            bgcolor: !currentUser?.avatar ? "primary.main" : undefined,
+          }}
         >
           {(currentUser?.username || "?").charAt(0).toUpperCase()}
         </Avatar>
@@ -152,47 +188,65 @@ const WritePost = ({ currentUser, eventId, onPostCreated }) => {
         />
       </Box>
 
-      {/* Media Preview */}
-      {previewUrl && (
-        <Box sx={{ position: "relative", mb: 2 }}>
-          {selectedFile?.type.startsWith("video/") ? (
-            <video
-              src={previewUrl}
-              controls
-              style={{
-                width: "100%",
-                maxHeight: 300,
-                borderRadius: "12px",
-                objectFit: "cover",
-              }}
-            />
-          ) : (
-            <Box
-              component="img"
-              src={previewUrl}
-              alt="Preview"
-              sx={{
-                width: "100%",
-                maxHeight: 300,
-                borderRadius: "12px",
-                objectFit: "cover",
-              }}
-            />
-          )}
-          <IconButton
-            size="small"
-            onClick={handleRemoveFile}
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              backgroundColor: "rgba(0, 0, 0, 0.6)",
-              color: "white",
-              "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
+      {/* Media Previews - Grid Layout */}
+      {previewUrls.length > 0 && (
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              {selectedFiles.length} file(s) đã chọn
+            </Typography>
+            <Button size="small" color="error" onClick={handleRemoveAllFiles}>
+              Xóa tất cả
+            </Button>
+          </Box>
+          <Box 
+            sx={{ 
+              display: "grid", 
+              gridTemplateColumns: previewUrls.length === 1 ? "1fr" : "repeat(auto-fill, minmax(100px, 1fr))",
+              gap: 1,
             }}
           >
-            <Close fontSize="small" />
-          </IconButton>
+            {previewUrls.map((preview, index) => (
+              <Box key={index} sx={{ position: "relative", aspectRatio: "1", overflow: "hidden", borderRadius: "8px" }}>
+                {preview.type.startsWith("video/") ? (
+                  <video
+                    src={preview.url}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                ) : (
+                  <Box
+                    component="img"
+                    src={preview.url}
+                    alt={`Preview ${index + 1}`}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                )}
+                <IconButton
+                  size="small"
+                  onClick={() => handleRemoveFile(index)}
+                  sx={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    color: "white",
+                    padding: 0.5,
+                    "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.8)" },
+                  }}
+                >
+                  <Close fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+          </Box>
         </Box>
       )}
 
@@ -204,26 +258,27 @@ const WritePost = ({ currentUser, eventId, onPostCreated }) => {
             ref={fileInputRef}
             onChange={handleFileSelect}
             accept="image/*,video/*"
+            multiple
             style={{ display: "none" }}
           />
           <Button
             startIcon={<Image />}
             onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
+            disabled={loading || selectedFiles.length >= MAX_FILES}
             sx={{
               color: "text.secondary",
               textTransform: "none",
               "&:hover": { backgroundColor: "grey.100" },
             }}
           >
-            Thêm Media
+            Thêm Media {selectedFiles.length > 0 && `(${selectedFiles.length}/${MAX_FILES})`}
           </Button>
         </Box>
         <Button
           variant="contained"
           size="small"
           onClick={handlePost}
-          disabled={loading || (!postContent.trim() && !selectedFile)}
+          disabled={loading || (!postContent.trim() && selectedFiles.length === 0)}
           sx={{
             borderRadius: "20px",
             px: 3,
@@ -249,3 +304,4 @@ WritePost.propTypes = {
 };
 
 export default WritePost;
+

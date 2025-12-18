@@ -96,19 +96,16 @@ const EventDetail = () => {
     }
   }, [eventId]);
 
-  // Fetch participants (only for managers/admins - backend requires ADMIN/MANAGER role)
+  // Fetch participants (publicly visible approved participants)
   const fetchParticipants = useCallback(async () => {
-    if (!isManager) {
-      // Regular users can't access event-users endpoint
-      return;
-    }
     try {
-      const response = await eventUserService.getEventUsersByEventId(eventId);
+      // Use the new public endpoint in eventService instead of eventUserService (which was admin only)
+      const response = await eventService.getEventParticipants(eventId);
       setParticipants(response.content || []);
     } catch (err) {
       console.error("Failed to fetch participants:", err);
     }
-  }, [eventId, isManager]);
+  }, [eventId]);
 
   // Fetch participation status for current user
   const fetchParticipationStatus = useCallback(async () => {
@@ -482,7 +479,7 @@ const EventDetail = () => {
       {/* Feed Tab */}
       {activeTab === 0 && (
         <Box sx={{ p: 2 }}>
-          {isAuthenticated && (
+          {isAuthenticated && participationStatus === 'APPROVED' && (
             <WritePost 
               currentUser={user} 
               eventId={parseInt(eventId)} 
@@ -501,7 +498,7 @@ const EventDetail = () => {
             <Box sx={{ textAlign: "center", py: 8 }}>
               <Typography variant="h2" sx={{ mb: 2 }}>💬</Typography>
               <Typography variant="h6" fontWeight={600}>Chưa có bài viết</Typography>
-              <Typography color="text.secondary">Hãy là người đầu tiên chia sẻ!</Typography>
+              {/* <Typography color="text.secondary">Hãy là người đầu tiên chia sẻ!</Typography> */}
             </Box>
           )}
         </Box>
