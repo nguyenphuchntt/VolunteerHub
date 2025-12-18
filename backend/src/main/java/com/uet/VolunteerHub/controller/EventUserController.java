@@ -31,24 +31,28 @@ public class EventUserController {
     }
 
     @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsers(EventUserSearchCriteriaDTO criteria,
                                                                      @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
     }
 
     @GetMapping("/accounts/{accountId}")
+    @PreAuthorize("authentication.principal.accountId.equals(#accountId) or hasRole('ADMIN')")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByAccountId(@PathVariable UUID accountId,
                                                                                 @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findByAccountId(accountId, pageable));
     }
 
     @GetMapping("/{eventId}")
+    @PreAuthorize("@eventUserSecurityService.isManager(#eventId)")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByEventId(@PathVariable Long eventId,
                                                                               @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findByEventId(eventId, pageable));
     }
 
     @GetMapping("/{eventId}/{accountId}")
+    @PreAuthorize("@eventUserSecurityService.isManager(#eventId) or authentication.principal.accountId.equals(#accountId)")
     public ResponseEntity<EventUserSearchDTO> searchEventUsersByAccountIdAndEventId(@PathVariable UUID accountId,
                                                                                     @PathVariable Long eventId) {
         return ResponseEntity.ok(eventUserSearchService.findByAccountIdAndEventId(accountId, eventId));
