@@ -143,10 +143,9 @@ public class EventSearchService {
         }).toList();
     }
 
+    @Transactional
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
-        java.time.OffsetDateTime threeDaysAgo = java.time.OffsetDateTime.now().minusDays(3);
-
-        Page<Event> eventPage = eventRepository.findHotEvents(threeDaysAgo, pageable);
+        Page<Event> eventPage = eventRepository.findHotEvents(pageable);
         return eventPage.map(event -> {
             Account account = event.getCreatedBy();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
