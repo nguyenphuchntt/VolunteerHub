@@ -27,4 +27,5 @@ public class EventUserSearchDTO {
     private String description;
     private String location;
     private EventStatus eventStatus;
+    private String coverImageUrl;
 }

@@ -8,6 +8,7 @@ import com.uet.VolunteerHub.entity.EventUser;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
+import com.uet.VolunteerHub.repository.EventMediaRepository;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.specification.EventUserSpecification;
 import jakarta.transaction.Transactional;
@@ -26,14 +27,24 @@ import java.util.UUID;
 @Service
 public class EventUserSearchService {
     private final EventUserRepository eventUserRepository;
+    private final EventMediaRepository eventMediaRepository;
 
     @Autowired
-    public EventUserSearchService(EventUserRepository eventUserRepository) {
+    public EventUserSearchService(EventUserRepository eventUserRepository, EventMediaRepository eventMediaRepository) {
         this.eventUserRepository = eventUserRepository;
+        this.eventMediaRepository = eventMediaRepository;
     }
 
     private EventUserSearchDTO mapToEventUserSearchDTO(EventUser eventUser, Account account,
             UserInfo userInfo, Event event) {
+        // Get cover image URL from first event media
+        String coverImageUrl = null;
+        if (event != null) {
+            coverImageUrl = eventMediaRepository.findFirstByEvent_EventIdOrderByMedia_UploadedAtAsc(event.getEventId())
+                .map(em -> em.getMedia().getUrl())
+                .orElse(null);
+        }
+
         var builder = EventUserSearchDTO.builder()
                 .accountId(eventUser.getAccountId())
                 .eventId(eventUser.getEventId())
@@ -54,7 +65,8 @@ public class EventUserSearchService {
             builder.title(event.getTitle())
                     .description(event.getDescription())
                     .location(event.getLocation())
-                    .eventStatus(event.getStatus());
+                    .eventStatus(event.getStatus())
+                    .coverImageUrl(coverImageUrl);
         }
         return builder.build();
     }
