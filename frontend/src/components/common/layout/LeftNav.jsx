@@ -36,6 +36,7 @@ import {
   Event,
   People,
   Download,
+  SupervisorAccount,
 } from "@mui/icons-material";
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
@@ -93,6 +94,12 @@ const LeftNav = ({ isMobile = false }) => {
       path: "/admin/users",
       icon: <People />,
       description: "Thay đổi role, khóa/mở tài khoản",
+    },
+    {
+      label: "Quản lý yêu cầu",
+      path: "/admin/requests",
+      icon: <SupervisorAccount />,
+      description: "Duyệt yêu cầu làm manager",
     },
     {
       label: "Xuất dữ liệu",

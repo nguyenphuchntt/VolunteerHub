@@ -27,6 +27,7 @@ import {
   AdminEventManagement,
   UserManagement,
   DataExport,
+  RequestManagement,
 } from "./pages/admin";
 
 function App() {
@@ -71,6 +72,11 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/settings/change-password" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings/manager-request" element={
             <ProtectedRoute>
               <Settings />
             </ProtectedRoute>
@@ -128,6 +134,11 @@ function App() {
           <Route path="/admin/export" element={
             <ProtectedRoute requiredRoles={['ADMIN']}>
               <DataExport />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/requests" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <RequestManagement />
             </ProtectedRoute>
           } />
         </Routes>

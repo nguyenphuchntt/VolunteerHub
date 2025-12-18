@@ -14,6 +14,22 @@ import {
 import { Image, Close } from "@mui/icons-material";
 import { postService, mediaService } from "../../api";
 
+// Helper to get display name from user object
+const getDisplayName = (user) => {
+  if (user?.firstName && user?.lastName) {
+    return `${user.firstName} ${user.lastName}`;
+  }
+  return user?.username || "Người dùng";
+};
+
+// Helper to get avatar letter from user object
+const getAvatarLetter = (user) => {
+  if (user?.firstName) {
+    return user.firstName.charAt(0).toUpperCase();
+  }
+  return (user?.username || "?").charAt(0).toUpperCase();
+};
+
 const WritePost = ({ currentUser, eventId, onPostCreated }) => {
   const [postContent, setPostContent] = useState("");
   const [selectedFiles, setSelectedFiles] = useState([]); // Array of files
@@ -153,14 +169,14 @@ const WritePost = ({ currentUser, eventId, onPostCreated }) => {
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
         <Avatar
           src={currentUser?.avatar}
-          alt={currentUser?.name || currentUser?.username}
+          alt={getDisplayName(currentUser)}
           sx={{ 
             width: 40, 
             height: 40,
             bgcolor: !currentUser?.avatar ? "primary.main" : undefined,
           }}
         >
-          {(currentUser?.username || "?").charAt(0).toUpperCase()}
+          {getAvatarLetter(currentUser)}
         </Avatar>
         <TextField
           fullWidth

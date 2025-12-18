@@ -112,24 +112,6 @@ const EventForm = () => {
       } else {
         createdEvent = await eventService.registerEvent(eventData);
       }
-
-      // Step 2: Upload image if selected
-      if (selectedFile && eventIdToUse) {
-        setUploading(true); // Re-use uploading state for UI feedback
-        try {
-          await mediaService.uploadEventMedia(selectedFile, eventIdToUse);
-          setSnackbar(prev => ({ ...prev, message: prev.message + " Đã tải ảnh bìa lên." }));
-        } catch (uploadErr) {
-          console.error("Image upload failed:", uploadErr);
-          setSnackbar(prev => ({ 
-            ...prev, 
-            severity: "warning",
-            message: prev.message + " Tuy nhiên, tải ảnh lỗi. Vui lòng cập nhật lại." 
-          }));
-        } finally {
-            setUploading(false);
-        }
-      }
       
       const eventId = createdEvent.eventId;
       

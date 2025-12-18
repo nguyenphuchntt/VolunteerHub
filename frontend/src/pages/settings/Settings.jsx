@@ -4,18 +4,20 @@ import {
   Box, Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Card, CardContent
 } from "@mui/material";
-import { Person, Lock, ChevronRight } from "@mui/icons-material";
+import { Person, Lock, ChevronRight, SupervisorAccount } from "@mui/icons-material";
 import { ThreeColumnLayout } from "../../components/common";
 import { useAuth } from "../../context/AuthContext";
 import ChangePassword from "./ChangePassword";
 import ProfileSettings from "./ProfileSettings";
+import ManagerRequest from "./ManagerRequest";
 
 const Settings = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
 
-  const menuItems = [
+  // Base menu items
+  const baseMenuItems = [
     { 
       label: "Thông tin cá nhân", 
       path: "/settings/profile", 
@@ -30,6 +32,19 @@ const Settings = () => {
     },
   ];
 
+  // Add manager request option only for regular users
+  const menuItems = user?.role === "USER" 
+    ? [
+        ...baseMenuItems,
+        { 
+          label: "Yêu cầu làm Quản lý", 
+          path: "/settings/manager-request", 
+          icon: <SupervisorAccount />,
+          description: "Gửi yêu cầu để trở thành quản lý sự kiện"
+        },
+      ]
+    : baseMenuItems;
+
   const isActive = (path) => location.pathname === path;
 
   // Determine which sub-component to render
@@ -39,6 +54,9 @@ const Settings = () => {
     }
     if (location.pathname === "/settings/change-password") {
       return <ChangePassword />;
+    }
+    if (location.pathname === "/settings/manager-request") {
+      return <ManagerRequest />;
     }
     // Main settings menu
     return (
@@ -99,3 +117,4 @@ const Settings = () => {
 };
 
 export default Settings;
+
