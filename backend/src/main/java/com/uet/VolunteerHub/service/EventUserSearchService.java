@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class EventUserSearchService {
     }
 
     private EventUserSearchDTO mapToEventUserSearchDTO(EventUser eventUser, Account account,
-                                                       UserInfo userInfo, Event event) {
+            UserInfo userInfo, Event event) {
         var builder = EventUserSearchDTO.builder()
                 .accountId(eventUser.getAccountId())
                 .eventId(eventUser.getEventId())
@@ -66,7 +67,7 @@ public class EventUserSearchService {
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = value.getEvent();
             return mapToEventUserSearchDTO(value, account, userInfo, event);
-        }).orElseThrow( () -> new ResourceNotFoundException("Event " + eventId + " not found for account " + accountId));
+        }).orElseThrow(() -> new ResourceNotFoundException("Event " + eventId + " not found for account " + accountId));
     }
 
     @Transactional
@@ -104,7 +105,8 @@ public class EventUserSearchService {
     @Transactional
     public Page<EventUserSearchDTO> findApprovedByEventId(Long eventId, Pageable pageable) {
         // Only return APPROVED participants (for public access)
-        Page<EventUser> eventUserPage = eventUserRepository.findByEventIdAndStatus(eventId, EventUserStatus.APPROVED, pageable);
+        Page<EventUser> eventUserPage = eventUserRepository.findByEventIdAndStatus(eventId, EventUserStatus.APPROVED,
+                pageable);
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
@@ -114,7 +116,8 @@ public class EventUserSearchService {
     }
 
     @Transactional
-    public Page<EventUserSearchDTO> findEventUsersBySpecification(EventUserSearchCriteriaDTO criteria, Pageable pageable) {
+    public Page<EventUserSearchDTO> findEventUsersBySpecification(EventUserSearchCriteriaDTO criteria,
+            Pageable pageable) {
         Specification<EventUser> spec = EventUserSpecification.fromCriteria(criteria);
         Page<EventUser> eventUserPage = eventUserRepository.findAll(spec, pageable);
         return eventUserPage.map(eventUser -> {
@@ -125,4 +128,36 @@ public class EventUserSearchService {
         });
     }
 
+    @Transactional
+    public List<EventUserSearchDTO> findAllEventUsers() {
+        List<EventUser> eventUsers = eventUserRepository.findAll();
+        return eventUsers.stream().map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        }).toList();
+    }
+
+    @Transactional
+    public List<EventUserSearchDTO> findAllEventUsersByEventId(Long eventId) {
+        List<EventUser> eventUsers = eventUserRepository.findByEventId(eventId);
+        return eventUsers.stream().map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        }).toList();
+    }
+
+    @Transactional
+    public List<EventUserSearchDTO> findAllEventUsersByAccountId(UUID accountId) {
+        List<EventUser> eventUsers = eventUserRepository.findByAccountId(accountId);
+        return eventUsers.stream().map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        }).toList();
+    }
 }
