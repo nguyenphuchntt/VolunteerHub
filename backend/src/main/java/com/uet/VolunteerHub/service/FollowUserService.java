@@ -7,6 +7,7 @@ import com.uet.VolunteerHub.entity.FollowUserId;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -59,16 +60,22 @@ public class FollowUserService {
         return followUsers.map(this::mapToFollowUserDTO);
     }
 
+    @Transactional
     public FollowUserDTO followUser(Account account, UUID toBeFollowedAccountId) {
         Account toBeFollowedAccount = accountRepository.findById(toBeFollowedAccountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with ID" + toBeFollowedAccountId + "not found"));
+        Account followingAccount = accountRepository.findById(account.getAccountId())
+                .orElseThrow(() -> new ResourceNotFoundException("Account with ID" + account.getAccountId() + "not found"));
         FollowUser followUser = new FollowUser();
         followUser.setAccount(toBeFollowedAccount);
-        followUser.setFollowedByAccount(account);
+        followUser.setAccountId(toBeFollowedAccount.getAccountId());
+        followUser.setFollowedByAccountId(account.getAccountId());
+        followUser.setFollowedByAccount(followingAccount);
         FollowUser savedFollowUser = followUserRepository.save(followUser);
         return mapToFollowUserDTO(savedFollowUser);
     }
 
+    @Transactional
     public void unfollowUser(Account account, UUID toBeUnfollowedAccountId) {
         Account toBeUnfollowedAccount = accountRepository.findById(toBeUnfollowedAccountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with ID" + toBeUnfollowedAccountId + "not found"));
