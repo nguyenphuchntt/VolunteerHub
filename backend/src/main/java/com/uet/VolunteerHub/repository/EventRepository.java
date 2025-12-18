@@ -23,9 +23,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
     Page<Event> findAll(Specification<Event> spec, Pageable pageable);
 
-    @Override
     @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
-    Optional<Event> findById(Long eventId);
+    Optional<Event> findByEventIdOrderByStartAt(Long eventId);
 
     List<Event> findAllByCreatedBy_AccountId(UUID accountID);
 

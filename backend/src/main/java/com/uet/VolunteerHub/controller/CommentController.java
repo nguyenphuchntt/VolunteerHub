@@ -46,12 +46,14 @@ public class CommentController {
 
     @PreAuthorize("hasRole('ADMIN') or @commentSecurityService.canCreateComment(#request.postId)")
     @PostMapping
-    public ResponseEntity<CreateCommentResponse> createComment(@RequestBody @Valid CreateCommentRequest request) {
+    public ResponseEntity<CreateCommentResponse> createComment(
+            @RequestBody @Valid CreateCommentRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.uet.VolunteerHub.entity.Account account) {
         CommentCreateDTO dto = CommentCreateDTO.builder()
                 .content(request.getContent())
                 .postId(request.getPostId())
                 .parentCommentId(request.getParentCommentId())
-                .createdByAccountId(java.util.UUID.fromString(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName()))
+                .createdByAccountId(account.getAccountId())
                 .build();
         CommentReadDTO result = commentService.createComment(dto);
         return ResponseEntity.ok(CreateCommentResponse.builder()

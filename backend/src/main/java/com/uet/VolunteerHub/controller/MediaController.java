@@ -71,6 +71,7 @@ public class MediaController {
     }
 
     @GetMapping("/download/{filename:.+}")
+    @PreAuthorize("true")
     public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
         Resource resource = fileStorageService.loadFileAsResource(filename);
         String contentType = fileStorageService.getContentType(filename);
@@ -112,6 +113,7 @@ public class MediaController {
     }
 
     @GetMapping("/by-account/{accountId}")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Page<MediaReadDTO>> getMediaByAccount(
             @PathVariable UUID accountId,
             Pageable pageable) {
@@ -136,6 +138,7 @@ public class MediaController {
     }
 
     @GetMapping("/by-event/{eventId}")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Page<MediaReadDTO>> getMediaByEvent(
             @PathVariable Long eventId,
             Pageable pageable) {
@@ -160,6 +163,7 @@ public class MediaController {
     }
 
     @GetMapping("/by-post/{postId}")
+    @PreAuthorize("permitAll()")
     public ResponseEntity<Page<MediaReadDTO>> getMediaByPost(
             @PathVariable Long postId,
             Pageable pageable) {

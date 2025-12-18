@@ -35,6 +35,10 @@ public class PostWriteService {
     @Transactional
     public PostReadDTO createPost(PostCreateDTO dto) {
         Post post = postMapper.toPostEntity(dto);
+        
+        // Set default postStatus for new posts
+        post.setPostStatus(PostStatus.CREATED);
+        
         Event event = eventRepository.findById(dto.getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Error: Event not found with id " + dto.getEventId()));
 

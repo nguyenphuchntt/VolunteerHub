@@ -6,6 +6,7 @@ import com.uet.VolunteerHub.dto.EventUser.EventUserSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.EventLikeService;
 import com.uet.VolunteerHub.service.EventSearchService;
+import com.uet.VolunteerHub.service.EventUserSearchService;
 import com.uet.VolunteerHub.service.EventUserWriteService;
 import com.uet.VolunteerHub.service.EventWriteService;
 import jakarta.validation.Valid;
@@ -30,14 +31,17 @@ public class EventController {
     private final EventWriteService eventWriteService;
     private final EventUserWriteService eventUserWriteService;
     private final EventLikeService eventLikeService;
+    private final EventUserSearchService eventUserSearchService;
 
     @Autowired
     public EventController(EventSearchService eventSearchService, EventWriteService eventWriteService,
-                           EventUserWriteService eventUserWriteService, EventLikeService eventLikeService) {
+                           EventUserWriteService eventUserWriteService, EventLikeService eventLikeService,
+                           EventUserSearchService eventUserSearchService) {
         this.eventSearchService = eventSearchService;
         this.eventWriteService = eventWriteService;
         this.eventUserWriteService = eventUserWriteService;
         this.eventLikeService = eventLikeService;
+        this.eventUserSearchService = eventUserSearchService;
     }
 
     @GetMapping("search")
@@ -60,6 +64,15 @@ public class EventController {
         UUID accountId = (account != null) ? account.getAccountId() : null;
         Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, accountId);
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{eventId}/participants")
+    public ResponseEntity<Page<EventUserSearchDTO>> getEventParticipants(
+            @PathVariable Long eventId,
+            @PageableDefault(page = 0, size = 50) Pageable pageable) {
+        // Get approved participants only (public access)
+        Page<EventUserSearchDTO> participants = eventUserSearchService.findApprovedByEventId(eventId, pageable);
+        return ResponseEntity.ok(participants);
     }
 
     @GetMapping("/accounts/{accountId}")

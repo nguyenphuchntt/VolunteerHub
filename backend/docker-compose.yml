@@ -35,6 +35,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-volunteerpass}
       SPRING_SQL_INIT_MODE: never
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploaded-files:/app/uploads
     ports:
       - "8080:8080"
     depends_on:
@@ -50,3 +53,4 @@ networks:
 
 volumes:
   mysql_data:
+  uploaded-files:

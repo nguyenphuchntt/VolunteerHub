@@ -19,7 +19,7 @@ import java.util.Set;
 public class Comment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "comment_id", updatable = false, nullable = false)
     private Long commentId;
 
@@ -38,11 +38,11 @@ public class Comment {
     private OffsetDateTime createAt;
 
     @NotNull
+    @Size(min = 1, max = 300, message = "Comment's length should between 1 and 300 characters")
     @Column(name = "content", nullable = false)
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @Size(min = 1, max = 300, message = "Comment's length should between 1 and 300 characters")
     @JoinColumn(name = "reply_to")
     private Comment parentComment;
 
