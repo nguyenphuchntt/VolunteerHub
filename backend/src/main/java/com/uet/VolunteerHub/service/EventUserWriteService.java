@@ -124,6 +124,22 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
+        
+        EventUser eventUser = findEventUser(account.getAccountId(), eventId);
+        if (eventUser.getRole() == EventUserRole.MANAGER) {
+            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
+            long managerCount = allEventUsers.stream()
+                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
+                    .count();
+            
+            if (managerCount <= 1) {
+                throw new IllegalStateException(
+                    "Cannot unregister. You are the last manager of this event. " +
+                    "Please assign another manager before leaving."
+                );
+            }
+        }
+        
         eventUserRepository.deleteByAccountIdAndEventId(account.getAccountId(), eventId);
     }
 
@@ -197,6 +213,23 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
+        
+        EventUser eventUser = findEventUser(accountId, eventId);
+        if (eventUser.getRole() == EventUserRole.MANAGER) {
+            // Count total managers in this event
+            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
+            long managerCount = allEventUsers.stream()
+                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
+                    .count();
+            
+            if (managerCount <= 1) {
+                throw new IllegalStateException(
+                    "Cannot remove this user. They are the last manager of this event. " +
+                    "Please assign another manager before removing them."
+                );
+            }
+        }
+        
         eventUserRepository.deleteByAccountIdAndEventId(accountId, eventId);
     }
 
