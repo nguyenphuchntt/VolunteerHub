@@ -7,61 +7,65 @@ import {
   Card,
   CardContent,
   Button,
-  Chip,
   CircularProgress,
   Alert,
 } from "@mui/material";
 import {
   Event,
   People,
-  TrendingUp,
   Pending,
-  ArrowForward,
-  Download,
   AccessTime,
+  Download,
+  CheckCircle,
+  Cancel
 } from "@mui/icons-material";
 import { ThreeColumnLayout, StatsCard } from "../../components/common";
-import { eventService, userService } from "../../api";
+import { adminService } from "../../api/services/admin.service";
 import { useAuth } from "../../context/AuthContext";
+import DashboardCharts from "./components/DashboardCharts";
+import DashboardRankings from "./components/DashboardRankings";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  // API states
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [stats, setStats] = useState({
-    totalEvents: 0,
-    pendingEvents: 0,
-    totalUsers: 0,
-    scheduledEvents: 0,
-  });
-  const [pendingEvents, setPendingEvents] = useState([]);
-  const [trendingEvents, setTrendingEvents] = useState([]);
 
-  // Fetch dashboard data
+  // Data states
+  const [overview, setOverview] = useState(null);
+  const [newUsersData, setNewUsersData] = useState([]);
+  const [newEventsData, setNewEventsData] = useState([]);
+  const [topActiveUsers, setTopActiveUsers] = useState([]);
+  const [topInteractiveUsers, setTopInteractiveUsers] = useState([]);
+  const [topEvents, setTopEvents] = useState([]);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Fetch events with different statuses for stats
-      const [allEvents, pendingEventsRes, trendingEventsRes, usersRes] = await Promise.all([
-        eventService.searchEvents({ size: 1 }),
-        eventService.searchEvents({ status: "PENDING", size: 5 }),
-        eventService.searchEvents({ sort: "likeCount,desc", size: 5 }),
-        userService.searchUsers({ size: 1 }),
+      const [
+        overviewRes,
+        newUsersRes,
+        newEventsRes,
+        topActiveRes,
+        topInteractiveRes,
+        topEventsRes
+      ] = await Promise.all([
+        adminService.getStatsOverview(),
+        adminService.getStatsChart('new_users_last_7_days'),
+        adminService.getStatsChart('new_events_last_7_days'),
+        adminService.getStatsRanking('top_active_users'),
+        adminService.getStatsRanking('top_interactive_users'),
+        adminService.getStatsRanking('top_events')
       ]);
 
-      setStats({
-        totalEvents: allEvents.totalElements || 0,
-        pendingEvents: pendingEventsRes.totalElements || 0,
-        totalUsers: usersRes.totalElements || 0,
-        scheduledEvents: allEvents.content?.filter(e => e.status === "SCHEDULED").length || 0,
-      });
+      setOverview(overviewRes);
+      setNewUsersData(newUsersRes.data || []);
+      setNewEventsData(newEventsRes.data || []);
+      setTopActiveUsers(topActiveRes || []);
+      setTopInteractiveUsers(topInteractiveRes || []);
+      setTopEvents(topEventsRes || []);
 
-      setPendingEvents(pendingEventsRes.content || []);
-      setTrendingEvents(trendingEventsRes.content || []);
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err);
       setError("Không thể tải dữ liệu dashboard.");
@@ -74,63 +78,53 @@ const AdminDashboard = () => {
     fetchData();
   }, [fetchData]);
 
-  // Handle quick approve/reject
-  const handleQuickApprove = async (eventId) => {
-    try {
-      await eventService.updateEventStatus(eventId, "SCHEDULED");
-      fetchData();
-    } catch (err) {
-      console.error("Failed to approve event:", err);
-    }
-  };
+  if (loading) {
+    return (
+      <ThreeColumnLayout user={user} role="admin" showRightSidebar={true}>
+        <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </ThreeColumnLayout>
+    );
+  }
 
-  const handleQuickReject = async (eventId) => {
-    try {
-      await eventService.updateEventStatus(eventId, "CANCELLED");
-      fetchData();
-    } catch (err) {
-      console.error("Failed to reject event:", err);
-    }
-  };
+  if (error) {
+    return (
+      <ThreeColumnLayout user={user} role="admin" showRightSidebar={true}>
+        <Box sx={{ p: 2 }}>
+          <Alert severity="error">{error}</Alert>
+          <Button onClick={fetchData} sx={{ mt: 2 }}>Thử lại</Button>
+        </Box>
+      </ThreeColumnLayout>
+    );
+  }
 
   const statsCards = [
     {
-      title: "Tổng sự kiện",
-      value: stats.totalEvents.toString(),
-      icon: <Event />,
+      title: "Tổng người dùng",
+      value: overview?.users?.summary?.total?.toLocaleString() || "0",
+      icon: <People />,
       color: "primary",
     },
     {
-      title: "Người dùng",
-      value: stats.totalUsers.toLocaleString(),
+      title: "Người dùng mới (tháng)",
+      value: overview?.users?.summary?.newThisMonth?.toLocaleString() || "0",
       icon: <People />,
       color: "success",
     },
     {
-      title: "Chờ duyệt",
-      value: stats.pendingEvents.toString(),
+      title: "Tổng sự kiện",
+      value: overview?.events?.summary?.total?.toLocaleString() || "0",
+      icon: <Event />,
+      color: "info",
+    },
+    {
+      title: "Sự kiện chờ duyệt",
+      value: overview?.events?.summary?.pending?.toLocaleString() || "0",
       icon: <Pending />,
       color: "warning",
     },
-    {
-      title: "Đang hoạt động",
-      value: stats.scheduledEvents.toString(),
-      icon: <AccessTime />,
-      color: "info",
-    },
   ];
-
-  // Get gradient for event without image
-  const getGradient = (category) => {
-    const gradients = [
-      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-      "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-    ];
-    const hash = (category || "default").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    return gradients[hash % gradients.length];
-  };
 
   return (
     <ThreeColumnLayout user={user} role="admin" showRightSidebar={true} showSearch={false}>
@@ -153,127 +147,68 @@ const AdminDashboard = () => {
       </Box>
 
       <Box sx={{ p: 2 }}>
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
-        ) : (
-          <>
-            {/* Stats Grid */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              {statsCards.map((stat, index) => (
-                <Grid item xs={6} key={index}>
-                  <StatsCard {...stat} />
-                </Grid>
-              ))}
+        {/* Stats Grid */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          {statsCards.map((stat, index) => (
+            <Grid item xs={6} md={3} key={index}>
+              <StatsCard {...stat} />
             </Grid>
+          ))}
+        </Grid>
 
-            {/* Pending Events */}
-            <Card
-              elevation={0}
-              sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", mb: 2 }}
-            >
-              <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Pending sx={{ color: "warning.main", fontSize: 20 }} />
-                    <Typography variant="subtitle1" fontWeight={700}>
-                      Sự kiện chờ duyệt
-                    </Typography>
-                    <Chip
-                      label={stats.pendingEvents}
-                      size="small"
-                      color="warning"
-                      sx={{ height: 20, fontSize: "11px" }}
-                    />
-                  </Box>
-                  <Button
-                    size="small"
-                    endIcon={<ArrowForward />}
-                    onClick={() => navigate("/admin/events")}
-                    sx={{ textTransform: "none", fontWeight: 500 }}
-                  >
-                    Xem tất cả
-                  </Button>
-                </Box>
-
-                {pendingEvents.length > 0 ? (
-                  pendingEvents.slice(0, 3).map((event) => (
-                    <Box
-                      key={event.eventId}
-                      sx={{
-                        display: "flex",
-                        gap: 1.5,
-                        p: 1.5,
-                        mb: 1,
-                        borderRadius: "12px",
-                        border: "1px solid",
-                        borderColor: "grey.200",
-                        "&:hover": { borderColor: "primary.main" },
-                        "&:last-child": { mb: 0 },
-                      }}
-                    >
-                      {event.coverImage ? (
-                        <Box
-                          component="img"
-                          src={event.coverImage}
-                          alt={event.title}
-                          sx={{ width: 56, height: 56, borderRadius: "8px", objectFit: "cover" }}
-                        />
-                      ) : (
-                        <Box
-                          sx={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: "8px",
-                            background: getGradient(event.category),
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
-                        >
-                          <Event sx={{ color: "white", fontSize: 24 }} />
+        {/* Detailed Stats Cards */}
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+           <Grid item xs={12} md={12}>
+                <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
+                    <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                            <CheckCircle color="success" />
+                            <Typography variant="subtitle1" fontWeight={600}>Hiệu suất sự kiện</Typography>
                         </Box>
-                      )}
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={600} noWrap>
-                          {event.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {event.location || "Chưa có địa điểm"}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: "flex", gap: 0.5 }}>
-                        <Button
-                          size="small"
-                          color="success"
-                          onClick={() => handleQuickApprove(event.eventId)}
-                          sx={{ minWidth: 0, p: 0.5 }}
-                        >
-                          Duyệt
-                        </Button>
-                        <Button
-                          size="small"
-                          color="error"
-                          onClick={() => handleQuickReject(event.eventId)}
-                          sx={{ minWidth: 0, p: 0.5 }}
-                        >
-                          Từ chối
-                        </Button>
-                      </Box>
-                    </Box>
-                  ))
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 3 }}>
-                    Không có sự kiện nào đang chờ duyệt.
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
+                        <Typography variant="body2" color="text.secondary">Tổng người tham gia: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.totalAttendees}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">Tỷ lệ hoàn thành: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.completionRate?.toFixed(2)}%</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">TB người/sự kiện: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.avgAttendeesPerEvent?.toFixed(2)}</Typography></Typography>
+                    </CardContent>
+                </Card>
+           </Grid>
+           <Grid item xs={12} md={12}>
+                <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
+                    <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                            <AccessTime color="info" />
+                            <Typography variant="subtitle1" fontWeight={600}>Trạng thái sự kiện</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">Đang diễn ra: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.ongoing}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">Đã kết thúc: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.finished}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">Đã hủy: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.cancelled}</Typography></Typography>
+                    </CardContent>
+                </Card>
+           </Grid>
+           <Grid item xs={12} md={12}>
+                <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
+                    <CardContent>
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                            <People color="primary" />
+                            <Typography variant="subtitle1" fontWeight={600}>Phân loại người dùng</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">Người dùng: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.USER}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">Quản lý: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.MANAGER}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary">Admin: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.ADMIN}</Typography></Typography>
+                    </CardContent>
+                </Card>
+           </Grid>
+        </Grid>
+
+        {/* Charts */}
+        <DashboardCharts newUsersData={newUsersData} newEventsData={newEventsData} />
+
+        {/* Rankings */}
+        <DashboardRankings 
+            topActiveUsers={topActiveUsers} 
+            topInteractiveUsers={topInteractiveUsers} 
+            topEvents={topEvents}
+        />
+
       </Box>
     </ThreeColumnLayout>
   );

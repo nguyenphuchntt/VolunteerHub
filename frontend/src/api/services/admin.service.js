@@ -33,5 +33,21 @@ export const adminService = {
   async updateUserDetails(userId, data) {
     const response = await api.patch(`/admin/users/${userId}/update-details`, data);
     return response.data;
+  },
+
+  // Stats APIs
+  async getStatsOverview() {
+    const response = await api.get('/admin/stats/overview');
+    return response.data;
+  },
+
+  async getStatsChart(type) {
+    const response = await api.get('/admin/stats/charts', { params: { type } });
+    return response.data;
+  },
+
+  async getStatsRanking(type) {
+    const response = await api.get('/admin/stats/rankings', { params: { type } });
+    return response.data;
   }
 };
