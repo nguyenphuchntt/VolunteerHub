@@ -1,7 +1,8 @@
 package com.uet.VolunteerHub.controller;
 
 import com.uet.VolunteerHub.dto.EventUser.*;
-import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.enums.EventUserRole;
+import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.service.EventUserSearchService;
 import com.uet.VolunteerHub.service.EventUserWriteService;
 import jakarta.validation.Valid;
@@ -11,16 +12,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
 @RestController
 @RequestMapping("/api/event-users")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 public class EventUserController {
     private final EventUserWriteService eventUserWriteService;
     private final EventUserSearchService eventUserSearchService;
@@ -46,9 +46,22 @@ public class EventUserController {
     }
 
     @GetMapping("/{eventId}")
-    @PreAuthorize("@eventUserSecurityService.isManager(#eventId)")
-    public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByEventId(@PathVariable Long eventId,
-                                                                              @PageableDefault(size = 10, page = 0) Pageable pageable) {
+    @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
+    public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByEventId(
+            @PathVariable Long eventId,
+            @RequestParam(required = false) EventUserRole role,
+            @RequestParam(required = false) EventUserStatus status,
+            @PageableDefault(size = 10, page = 0) Pageable pageable) {
+        
+        if (role != null || status != null) {
+            EventUserSearchCriteriaDTO criteria = EventUserSearchCriteriaDTO.builder()
+                    .eventId(eventId)
+                    .role(role)
+                    .status(status)
+                    .build();
+            return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
+        }
+        
         return ResponseEntity.ok(eventUserSearchService.findByEventId(eventId, pageable));
     }
 
@@ -78,9 +91,9 @@ public class EventUserController {
     }
 
     @PatchMapping("/{eventId}/{accountId}/update-role")
-    @PreAuthorize("(hasRole('ADMIN')) or " +
-    "((@eventUserSecurityService.isManager(#eventId)) and " +
-    "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId)))")
+    @PreAuthorize("hasRole('ADMIN') or " +
+        "(@eventUserSecurityService.isManager(#eventId) and " +
+        "(#updateDTO.eventUserRole.name() == 'MANAGER' or @eventSecurityService.isCreatorOfEvent(#eventId, authentication.principal.accountId)))")
     public ResponseEntity<EventUserSearchDTO> updateEventUserRole(@PathVariable Long eventId,
                                                                   @PathVariable UUID accountId,
                                                                   @RequestBody EventUserRoleUpdateDTO updateDTO) {
@@ -96,6 +109,23 @@ public class EventUserController {
                                                                     @PathVariable UUID accountId,
                                                                     @RequestBody EventUserStatusUpdateDTO updateDTO) {
         return ResponseEntity.ok(eventUserWriteService.updateStatus(accountId, eventId, updateDTO));
+    }
+
+
+    @PostMapping("/{eventId}/bulk-approve")
+    @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
+    public ResponseEntity<Map<String, Object>> bulkApprove(
+            @PathVariable Long eventId,
+            @RequestBody @Valid BulkOperationDTO bulkOperationDTO) {
+        return ResponseEntity.ok(eventUserWriteService.bulkApprove(eventId, bulkOperationDTO.getAccountIds()));
+    }
+
+    @PostMapping("/{eventId}/bulk-reject")
+    @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
+    public ResponseEntity<Map<String, Object>> bulkReject(
+            @PathVariable Long eventId,
+            @RequestBody @Valid BulkOperationDTO bulkOperationDTO) {
+        return ResponseEntity.ok(eventUserWriteService.bulkReject(eventId, bulkOperationDTO.getAccountIds()));
     }
 
     @GetMapping("/get-all")
