@@ -1,12 +1,25 @@
 package com.uet.VolunteerHub.controller;
 
+import com.uet.VolunteerHub.dto.NotificationCreateDTO;
+import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.enums.NotificationType;
+import com.uet.VolunteerHub.enums.UserRole;
+import com.uet.VolunteerHub.repository.AccountRepository;
+import com.uet.VolunteerHub.repository.NotificationRepository;
 import com.uet.VolunteerHub.service.AdminDashboardService;
+import com.uet.VolunteerHub.service.NotificationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -15,6 +28,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminDashboardController {
     private final AdminDashboardService adminDashboardService;
+    private final AccountRepository accountRepository;
+    private final NotificationService notificationService;
 
     // Dashboard Overview
     @GetMapping("/stats/overview")
@@ -54,4 +69,17 @@ public class AdminDashboardController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PostMapping("/notifications")
+    public ResponseEntity<Void> createAnnouncementNotification(
+            @RequestBody @Valid NotificationCreateDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        String username = userDetails.getUsername();
+        Account sender = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin not found"));
+        notificationService.createNotification(sender, sender, NotificationType.SYSTEM_ANNOUNCEMENT, dto.getContent());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+
 }

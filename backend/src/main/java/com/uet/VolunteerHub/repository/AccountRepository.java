@@ -56,4 +56,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
 
     @Query("SELECT DATE(a.createAt) as date, COUNT(a) as count FROM Account a WHERE a.createAt >= :startDate GROUP BY DATE(a.createAt) ORDER BY date ASC")
     List<Object[]> countNewUsersByDate(java.time.OffsetDateTime startDate);
+
+    List<Account> findAllByRoleNot(UserRole role);
 }

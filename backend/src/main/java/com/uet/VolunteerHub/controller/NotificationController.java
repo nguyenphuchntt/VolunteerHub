@@ -1,21 +1,27 @@
 package com.uet.VolunteerHub.controller;
 
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.uet.VolunteerHub.dto.NotificationReadDTO;
-import com.uet.VolunteerHub.dto.NotificationUpdateTypeDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.AccountRepository;
-import com.uet.VolunteerHub.service.NotificationService;
-import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.security.Principal;
-import java.util.Map;
-import java.util.UUID;
 import com.uet.VolunteerHub.service.NotificationSecurityService;
-import org.springframework.security.access.prepost.PreAuthorize;
+import com.uet.VolunteerHub.service.NotificationService;
+
+import lombok.AllArgsConstructor;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -79,6 +85,13 @@ public class NotificationController {
         UUID receiverId = getCurrentUserId(principal);
         notificationService.markAllAsRead(receiverId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<NotificationReadDTO>> getMyNotifications(Principal principal) {
+        UUID receiverId = getCurrentUserId(principal);
+        List<NotificationReadDTO> notifications = notificationService.findAllForUserOrSystemAnnouncement(receiverId);
+        return ResponseEntity.ok(notifications);
     }
 
 //    @PreAuthorize("@notificationSecurityService.isReceiver(#notificationId)")
