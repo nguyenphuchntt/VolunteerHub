@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @NoArgsConstructor
@@ -19,5 +21,6 @@ public class LikeId implements Serializable {
     private Long postId;
 
     @Column(name = "account_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID accountId;
 }

@@ -18,7 +18,7 @@ import java.time.OffsetDateTime;
 public class Notification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "notification_id", nullable = false, updatable = false)
     private Long notificationId;
 

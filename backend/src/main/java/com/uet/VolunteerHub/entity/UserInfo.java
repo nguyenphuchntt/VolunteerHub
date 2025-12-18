@@ -9,6 +9,8 @@ import lombok.*;
 import java.util.Date;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -24,6 +26,7 @@ public class UserInfo {
 
     @Id
     @Column(name="account_id", updatable = false, nullable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID accountId;
 
     private String firstName;

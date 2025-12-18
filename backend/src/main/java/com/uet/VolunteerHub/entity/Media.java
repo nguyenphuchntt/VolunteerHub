@@ -7,6 +7,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Getter
@@ -18,6 +20,7 @@ import java.util.UUID;
 public class Media {
     @Id
     @NotNull
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID id;
 
     @NotNull
