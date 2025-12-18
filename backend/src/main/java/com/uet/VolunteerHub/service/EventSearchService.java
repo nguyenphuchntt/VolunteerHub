@@ -140,6 +140,8 @@ public class EventSearchService {
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
         }).toList();
+    }
+
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
         java.time.OffsetDateTime threeDaysAgo = java.time.OffsetDateTime.now().minusDays(3);
         
