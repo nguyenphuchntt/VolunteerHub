@@ -78,10 +78,10 @@ const EventManagement = () => {
       label: "Tên sự kiện",
       render: (value, row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          {row.coverImage ? (
+          {row.coverImageUrl ? (
             <Box
               component="img"
-              src={row.coverImage}
+              src={row.coverImageUrl}
               alt={value}
               sx={{ width: 40, height: 40, borderRadius: "8px", objectFit: "cover" }}
             />
