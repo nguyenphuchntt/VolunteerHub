@@ -160,4 +160,19 @@ public class EventUserSearchService {
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
         }).toList();
     }
+
+    @Transactional
+    public Page<EventUserSearchDTO> findPendingUsersByManagerId(UUID managerId, Pageable pageable) {
+        Page<EventUser> eventUserPage = eventUserRepository.findPendingUsersByManagerId(
+            managerId, 
+            EventUserStatus.PENDING, 
+            pageable
+        );
+        return eventUserPage.map(eventUser -> {
+            Account account = eventUser.getAccount();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Event event = eventUser.getEvent();
+            return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
+        });
+    }
 }

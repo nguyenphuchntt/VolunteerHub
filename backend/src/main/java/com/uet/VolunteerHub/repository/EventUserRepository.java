@@ -57,4 +57,20 @@ public interface EventUserRepository
     @Query("SELECT eu.account, COUNT(eu) as count FROM EventUser eu GROUP BY eu.account ORDER BY count DESC")
     List<Object[]> findTopActiveUsers(Pageable pageable);
 
+    @Query("SELECT eu FROM EventUser eu " +
+           "WHERE eu.status = :status " +
+           "AND eu.eventId IN (" +
+           "  SELECT eu2.eventId FROM EventUser eu2 " +
+           "  WHERE eu2.accountId = :managerId " +
+           "  AND eu2.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER" +
+           ")")
+    @EntityGraph(attributePaths = { "account", "account.userInfo", "event" })
+    Page<EventUser> findPendingUsersByManagerId(UUID managerId, EventUserStatus status, Pageable pageable);
+
+    @Query("SELECT CASE WHEN COUNT(eu) > 0 THEN true ELSE false END " +
+           "FROM EventUser eu " +
+           "WHERE eu.accountId = :accountId " +
+           "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
+    boolean isEventManager(UUID accountId);
+
 }
