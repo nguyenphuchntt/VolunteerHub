@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS event_user (
     registered_at DATETIME(6),
     start_at DATETIME(6),
     end_at DATETIME(6),
-    status ENUM('APPROVED', 'REJECTED', 'PENDING', 'FINISHED') NOT NULL DEFAULT 'PENDING',
+    status ENUM('APPROVED', 'REJECTED', 'PENDING', 'FINISHED', 'UNFINISHED') NOT NULL DEFAULT 'PENDING',
     event_user_role ENUM('ATTENDEE', 'MANAGER') NOT NULL DEFAULT 'ATTENDEE',
     PRIMARY KEY (account_id, event_id),
     CONSTRAINT fk_event_user_account FOREIGN KEY (account_id) REFERENCES account(account_id) ON DELETE CASCADE,

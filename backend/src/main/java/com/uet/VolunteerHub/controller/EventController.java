@@ -75,7 +75,7 @@ public class EventController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventSearchDTO>> getEventsLikedByAccount(@PathVariable UUID accountId,
                                                                         @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.getEventsLikedByAccount(accountId, pageable);
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsLikedByAccount(accountId, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
@@ -131,4 +131,10 @@ public class EventController {
         return eventLikeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    @PostMapping("/{eventId}/liked")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> isEventLikedByUser(@AuthenticationPrincipal Account account, @PathVariable Long eventId) {
+        boolean isLiked = eventLikeService.isEventLikedByUser(account, eventId);
+        return ResponseEntity.ok(isLiked);
+    }
 }

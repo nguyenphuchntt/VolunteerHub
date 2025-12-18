@@ -9,6 +9,7 @@ import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.PostLikeRepository;
 import com.uet.VolunteerHub.repository.PostRepository;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
@@ -55,4 +56,11 @@ public class PostLikeService {
         }
     }
 
+    public boolean isPostLiked(Account account, Long postId) {
+        PostLikeDTO dto = new PostLikeDTO();
+        dto.setAccountId(account.getAccountId());
+        dto.setPostId(postId);
+        LikeId likeId = new LikeId(dto.getPostId(), dto.getAccountId());
+        return postLikeRepository.existsById(likeId);
+    }
 }

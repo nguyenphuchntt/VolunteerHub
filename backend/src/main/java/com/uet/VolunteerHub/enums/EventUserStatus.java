@@ -5,5 +5,6 @@ public enum EventUserStatus {
     APPROVED,
     REJECTED,
     PENDING,
-    FINISHED
+    FINISHED,
+    UNFINISHED
 }
