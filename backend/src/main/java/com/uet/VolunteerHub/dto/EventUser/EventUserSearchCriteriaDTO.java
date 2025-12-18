@@ -2,12 +2,18 @@ package com.uet.VolunteerHub.dto.EventUser;
 
 import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EventUserSearchCriteriaDTO {
     private Long eventId;
     private UUID accountId;

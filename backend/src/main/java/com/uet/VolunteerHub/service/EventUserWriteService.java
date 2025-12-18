@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Log
@@ -233,11 +235,102 @@ public class EventUserWriteService {
     @Transactional
     public EventUserSearchDTO updateStatus(UUID accountId, Long eventId, EventUserStatusUpdateDTO status) {
         EventUser eventUser = findEventUser(accountId, eventId);
+        
         if (status.getStatus() != null) {
-            eventUser.setStatus(status.getStatus());
+            EventUserStatus currentStatus = eventUser.getStatus();
+            EventUserStatus newStatus = status.getStatus();
+            
+            if (currentStatus == EventUserStatus.PENDING &&
+                (newStatus == EventUserStatus.APPROVED || newStatus == EventUserStatus.REJECTED)) {
+                eventUser.setStatus(newStatus);
+            } else if (currentStatus == newStatus) {
+                eventUser.setStatus(newStatus);
+            } else {
+                throw new IllegalArgumentException(
+                    "Invalid status transition from " + currentStatus + " to " + newStatus + 
+                    ". Only PENDING -> APPROVED/REJECTED is allowed."
+                );
+            }
         }
+        
         eventUserRepository.save(eventUser);
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
+    }
+
+    @Transactional
+    public Map<String, Object> bulkApprove(Long eventId, List<UUID> accountIds) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
+        }
+
+        int successCount = 0;
+        int skippedCount = 0;
+        List<String> errors = new java.util.ArrayList<>();
+
+        for (UUID accountId : accountIds) {
+            try {
+                EventUser eventUser = findEventUser(accountId, eventId);
+                if (eventUser.getStatus() == EventUserStatus.PENDING) {
+                    eventUser.setStatus(EventUserStatus.APPROVED);
+                    eventUserRepository.save(eventUser);
+                    successCount++;
+                } else {
+                    skippedCount++;
+                    errors.add("Account " + accountId + " is not in PENDING status (current: " + eventUser.getStatus() + ")");
+                }
+            } catch (ResourceNotFoundException e) {
+                errors.add("EventUser not found for account " + accountId);
+                skippedCount++;
+            } catch (Exception e) {
+                errors.add("Error processing account " + accountId + ": " + e.getMessage());
+                skippedCount++;
+            }
+        }
+
+        return Map.of(
+            "eventId", eventId,
+            "totalProcessed", accountIds.size(),
+            "successCount", successCount,
+            "skippedCount", skippedCount,
+            "errors", errors
+        );
+    }
+
+    @Transactional
+    public Map<String, Object> bulkReject(Long eventId, List<UUID> accountIds) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
+        }
+        int successCount = 0;
+        int skippedCount = 0;
+        List<String> errors = new java.util.ArrayList<>();
+        for (UUID accountId : accountIds) {
+            try {
+                EventUser eventUser = findEventUser(accountId, eventId);
+                // Only reject if status is PENDING
+                if (eventUser.getStatus() == EventUserStatus.PENDING) {
+                    eventUser.setStatus(EventUserStatus.REJECTED);
+                    eventUserRepository.save(eventUser);
+                    successCount++;
+                } else {
+                    skippedCount++;
+                    errors.add("Account " + accountId + " is not in PENDING status (current: " + eventUser.getStatus() + ")");
+                }
+            } catch (ResourceNotFoundException e) {
+                errors.add("EventUser not found for account " + accountId);
+                skippedCount++;
+            } catch (Exception e) {
+                errors.add("Error processing account " + accountId + ": " + e.getMessage());
+                skippedCount++;
+            }
+        }
+        return Map.of(
+            "eventId", eventId,
+            "totalProcessed", accountIds.size(),
+            "successCount", successCount,
+            "skippedCount", skippedCount,
+            "errors", errors
+        );
     }
 
 }
