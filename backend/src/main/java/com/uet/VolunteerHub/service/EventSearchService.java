@@ -7,6 +7,7 @@ import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.EventLikeRepository;
+import com.uet.VolunteerHub.repository.EventMediaRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
 import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
@@ -27,14 +28,21 @@ import java.util.UUID;
 public class EventSearchService {
     private final EventRepository eventRepository;
     private final EventLikeRepository eventLikeRepository;
+    private final EventMediaRepository eventMediaRepository;
 
     @Autowired
-    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository) {
+    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository, EventMediaRepository eventMediaRepository) {
         this.eventRepository = eventRepository;
         this.eventLikeRepository = eventLikeRepository;
+        this.eventMediaRepository = eventMediaRepository;
     }
 
     private EventSearchDTO mapToEventSearchDTO(Event event, Account account, UserInfo userInfo) {
+        // Get cover image URL from first event media
+        String coverImageUrl = eventMediaRepository.findFirstByEvent_EventIdOrderByMedia_UploadedAtAsc(event.getEventId())
+                .map(em -> em.getMedia().getUrl())
+                .orElse(null);
+        
         var builder = EventSearchDTO.builder()
                 .eventId(event.getEventId())
                 .title(event.getTitle())
@@ -46,7 +54,8 @@ public class EventSearchService {
                 .endAt(event.getEndAt())
                 .category(event.getCategory())
                 .location(event.getLocation())
-                .likeCount(event.getLikeCount());
+                .likeCount(event.getLikeCount())
+                .coverImageUrl(coverImageUrl);
         if (account != null) {
             builder.accountId(account.getAccountId());
         }
