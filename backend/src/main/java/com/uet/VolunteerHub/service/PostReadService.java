@@ -45,7 +45,8 @@ public class PostReadService {
         Specification<Post> spec = Specification
                 .where(postSpecification.contentLike(content)
                         .and(postSpecification.hasOwner(ownerUsername))
-                        .and(postSpecification.isInEvent(eventId)));
+                        .and(postSpecification.isInEvent(eventId))
+                        .and(postSpecification.isNotDeleted())); // Filter out deleted posts
         Page<Post> posts = postRepository.findAll(spec, pageable);
         return posts.map(postMapper::toPostReadDTO);
     }
@@ -53,14 +54,18 @@ public class PostReadService {
     @Transactional(readOnly = true)
     public Page<PostReadDTO> findPostByOwner(String ownerUsername, Pageable pageable) {
         Specification<Post> spec = Specification
-                .where(postSpecification.hasOwner(ownerUsername));
+                .where(postSpecification.hasOwner(ownerUsername)
+                        .and(postSpecification.isNotDeleted())); // Filter out deleted posts
         Page<Post> posts = postRepository.findAll(spec, pageable);
         return posts.map(postMapper::toPostReadDTO);
     }
 
     @Transactional(readOnly = true)
     public Page<PostReadDTO> findPostByEvent(Long eventId, Pageable pageable) {
-        Page<Post> posts = postRepository.findByEvent_EventId(eventId, pageable);
+        Specification<Post> spec = Specification
+                .where(postSpecification.isInEvent(eventId)
+                        .and(postSpecification.isNotDeleted())); // Filter out deleted posts
+        Page<Post> posts = postRepository.findAll(spec, pageable);
         return posts.map(postMapper::toPostReadDTO);
     }
     @Transactional(readOnly = true)

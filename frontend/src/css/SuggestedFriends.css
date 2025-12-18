@@ -1,0 +1,107 @@
+/* Suggested Friends Component */
+.suggested-friends {
+  padding: 0;
+  position: relative;
+}
+
+.suggested-friends-divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--green-200);
+  margin-bottom: 24px;
+}
+
+.suggested-friends-title {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.21;
+  color: var(--black-900);
+  margin: 0 0 32px 0;
+  padding: 0 40px;
+}
+
+/* Friends List */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 32px 32px;
+}
+
+.friend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.friend-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.21;
+  color: var(--black-900);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friend-bio {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.21;
+  color: var(--black-800);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Add Friend Button */
+.add-friend-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: var(--white-200);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--black-800);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.add-friend-btn:hover {
+  background-color: var(--green-200);
+  color: var(--green-900);
+}
+
+.add-friend-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 1280px) {
+  .suggested-friends {
+    display: none;
+  }
+}

@@ -6,6 +6,7 @@ import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.repository.CommentRepository;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.PostRepository;
+import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Log
 @Service("commentSecurityService")
 public class CommentSecurityService {
 
@@ -30,17 +32,21 @@ public class CommentSecurityService {
     public boolean canCreateComment(Long postId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof Account account)) {
+            log.warning("canCreateComment: No authentication or invalid principal");
             return false;
         }
         if (postId == null) {
+            log.warning("canCreateComment: postId is null");
             return false;
         }
         Optional<Post> postOptional = postRepository.findById(postId);
         if (postOptional.isEmpty()) {
+            log.warning("canCreateComment: Post not found for postId=" + postId);
             return false;
         }
         Post post = postOptional.get();
         if (post.getEvent() == null) {
+            log.warning("canCreateComment: Post has no associated event, postId=" + postId);
             return false;
         }
         Long eventId = post.getEvent().getEventId();
@@ -51,10 +57,13 @@ public class CommentSecurityService {
                 eventId
         );
         if (eventUserOptional.isEmpty()) {
+            log.warning("canCreateComment: User not participant of event. accountId=" + account.getAccountId() + ", eventId=" + eventId);
             return false;
         }
         EventUser eventUser = eventUserOptional.get();
-        return eventUser.getStatus() == EventUserStatus.APPROVED;
+        boolean isApproved = eventUser.getStatus() == EventUserStatus.APPROVED;
+        log.info("canCreateComment: accountId=" + account.getAccountId() + ", eventId=" + eventId + ", status=" + eventUser.getStatus() + ", isApproved=" + isApproved);
+        return isApproved;
     }
 
     public boolean canModifyComment(Long commentId) {

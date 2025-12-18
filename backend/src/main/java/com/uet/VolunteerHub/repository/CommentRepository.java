@@ -12,4 +12,11 @@ public interface CommentRepository extends JpaRepository<Comment, Long>, JpaSpec
     Page<Comment> findByPost_PostId(Long postId, Pageable pageable);
     Page<Comment> findByParentComment_CommentId(Long parentCommentId, Pageable pageable);
     Long countByPost_PostId(Long postId);
+    
+    // Root comments only (comments without parent)
+    Page<Comment> findByPost_PostIdAndParentCommentIsNull(Long postId, Pageable pageable);
+    
+    // Count replies for a comment
+    Long countByParentComment_CommentId(Long parentCommentId);
 }
+

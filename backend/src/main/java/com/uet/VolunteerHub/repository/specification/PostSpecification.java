@@ -1,6 +1,7 @@
 package com.uet.VolunteerHub.repository.specification;
 
 import com.uet.VolunteerHub.entity.Post;
+import com.uet.VolunteerHub.enums.PostStatus;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -42,4 +43,11 @@ public class PostSpecification {
             );
         };
     }
+
+    // Filter out DELETED posts
+    public Specification<Post> isNotDeleted() {
+        return (root, query, criteriaBuilder) -> 
+            criteriaBuilder.notEqual(root.get("postStatus"), PostStatus.DELETED);
+    }
 }
+
