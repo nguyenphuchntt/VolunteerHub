@@ -78,9 +78,6 @@ public class EventSpecification {
             if (criteria.getLastName() != null) {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("lastName")), "%" + criteria.getLastName().toLowerCase() + "%"));
             }
-            if (query != null && query.getResultType() != Long.class ) {
-                query.orderBy(criteriaBuilder.asc(root.get("startAt")));
-            }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
 
