@@ -92,6 +92,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    @GetMapping("/hot")
+    public ResponseEntity<Page<EventSearchDTO>> getHotEvents(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findHotEvents(pageable);
+        return ResponseEntity.ok(eventSearchDTOPage);
+    }
+
     @PostMapping("/register-event")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<EventSearchDTO> registerEvent(@AuthenticationPrincipal Account account,
