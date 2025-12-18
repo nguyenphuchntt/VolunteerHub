@@ -21,7 +21,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/event-users")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 public class EventUserController {
     private final EventUserWriteService eventUserWriteService;
     private final EventUserSearchService eventUserSearchService;
