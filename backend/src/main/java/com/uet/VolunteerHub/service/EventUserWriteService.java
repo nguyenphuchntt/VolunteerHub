@@ -18,7 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Log
@@ -309,5 +311,71 @@ public class EventUserWriteService {
         }
         eventUserRepository.save(eventUser);
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
+    }
+
+    @Transactional
+    public Map<String, Object> bulkApprove(Long eventId, List<UUID> accountIds) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
+        }
+        Event event = eventRepository.findById(eventId).orElseThrow();
+        int successCount = 0;
+        
+        for (UUID accountId : accountIds) {
+            EventUserId eventUserId = new EventUserId();
+            eventUserId.setAccountId(accountId);
+            eventUserId.setEventId(eventId);
+            
+            EventUser eventUser = eventUserRepository.findById(eventUserId).orElse(null);
+            
+            if (eventUser != null && eventUser.getStatus() != EventUserStatus.APPROVED) {
+                eventUser.setStatus(EventUserStatus.APPROVED);
+                eventUserRepository.save(eventUser);
+                
+                // Increment attendee count
+                event.setAttendeeCount(event.getAttendeeCount() + 1);
+                successCount++;
+            }
+        }
+        eventRepository.save(event);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("count", successCount);
+        return response;
+    }
+
+    @Transactional
+    public Map<String, Object> bulkReject(Long eventId, List<UUID> accountIds) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
+        }
+        Event event = eventRepository.findById(eventId).orElseThrow();
+        int successCount = 0;
+        
+        for (UUID accountId : accountIds) {
+            EventUserId eventUserId = new EventUserId();
+            eventUserId.setAccountId(accountId);
+            eventUserId.setEventId(eventId);
+            
+            EventUser eventUser = eventUserRepository.findById(eventUserId).orElse(null);
+            
+            if (eventUser != null && eventUser.getStatus() != EventUserStatus.REJECTED) {
+                // If previously approved, decrement count
+                if (eventUser.getStatus() == EventUserStatus.APPROVED) {
+                    event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
+                }
+                
+                eventUser.setStatus(EventUserStatus.REJECTED);
+                eventUserRepository.save(eventUser);
+                successCount++;
+            }
+        }
+        eventRepository.save(event);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("count", successCount);
+        return response;
     }
 }
