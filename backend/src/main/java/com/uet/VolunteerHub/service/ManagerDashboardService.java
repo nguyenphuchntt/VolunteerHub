@@ -31,29 +31,11 @@ public class ManagerDashboardService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
         List<EventUser> eventUsers = eventUserRepository.findByEventId(eventId);
-        // Count by status
-        Map<EventUserStatus, Long> statusCounts = eventUsers.stream()
-                .collect(Collectors.groupingBy(EventUser::getStatus, Collectors.counting()));
-        // Count by role
-        Map<EventUserRole, Long> roleCounts = eventUsers.stream()
-                .collect(Collectors.groupingBy(EventUser::getRole, Collectors.counting()));
-        // Calculate attendance rate (FINISHED / APPROVED)
-        long approvedCount = statusCounts.getOrDefault(EventUserStatus.APPROVED, 0L);
-        long finishedCount = statusCounts.getOrDefault(EventUserStatus.FINISHED, 0L);
-        double attendanceRate = approvedCount > 0 ? (finishedCount * 100.0 / approvedCount) : 0.0;
 
         return EventStatsDTO.builder()
                 .eventId(eventId)
                 .eventTitle(event.getTitle())
                 .totalParticipants(eventUsers.size())
-                .approvedParticipants(statusCounts.getOrDefault(EventUserStatus.APPROVED, 0L).intValue())
-                .pendingParticipants(statusCounts.getOrDefault(EventUserStatus.PENDING, 0L).intValue())
-                .rejectedParticipants(statusCounts.getOrDefault(EventUserStatus.REJECTED, 0L).intValue())
-                .finishedParticipants(statusCounts.getOrDefault(EventUserStatus.FINISHED, 0L).intValue())
-                .unfinishedParticipants(statusCounts.getOrDefault(EventUserStatus.UNFINISHED, 0L).intValue())
-                .totalManagers(roleCounts.getOrDefault(EventUserRole.MANAGER, 0L).intValue())
-                .totalAttendees(roleCounts.getOrDefault(EventUserRole.ATTENDEE, 0L).intValue())
-                .attendanceRate(Math.round(attendanceRate * 100.0) / 100.0)
                 .build();
     }
 
