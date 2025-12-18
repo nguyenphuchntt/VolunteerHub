@@ -162,6 +162,18 @@ CREATE TABLE IF NOT EXISTS post_media (
     CONSTRAINT fk_post_media_media FOREIGN KEY (media_id) REFERENCES media(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS request (
+    request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    account_id VARCHAR(36) NOT NULL,
+    status ENUM('WAITING', 'APPROVED', 'REJECTED') DEFAULT 'WAITING',
+    reason TEXT,
+    admin_response TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_request_account FOREIGN KEY (account_id)
+        REFERENCES account(account_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE INDEX idx_event_created_by ON event(created_by_account_id);
 CREATE INDEX idx_event_status ON event(status);
 CREATE INDEX idx_event_user_event_id ON event_user(event_id);

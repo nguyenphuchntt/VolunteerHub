@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -92,6 +93,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    @GetMapping("/hot")
+    public ResponseEntity<Page<EventSearchDTO>> getHotEvents(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findHotEvents(pageable);
+        return ResponseEntity.ok(eventSearchDTOPage);
+    }
+
     @PostMapping("/register-event")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<EventSearchDTO> registerEvent(@AuthenticationPrincipal Account account,
@@ -149,5 +156,11 @@ public class EventController {
     public ResponseEntity<Boolean> isEventLikedByUser(@AuthenticationPrincipal Account account, @PathVariable Long eventId) {
         boolean isLiked = eventLikeService.isEventLikedByUser(account, eventId);
         return ResponseEntity.ok(isLiked);
+    }
+    @GetMapping("/find-all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EventSearchDTO>> findAllEvents() {
+        List<EventSearchDTO> eventSearchDTOPage = eventSearchService.findAllEvents();
+        return ResponseEntity.ok(eventSearchDTOPage);
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -95,5 +96,23 @@ public class EventUserController {
                                                                     @PathVariable UUID accountId,
                                                                     @RequestBody EventUserStatusUpdateDTO updateDTO) {
         return ResponseEntity.ok(eventUserWriteService.updateStatus(accountId, eventId, updateDTO));
+    }
+
+    @GetMapping("/get-all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EventUserSearchDTO>> getAllEventUsers() {
+        return ResponseEntity.ok(eventUserSearchService.findAllEventUsers());
+    }
+
+    @GetMapping("/get-all-by-event/{eventId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EventUserSearchDTO>> getAllEventUsersByEventId(@PathVariable Long eventId) {
+        return ResponseEntity.ok(eventUserSearchService.findAllEventUsersByEventId(eventId));
+    }
+
+    @GetMapping("/get-all-by-account/{accountId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<EventUserSearchDTO>> getAllEventUsersByAccountId(@PathVariable UUID accountId) {
+        return ResponseEntity.ok(eventUserSearchService.findAllEventUsersByAccountId(accountId));
     }
 }

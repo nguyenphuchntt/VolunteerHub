@@ -20,15 +20,15 @@ import java.util.UUID;
 public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
 
     @Override
-    @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
+    @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
     Page<Event> findAll(Specification<Event> spec, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
+    @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
     Optional<Event> findByEventIdOrderByStartAt(Long eventId);
 
     List<Event> findAllByCreatedBy_AccountId(UUID accountID);
 
-    @EntityGraph(attributePaths = {"createdBy", "createdBy.userInfo"})
+    @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
     Page<Event> findAllByCreatedBy_AccountId(UUID accountId, Pageable pageable);
 
     Optional<Event> findByEventIdAndCreatedBy_AccountId(Long eventId, UUID accountId);
@@ -47,4 +47,19 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     Long sumAttendeeCount();
 
     List<Event> findAllByStatus(EventStatus status);
+
+    @Query("""
+                SELECT e FROM Event e
+                WHERE e.status IN ('SCHEDULED', 'STARTED')
+                ORDER BY (
+                    (SELECT COUNT(el) FROM EventLike el
+                     WHERE el.event.eventId = e.eventId
+                     AND el.createAt >= :threeDaysAgo) * 7 +
+                    (SELECT COUNT(eu) FROM EventUser eu
+                     WHERE eu.eventId = e.eventId
+                     AND eu.registeredAt >= :threeDaysAgo) * 3
+                ) DESC
+            """)
+    @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
+    Page<Event> findHotEvents(java.time.OffsetDateTime threeDaysAgo, Pageable pageable);
 }
