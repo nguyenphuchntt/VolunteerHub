@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Data
 @Entity
@@ -16,10 +18,12 @@ import java.util.UUID;
 public class AccountMedia {
     @Id
     @Column(name="account_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID accountId;
 
     @Id
     @Column(name="media_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID mediaId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

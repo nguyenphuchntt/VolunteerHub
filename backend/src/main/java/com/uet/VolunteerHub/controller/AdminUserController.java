@@ -1,15 +1,36 @@
 package com.uet.VolunteerHub.controller;
 
-import com.uet.VolunteerHub.dto.Account.*;
-import com.uet.VolunteerHub.service.UserWriteService;
-import jakarta.validation.Valid;
+import java.util.UUID;
+
+import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
+import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
+import com.uet.VolunteerHub.service.UserSearchService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
+import com.uet.VolunteerHub.dto.Account.AccountAdminCreateDTO;
+import com.uet.VolunteerHub.dto.Account.AccountAdminPasswordChangeDTO;
+import com.uet.VolunteerHub.dto.Account.AccountRoleUpdateDTO;
+import com.uet.VolunteerHub.dto.Account.AccountStatusUpdateDTO;
+import com.uet.VolunteerHub.dto.Account.UserProfileUpdateDTO;
+import com.uet.VolunteerHub.dto.Account.UserSearchDTO;
+import com.uet.VolunteerHub.service.UserWriteService;
+
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -17,10 +38,12 @@ import java.util.UUID;
 public class AdminUserController {
 
     private final UserWriteService userWriteService;
+    private final UserSearchService userSearchService;
 
     @Autowired
-    public AdminUserController(UserWriteService userWriteService) {
+    public AdminUserController(UserWriteService userWriteService, UserSearchService userSearchService) {
         this.userWriteService = userWriteService;
+        this.userSearchService = userSearchService;
     }
 
     @PostMapping("/create-user")
@@ -63,6 +86,12 @@ public class AdminUserController {
         return ResponseEntity.ok(userSearchDTO);
     }
 
-
+    @GetMapping("")
+    public ResponseEntity<Page<UserSearchDTO>> getUsersByRole(
+            @RequestParam(value = "role", required = false) String role,
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<UserSearchDTO> users = userSearchService.getUsersByRole(role, pageable);
+        return ResponseEntity.ok(users);
+    }
 
 }

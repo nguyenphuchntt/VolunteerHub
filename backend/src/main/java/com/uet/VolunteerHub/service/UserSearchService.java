@@ -10,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -60,4 +61,14 @@ public class UserSearchService {
         return accountPage.map(account -> mapToUserSearchDTO(account, account.getUserInfo()));
     }
 
+    public Page<UserSearchDTO> getUsersByRole(String role, Pageable pageable) {
+        Specification<Account> spec = (root, query, cb) -> {
+            if (role != null && !role.isEmpty()) {
+                return cb.equal(root.get("role"), com.uet.VolunteerHub.enums.UserRole.valueOf(role));
+            }
+            return cb.conjunction();
+        };
+        Page<Account> accountPage = accountRepository.findAll(spec, pageable);
+        return accountPage.map(account -> mapToUserSearchDTO(account, account.getUserInfo()));
+    }
 }

@@ -1,5 +1,15 @@
 package com.uet.VolunteerHub.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.uet.VolunteerHub.dto.NotificationReadDTO;
 import com.uet.VolunteerHub.dto.NotificationUpdateTypeDTO;
 import com.uet.VolunteerHub.entity.Account;
@@ -9,16 +19,9 @@ import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.mapper.NotificationMapper;
 import com.uet.VolunteerHub.repository.NotificationRepository;
 import com.uet.VolunteerHub.repository.specification.NotificationSpecification;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.java.Log;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
-import java.util.UUID;
 
 @Log
 @Service
@@ -95,7 +98,7 @@ public class NotificationService {
 
     @Transactional
     public void createNotification(Account sender, Account receiver, NotificationType type, String content) {
-        if (sender.getAccountId().equals(receiver.getAccountId())) {
+        if (sender.getAccountId().equals(receiver.getAccountId()) && type != NotificationType.SYSTEM_ANNOUNCEMENT) {
             return;
         }
         Notification notification = new Notification();
@@ -108,5 +111,10 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
-
+    @Transactional(readOnly = true)
+    public List<NotificationReadDTO> findAllForUserOrSystemAnnouncement(UUID receiverId) {
+        var notifications = notificationRepository.findAllByReceiverAccount_AccountIdOrNotificationTypeAndIsDeletedFalse(
+                receiverId, com.uet.VolunteerHub.enums.NotificationType.SYSTEM_ANNOUNCEMENT);
+        return notifications.stream().map(notificationMapper::toDTO).toList();
+    }
 }
