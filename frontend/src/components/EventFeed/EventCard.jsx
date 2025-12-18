@@ -112,8 +112,9 @@ const EventCard = ({ event }) => {
   // Handle attendee count - API returns attendeeCount, mock returns participants array
   const attendeeCount = event.attendeeCount || event.participants?.length || 0;
   
-  // Check if image exists
-  const hasImage = !!event.coverImage;
+  // Check if image exists 
+  const coverImage = event.coverImageUrl ;
+  const hasImage = !!coverImage;
   
   // Generate gradient based on category for variety
   const getGradient = (category) => {
@@ -167,7 +168,7 @@ const EventCard = ({ event }) => {
           <CardMedia
             component="img"
             height="180"
-            image={event.coverImage}
+            image={coverImage}
             alt={event.title}
             sx={{ objectFit: "cover", backgroundColor: "#e0e0e0" }}
             onError={(e) => {
@@ -353,7 +354,8 @@ EventCard.propTypes = {
     // Common fields
     title: PropTypes.string.isRequired,
     description: PropTypes.string,
-    coverImage: PropTypes.string,
+    coverImageUrl: PropTypes.string, // API format
+    coverImage: PropTypes.string, // Legacy mock format
     location: PropTypes.string,
     status: PropTypes.string,
     category: PropTypes.string,

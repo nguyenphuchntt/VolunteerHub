@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -17,10 +19,12 @@ import java.util.UUID;
 public class FollowUser {
     @Id
     @Column(name = "account_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID accountId;
 
     @Id
     @Column(name = "followed_by_account_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID followedByAccountId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

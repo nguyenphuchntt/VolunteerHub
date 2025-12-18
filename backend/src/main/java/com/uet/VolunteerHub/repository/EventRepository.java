@@ -48,18 +48,18 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
 
     List<Event> findAllByStatus(EventStatus status);
 
-    @Query("""
+    @Query(value = """
                 SELECT e FROM Event e
                 WHERE e.status IN ('SCHEDULED', 'STARTED')
                 ORDER BY (
-                    (SELECT COUNT(el) FROM EventLike el
-                     WHERE el.event.eventId = e.eventId
-                     AND el.createAt >= :threeDaysAgo) * 7 +
-                    (SELECT COUNT(eu) FROM EventUser eu
-                     WHERE eu.eventId = e.eventId
-                     AND eu.registeredAt >= :threeDaysAgo) * 3
+                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5 +
+                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5
                 ) DESC
+            """,
+            countQuery = """
+                SELECT COUNT(e) FROM Event e
+                WHERE e.status IN ('SCHEDULED', 'STARTED')
             """)
     @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
-    Page<Event> findHotEvents(java.time.OffsetDateTime threeDaysAgo, Pageable pageable);
+    Page<Event> findHotEvents(Pageable pageable);
 }
