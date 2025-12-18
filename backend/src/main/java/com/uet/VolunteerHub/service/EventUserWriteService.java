@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Log
@@ -126,20 +127,32 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
-        EventUserId eventUserId = new EventUserId();
-        eventUserId.setAccountId(account.getAccountId());
-        eventUserId.setEventId(eventId);
-        EventUser eventUser = eventUserRepository.findById(eventUserId).orElse(null);
         
-        if (eventUser != null) {
-            // Decrement attendeeCount if deleted user was APPROVED
-            if (eventUser.getStatus() == EventUserStatus.APPROVED) {
-                Event event = eventUser.getEvent();
-                event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
-                eventRepository.save(event);
+        EventUser eventUser = findEventUser(account.getAccountId(), eventId);
+        
+        // Check last manager logic
+        if (eventUser.getRole() == EventUserRole.MANAGER) {
+            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
+            long managerCount = allEventUsers.stream()
+                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
+                    .count();
+            
+            if (managerCount <= 1) {
+                throw new IllegalStateException(
+                    "Cannot unregister. You are the last manager of this event. " +
+                    "Please assign another manager before leaving."
+                );
             }
-            eventUserRepository.delete(eventUser);
         }
+
+        // Decrement attendeeCount if deleted user was APPROVED
+        if (eventUser.getStatus() == EventUserStatus.APPROVED) {
+            Event event = eventUser.getEvent();
+            event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
+            eventRepository.save(event);
+        }
+        
+        eventUserRepository.delete(eventUser);
     }
 
     @Transactional
@@ -212,7 +225,32 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
-        eventUserRepository.deleteByAccountIdAndEventId(accountId, eventId);
+        
+        EventUser eventUser = findEventUser(accountId, eventId);
+        
+        if (eventUser.getRole() == EventUserRole.MANAGER) {
+            // Count total managers in this event
+            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
+            long managerCount = allEventUsers.stream()
+                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
+                    .count();
+            
+            if (managerCount <= 1) {
+                throw new IllegalStateException(
+                    "Cannot remove this user. They are the last manager of this event. " +
+                    "Please assign another manager before removing them."
+                );
+            }
+        }
+        
+        // Decrement attendeeCount if deleted user was APPROVED
+        if (eventUser.getStatus() == EventUserStatus.APPROVED) {
+            Event event = eventUser.getEvent();
+            event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
+            eventRepository.save(event);
+        }
+
+        eventUserRepository.delete(eventUser);
     }
 
     @Transactional
@@ -272,6 +310,4 @@ public class EventUserWriteService {
         eventUserRepository.save(eventUser);
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
     }
-
 }
-
