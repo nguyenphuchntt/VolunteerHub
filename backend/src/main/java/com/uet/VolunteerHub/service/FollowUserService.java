@@ -50,12 +50,12 @@ public class FollowUserService {
     }
 
     public Page<FollowUserDTO> getFollowersByAccountId(UUID accountId, Pageable pageable) {
-        Page<FollowUser> followUsers = followUserRepository.findAllByAccount(accountId, pageable);
+        Page<FollowUser> followUsers = followUserRepository.findAllByAccount_AccountId(accountId, pageable);
         return followUsers.map(this::mapToFollowUserDTO);
     }
 
     public Page<FollowUserDTO> getFollowingByAccountId(UUID followedByAccountId, Pageable pageable) {
-        Page<FollowUser> followUsers = followUserRepository.findAllByFollowedByAccount(followedByAccountId, pageable);
+        Page<FollowUser> followUsers = followUserRepository.findAllByFollowedByAccount_AccountId(followedByAccountId, pageable);
         return followUsers.map(this::mapToFollowUserDTO);
     }
 
