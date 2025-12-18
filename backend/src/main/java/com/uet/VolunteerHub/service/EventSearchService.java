@@ -46,6 +46,13 @@ public class EventSearchService {
                 .category(event.getCategory())
                 .location(event.getLocation())
                 .likeCount(event.getLikeCount());
+        if (event.getMedia() != null && !event.getMedia().isEmpty()) {
+             event.getMedia().stream()
+                 .map(com.uet.VolunteerHub.entity.EventMedia::getMedia)
+                 .max((m1, m2) -> m1.getUploadedAt().compareTo(m2.getUploadedAt()))
+                 .ifPresent(latestMedia -> builder.coverImage(latestMedia.getUrl()));
+        }
+
         if (account != null) {
             builder.accountId(account.getAccountId());
         }

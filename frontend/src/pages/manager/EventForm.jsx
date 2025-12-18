@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { Save, ArrowBack, Image as ImageIcon } from "@mui/icons-material";
 import { ThreeColumnLayout } from "../../components/common";
-import { eventService } from "../../api";
+import { eventService, mediaService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
 // Backend uses English values: ENVIRONMENT, EDUCATION, HEALTHCARE, COMMUNITY, CHARITY, OTHER
@@ -55,49 +55,37 @@ const EventForm = () => {
   const [fetchingEvent, setFetchingEvent] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
   const [isOwner, setIsOwner] = useState(true);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  // Fetch event data when editing
-  useEffect(() => {
-    const fetchEvent = async () => {
-      if (!isEdit || !eventId) return;
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setSnackbar({ open: true, message: "Kích thước tệp quá lớn (tối đa 5MB)", severity: "error" });
+      return;
+    }
+
+    setSelectedFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setFilePreview(objectUrl);
       
-      setFetchingEvent(true);
-      try {
-        const event = await eventService.getEventById(eventId);
-        
-        // Check ownership
-        if (user?.accountID && event.accountId && event.accountId !== user.accountID && !isAdmin) {
-          setIsOwner(false);
-          setSubmitError("Bạn không có quyền chỉnh sửa sự kiện này.");
-        }
-
-        // Format dates for input fields
-        const formatDateTime = (dateString) => {
-          if (!dateString) return "";
-          const date = new Date(dateString);
-          return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
-        };
-
-        setFormData({
-          title: event.title || "",
-          description: event.description || "",
-          startAt: formatDateTime(event.startAt),
-          endAt: formatDateTime(event.endAt),
-          location: event.location || "",
-          category: (event.category || "").toUpperCase(), // Normalize to uppercase
-          coverImage: event.coverImage || "",
-          maxParticipants: event.maxParticipants?.toString() || "",
-        });
-      } catch (err) {
-        console.error("Failed to fetch event:", err);
-        setSubmitError("Không thể tải thông tin sự kiện.");
-      } finally {
-        setFetchingEvent(false);
-      }
+    // Cleanup previous object URL to avoid memory leaks
+    return () => URL.revokeObjectURL(objectUrl);
+  };
+  
+  // Cleanup preview URL on unmount or new selection
+  useEffect(() => {
+    return () => {
+      if (filePreview) URL.revokeObjectURL(filePreview);
     };
+  }, [filePreview]);
 
-    fetchEvent();
-  }, [isEdit, eventId, user?.accountID, isAdmin]);
+  // Existing coverImage logic remains for "Edit" mode initial display or if we choose not to change it.
+  // Display priority: filePreview (new selection) > formData.coverImage (existing)
 
   const handleChange = (field) => (event) => {
     setFormData({ ...formData, [field]: event.target.value });
@@ -153,8 +141,8 @@ const EventForm = () => {
         endAt: formData.endAt ? new Date(formData.endAt).toISOString() : null,
         location: formData.location,
         category: formData.category,
-        coverImage: formData.coverImage,
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
+        // coverImage field is no longer sent in create/update payload directly, handled via separate upload
       };
 
       // Rename maxParticipants to attendeeCount for API compatibility if needed
@@ -163,16 +151,37 @@ const EventForm = () => {
         delete eventData.maxParticipants;
       }
 
+      let eventIdToUse = eventId;
+
       if (isEdit) {
         await eventService.updateEvent(eventId, eventData);
-        setSnackbar({ open: true, message: "Cập nhật sự kiện thành công!", severity: "success" });
+        setSnackbar({ open: true, message: "Cập nhật thông tin sự kiện thành công!", severity: "success" });
       } else {
-        await eventService.registerEvent(eventData);
+        const newEvent = await eventService.registerEvent(eventData);
+        eventIdToUse = newEvent.eventId;
         setSnackbar({ open: true, message: "Tạo sự kiện thành công!", severity: "success" });
       }
+
+      // Step 2: Upload image if selected
+      if (selectedFile && eventIdToUse) {
+        setUploading(true); // Re-use uploading state for UI feedback
+        try {
+          await mediaService.uploadEventMedia(selectedFile, eventIdToUse);
+          setSnackbar(prev => ({ ...prev, message: prev.message + " Đã tải ảnh bìa lên." }));
+        } catch (uploadErr) {
+          console.error("Image upload failed:", uploadErr);
+          setSnackbar(prev => ({ 
+            ...prev, 
+            severity: "warning",
+            message: prev.message + " Tuy nhiên, tải ảnh lỗi. Vui lòng cập nhật lại." 
+          }));
+        } finally {
+            setUploading(false);
+        }
+      }
       
-      // Navigate after short delay to show success message
-      setTimeout(() => navigate("/manage/events"), 1000);
+      // Navigate after short delay
+      setTimeout(() => navigate("/manage/events"), 1500);
     } catch (err) {
       console.error("Failed to save event:", err);
       setSubmitError(err.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
@@ -302,26 +311,80 @@ const EventForm = () => {
               </Grid>
             </Grid>
 
-            <TextField
-              fullWidth
-              label="URL ảnh bìa (Tùy chọn)"
-              value={formData.coverImage}
-              onChange={handleChange("coverImage")}
-              error={!!errors.coverImage}
-              helperText={errors.coverImage}
-              sx={{ mb: 3 }}
-              InputProps={{ startAdornment: <ImageIcon sx={{ mr: 1, color: "grey.500" }} /> }}
-            />
-
-            {formData.coverImage && (
-              <Box
-                component="img"
-                src={formData.coverImage}
-                alt="Cover preview"
-                onError={(e) => e.target.style.display = 'none'}
-                sx={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: "12px", mb: 3 }}
-              />
-            )}
+            <Box sx={{ mb: 3 }}>
+              <InputLabel sx={{ mb: 1 }}>Ảnh bìa sự kiện</InputLabel>
+              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+                <Box 
+                  sx={{ 
+                    position: "relative",
+                    width: 200, 
+                    height: 120, 
+                    borderRadius: "12px", 
+                    overflow: "hidden",
+                    border: "1px dashed",
+                    borderColor: "grey.300",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "grey.50",
+                  }}
+                >
+                  {(filePreview || formData.coverImage) ? (
+                    <Box
+                      component="img"
+                      src={filePreview || formData.coverImage}
+                      alt="Cover preview"
+                      sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <ImageIcon sx={{ color: "grey.400", fontSize: 40 }} />
+                  )}
+                  
+                  {uploading && (
+                    <Box 
+                      sx={{ 
+                        position: "absolute", 
+                        top: 0, 
+                        left: 0, 
+                        right: 0, 
+                        bottom: 0, 
+                        backgroundColor: "rgba(255,255,255,0.7)", 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center" 
+                      }}
+                    >
+                      <CircularProgress size={24} />
+                    </Box>
+                  )}
+                </Box>
+                
+                <Box>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<ImageIcon />}
+                    disabled={uploading}
+                    sx={{ mb: 1, textTransform: "none", borderRadius: "8px" }}
+                  >
+                    Chọn ảnh
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                    />
+                  </Button>
+                  <Typography variant="caption" display="block" color="text.secondary">
+                    Hỗ trợ định dạng JPG, PNG. Kích thước tối đa 5MB.
+                  </Typography>
+                </Box>
+              </Box>
+              {errors.coverImage && <FormHelperText error>{errors.coverImage}</FormHelperText>}
+            </Box>
 
             <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
               <Button 

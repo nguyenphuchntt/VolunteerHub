@@ -306,8 +306,8 @@ const EventDetail = () => {
       {/* Banner */}
       <Box
         sx={{
-          height: 150,
-          backgroundImage: `url(${coverImage})`,
+          height: 250,
+          backgroundImage: `url("${coverImage}")`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundColor: "#e0e0e0",

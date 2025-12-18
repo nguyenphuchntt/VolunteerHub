@@ -46,7 +46,7 @@ const ParticipantManagement = () => {
             ? { status: "APPROVED" }
             : {};
       
-      const response = await eventUserService.searchEventUsers(params);
+      const response = await eventUserService.getEventUsersByEventId(eventId);
       setParticipants(response.content || []);
     } catch (err) {
       console.error("Failed to fetch participants:", err);

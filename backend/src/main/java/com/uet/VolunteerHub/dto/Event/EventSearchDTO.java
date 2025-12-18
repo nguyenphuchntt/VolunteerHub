@@ -22,4 +22,5 @@ public class EventSearchDTO {
     private Integer attendeeCount;
     private Integer likeCount;
     private UUID accountId;
+    private String coverImage;
 }
