@@ -1,7 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, Typography, Button, Chip, Avatar, Tabs, Tab, CircularProgress, Alert, Snackbar } from "@mui/material";
-import { CheckCircle, Cancel, Refresh, TaskAlt } from "@mui/icons-material";
+import { 
+  Box, Typography, Button, Chip, Avatar, Tabs, Tab, CircularProgress, Alert, Snackbar,
+  Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel
+} from "@mui/material";
+import { CheckCircle, Cancel, Refresh, TaskAlt, PersonRemove, AdminPanelSettings } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog, EmptyState } from "../../components/common";
 import { eventUserService, eventService, managerService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
@@ -18,6 +21,7 @@ const ParticipantManagement = () => {
   const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
+  // Tabs: 0 = Chờ duyệt, 1 = Đã duyệt (merged with mark complete), 2 = Quản lý role
   const [activeTab, setActiveTab] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, participant: null });
   
@@ -25,6 +29,9 @@ const ParticipantManagement = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
   const [batchLoading, setBatchLoading] = useState(false);
+
+  // Role change dialog
+  const [roleDialog, setRoleDialog] = useState({ open: false, participant: null, newRole: "ATTENDEE" });
 
   // Fetch event details if eventId provided
   const fetchEvent = useCallback(async () => {
@@ -37,40 +44,27 @@ const ParticipantManagement = () => {
     }
   }, [eventId]);
 
-  // Fetch participants
+  // Fetch ALL participants once (not per tab)
   const fetchParticipants = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       let response;
       if (eventId) {
-        // Event specific view
-        const params = activeTab === 1 
-            ? { status: "PENDING" } 
-            : activeTab === 2 
-              ? { status: "APPROVED" }
-              : activeTab === 3
-                ? { status: "APPROVED" } // Tab "Đánh dấu hoàn thành hàng loạt" - show APPROVED only
-                : {};
-        response = await eventUserService.getEventUsersByEventId(eventId, params);
+        // Fetch all participants for this event
+        response = await eventUserService.getEventUsersByEventId(eventId, {});
       } else {
-        // General "Pending Volunteers" view
         response = await managerService.getPendingUsers();
       }
       
-      // Filter out MANAGER role - managers should not appear in participant list
-      const filteredParticipants = (response.content || []).filter(
-        p => p.eventUserRole?.toUpperCase() !== "MANAGER"
-      );
-      
-      setParticipants(filteredParticipants);
+      setParticipants(response.content || []);
     } catch (err) {
       console.error("Failed to fetch participants:", err);
       setError("Không thể tải danh sách đăng ký.");
     } finally {
       setLoading(false);
     }
-  }, [eventId, activeTab]);
+  }, [eventId]);
 
   useEffect(() => {
     fetchEvent();
@@ -78,11 +72,38 @@ const ParticipantManagement = () => {
 
   useEffect(() => {
     fetchParticipants();
-    // Clear selection when switching tabs
-    setSelectedIds([]);
   }, [fetchParticipants]);
 
-  // Backend EventUserStatus: APPROVED, REJECTED, PENDING, FINISHED
+  // Clear selection when switching tabs
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [activeTab]);
+
+  // Filter participants based on active tab (client-side filtering)
+  const filteredParticipants = useMemo(() => {
+    if (!eventId) return participants;
+    
+    const currentUserId = user?.accountID;
+    
+    switch (activeTab) {
+      case 0: // Chờ duyệt
+        return participants.filter(p => p.status?.toUpperCase() === "PENDING");
+      case 1: // Thành viên (APPROVED + FINISHED), exclude current user
+        return participants.filter(
+          p => (p.status?.toUpperCase() === "APPROVED" || p.status?.toUpperCase() === "FINISHED") &&
+               p.accountId !== currentUserId
+        );
+      case 2: // Quản lý vai trò - show all members
+        return participants.filter(
+          p => p.status?.toUpperCase() !== "REJECTED" && 
+               p.status?.toUpperCase() !== "PENDING"
+        );
+      default:
+        return participants;
+    }
+  }, [participants, activeTab, eventId, user]);
+
+  // Status helpers
   const getStatusColor = (status) => {
     const statusUpper = (status || "PENDING").toUpperCase();
     const colors = {
@@ -95,57 +116,43 @@ const ParticipantManagement = () => {
   };
 
   const getStatusLabel = (status) => {
-    const statusUpper = (status || "PENDING").toUpperCase();
     const labels = { 
       PENDING: "Chờ duyệt", 
       APPROVED: "Đã duyệt", 
       FINISHED: "Hoàn thành", 
       REJECTED: "Từ chối" 
     };
-    return labels[statusUpper] || status;
+    return labels[(status || "PENDING").toUpperCase()] || status;
   };
 
-  // Handle approve/reject/finish
+  const getRoleLabel = (role) => {
+    const labels = {
+      ATTENDEE: "Thành viên",
+      MANAGER: "Quản lý sự kiện"
+    };
+    return labels[(role || "ATTENDEE").toUpperCase()] || role;
+  };
+
+  // Handle approve/reject/finish/delete
   const handleConfirmAction = async () => {
     const { action, participant } = confirmDialog;
     if (!participant) return;
     
-    const statusMap = {
-      approve: "APPROVED",
-      reject: "REJECTED",
-      finish: "FINISHED"
-    };
-    const newStatus = statusMap[action];
-    
-    const actionLabelMap = {
-      approve: "duyệt",
-      reject: "từ chối",
-      finish: "đánh dấu hoàn thành"
-    };
-    const actionLabel = actionLabelMap[action];
-    
     try {
-      await eventUserService.updateEventUserStatus(
-        participant.eventId, 
-        participant.accountId, 
-        newStatus
-      );
-      
-      setSnackbar({
-        open: true,
-        message: `Đã ${actionLabel} đăng ký thành công!`,
-        severity: "success"
-      });
-      
-      // Refresh the list
+      if (action === "delete") {
+        await eventUserService.deleteEventUser(participant.eventId, participant.accountId);
+        setSnackbar({ open: true, message: "Đã xóa người dùng khỏi sự kiện!", severity: "success" });
+      } else {
+        const statusMap = { approve: "APPROVED", reject: "REJECTED", finish: "FINISHED" };
+        const actionLabelMap = { approve: "duyệt", reject: "từ chối", finish: "đánh dấu hoàn thành" };
+        
+        await eventUserService.updateEventUserStatus(participant.eventId, participant.accountId, statusMap[action]);
+        setSnackbar({ open: true, message: `Đã ${actionLabelMap[action]} đăng ký thành công!`, severity: "success" });
+      }
       fetchParticipants();
     } catch (err) {
-      console.error("Failed to update status:", err);
-      setSnackbar({
-        open: true,
-        message: err.response?.data?.message || `Không thể ${actionLabel} đăng ký.`,
-        severity: "error"
-      });
+      console.error("Failed to perform action:", err);
+      setSnackbar({ open: true, message: err.response?.data?.message || "Không thể thực hiện thao tác.", severity: "error" });
     }
     
     setConfirmDialog({ open: false, action: null, participant: null });
@@ -160,15 +167,11 @@ const ParticipantManagement = () => {
     let failCount = 0;
     
     for (const accountId of selectedIds) {
-      const participant = participants.find(p => p.accountId === accountId);
-      if (!participant) continue;
+      const participant = filteredParticipants.find(p => p.accountId === accountId);
+      if (!participant || participant.status?.toUpperCase() === "FINISHED") continue;
       
       try {
-        await eventUserService.updateEventUserStatus(
-          participant.eventId,
-          participant.accountId,
-          "FINISHED"
-        );
+        await eventUserService.updateEventUserStatus(participant.eventId, participant.accountId, "FINISHED");
         successCount++;
       } catch (err) {
         console.error(`Failed to update status for ${accountId}:`, err);
@@ -180,23 +183,35 @@ const ParticipantManagement = () => {
     setBatchConfirmOpen(false);
     setSelectedIds([]);
     
-    if (failCount === 0) {
-      setSnackbar({
-        open: true,
-        message: `Đã đánh dấu hoàn thành ${successCount} tình nguyện viên!`,
-        severity: "success"
-      });
-    } else {
-      setSnackbar({
-        open: true,
-        message: `Thành công: ${successCount}, Thất bại: ${failCount}`,
-        severity: failCount === selectedIds.length ? "error" : "warning"
-      });
-    }
+    setSnackbar({
+      open: true,
+      message: failCount === 0 
+        ? `Đã đánh dấu hoàn thành ${successCount} tình nguyện viên!` 
+        : `Thành công: ${successCount}, Thất bại: ${failCount}`,
+      severity: failCount === 0 ? "success" : "warning"
+    });
     
     fetchParticipants();
   };
 
+  // Handle role change
+  const handleRoleChange = async () => {
+    const { participant, newRole } = roleDialog;
+    if (!participant || !newRole) return;
+    
+    try {
+      await eventUserService.updateEventUserRole(participant.eventId, participant.accountId, newRole);
+      setSnackbar({ open: true, message: `Đã đổi vai trò thành ${getRoleLabel(newRole)}!`, severity: "success" });
+      fetchParticipants();
+    } catch (err) {
+      console.error("Failed to update role:", err);
+      setSnackbar({ open: true, message: err.response?.data?.message || "Không thể đổi vai trò.", severity: "error" });
+    }
+    
+    setRoleDialog({ open: false, participant: null, newRole: "ATTENDEE" });
+  };
+
+  // Columns configuration
   const columns = [
     {
       id: "username",
@@ -215,20 +230,17 @@ const ParticipantManagement = () => {
         </Box>
       ),
     },
-    // Always show Event column, especially important for general view
-    {
-      id: "title",
-      label: "Sự kiện",
-      render: (value, row) => (
-        <Typography variant="body2" sx={{ maxWidth: 200 }} noWrap title={row.title || value}>
-          {row.title || value}
-        </Typography>
-      )
-    },
     { 
       id: "eventUserRole", 
       label: "Vai trò",
-      render: (value) => value || "PARTICIPANT"
+      render: (value) => (
+        <Chip 
+          label={getRoleLabel(value)} 
+          size="small" 
+          color={value?.toUpperCase() === "MANAGER" ? "primary" : "default"}
+          sx={{ fontSize: "11px" }}
+        />
+      )
     },
     {
       id: "status",
@@ -240,33 +252,54 @@ const ParticipantManagement = () => {
     },
   ];
 
-  const actions = [
-    { 
-      label: "Duyệt", 
-      icon: <CheckCircle sx={{ fontSize: 16, color: "success.main" }} />, 
-      onClick: (row) => row.status?.toUpperCase() === "PENDING" && setConfirmDialog({ open: true, action: "approve", participant: row }),
-      disabled: (row) => row.status?.toUpperCase() !== "PENDING"
-    },
-    { 
-      label: "Từ chối", 
-      icon: <Cancel sx={{ fontSize: 16 }} />, 
-      color: "error.main", 
-      onClick: (row) => row.status?.toUpperCase() === "PENDING" && setConfirmDialog({ open: true, action: "reject", participant: row }),
-      disabled: (row) => row.status?.toUpperCase() !== "PENDING"
-    },
-    { 
-      label: "Đánh dấu hoàn thành", 
-      icon: <TaskAlt sx={{ fontSize: 16, color: "info.main" }} />, 
-      onClick: (row) => row.status?.toUpperCase() === "APPROVED" && setConfirmDialog({ open: true, action: "finish", participant: row }),
-      disabled: (row) => row.status?.toUpperCase() !== "APPROVED"
-    },
-  ];
+  // Actions based on active tab
+  const getActions = () => {
+    if (activeTab === 0) {
+      // Tab Pending: Approve/Reject only
+      return [
+        { 
+          label: "Duyệt", 
+          icon: <CheckCircle sx={{ fontSize: 16, color: "success.main" }} />, 
+          onClick: (row) => setConfirmDialog({ open: true, action: "approve", participant: row }),
+        },
+        { 
+          label: "Từ chối", 
+          icon: <Cancel sx={{ fontSize: 16 }} />, 
+          color: "error.main", 
+          onClick: (row) => setConfirmDialog({ open: true, action: "reject", participant: row }),
+        },
+      ];
+    } else if (activeTab === 1) {
+      // Tab Approved: Mark complete + Delete
+      return [
+        { 
+          label: "Hoàn thành", 
+          icon: <TaskAlt sx={{ fontSize: 16, color: "info.main" }} />, 
+          onClick: (row) => row.status?.toUpperCase() === "APPROVED" && setConfirmDialog({ open: true, action: "finish", participant: row }),
+          disabled: (row) => row.status?.toUpperCase() === "FINISHED"
+        },
+        { 
+          label: "Xóa khỏi sự kiện", 
+          icon: <PersonRemove sx={{ fontSize: 16 }} />, 
+          color: "error.main", 
+          onClick: (row) => setConfirmDialog({ open: true, action: "delete", participant: row }),
+        },
+      ];
+    } else {
+      // Tab Role Management: Change role
+      return [
+        { 
+          label: "Đổi vai trò", 
+          icon: <AdminPanelSettings sx={{ fontSize: 16 }} />, 
+          onClick: (row) => setRoleDialog({ open: true, participant: row, newRole: row.eventUserRole?.toUpperCase() === "MANAGER" ? "ATTENDEE" : "MANAGER" }),
+        },
+      ];
+    }
+  };
 
+  // Counts
   const pendingCount = participants.filter((p) => p.status?.toUpperCase() === "PENDING").length;
-  const approvedCount = participants.filter((p) => p.status?.toUpperCase() === "APPROVED").length;
-  
-  // Check if we are in batch selection mode (tab 3)
-  const isBatchMode = activeTab === 3;
+  const approvedCount = participants.filter((p) => ["APPROVED", "FINISHED"].includes(p.status?.toUpperCase())).length;
 
   return (
     <ThreeColumnLayout user={user} role="manager" showRightSidebar={true} showSearch={false}>
@@ -277,7 +310,7 @@ const ParticipantManagement = () => {
             {eventId ? (event ? `TNV - ${event.title}` : "Quản lý tình nguyện viên") : "Danh sách tnv chờ duyệt"}
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
-            {isBatchMode && selectedIds.length > 0 && (
+            {activeTab === 1 && selectedIds.length > 0 && (
               <Button 
                 size="small" 
                 variant="contained"
@@ -301,30 +334,40 @@ const ParticipantManagement = () => {
           </Box>
         </Box>
 
-        {/* Only show tabs in Event context */}
+        {/* Tabs */}
         {eventId && (
           <Tabs
             value={activeTab}
             onChange={(e, v) => setActiveTab(v)}
             sx={{ px: 2, "& .MuiTab-root": { textTransform: "none", fontWeight: 500, fontSize: "14px" } }}
           >
-            <Tab label="Tất cả" />
-            <Tab label={<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>Chờ duyệt <Chip label={pendingCount} size="small" color="warning" sx={{ height: 18, fontSize: "10px" }} /></Box>} />
-            <Tab label="Đã duyệt" />
             <Tab label={
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                Đánh dấu hoàn thành 
-                <Chip label={approvedCount} size="small" color="info" sx={{ height: 18, fontSize: "10px" }} />
+                Chờ duyệt 
+                <Chip label={pendingCount} size="small" color="warning" sx={{ height: 18, fontSize: "10px" }} />
               </Box>
             } />
+            <Tab label={
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                Thành viên 
+                <Chip label={approvedCount} size="small" color="success" sx={{ height: 18, fontSize: "10px" }} />
+              </Box>
+            } />
+            <Tab label="Quản lý vai trò" />
           </Tabs>
         )}
       </Box>
 
       <Box sx={{ p: 2 }}>
-        {isBatchMode && (
+        {activeTab === 1 && (
           <Alert severity="info" sx={{ mb: 2, borderRadius: "12px" }}>
-            Chọn các tình nguyện viên bạn muốn đánh dấu hoàn thành, sau đó nhấn nút "Đánh dấu hoàn thành" ở trên.
+            Chọn các tình nguyện viên để đánh dấu hoàn thành hàng loạt, hoặc sử dụng nút "Xóa khỏi sự kiện" để loại người dùng.
+          </Alert>
+        )}
+        
+        {activeTab === 2 && (
+          <Alert severity="info" sx={{ mb: 2, borderRadius: "12px" }}>
+            Đổi vai trò của thành viên thành <strong>Quản lý sự kiện</strong> để họ có quyền quản lý chỉ sự kiện này.
           </Alert>
         )}
         
@@ -334,26 +377,28 @@ const ParticipantManagement = () => {
           </Box>
         ) : error ? (
           <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
-        ) : participants.length > 0 ? (
+        ) : filteredParticipants.length > 0 ? (
           <DataTable 
             columns={columns} 
-            data={participants} 
+            data={filteredParticipants} 
             searchable 
             searchPlaceholder="Tìm kiếm..." 
-            actions={isBatchMode ? [] : actions}  // Hide individual actions in batch mode
+            actions={getActions()}
             rowKey="accountId" 
-            selectable={isBatchMode}
+            selectable={activeTab === 1}
             onSelectionChange={(ids) => setSelectedIds(ids)}
           />
         ) : (
           <EmptyState 
-            title={isBatchMode ? "Không có TNV cần đánh dấu" : "Chưa có đăng ký"} 
+            title={
+              activeTab === 0 ? "Không có yêu cầu chờ duyệt" :
+              activeTab === 1 ? "Không có thành viên" :
+              "Không có thành viên để quản lý"
+            } 
             description={
-              isBatchMode 
-                ? "Không có tình nguyện viên nào đã duyệt cần đánh dấu hoàn thành." 
-                : eventId 
-                  ? "Chưa có ai đăng ký tham gia." 
-                  : "Không có yêu cầu chờ duyệt nào."
+              activeTab === 0 ? "Không có tình nguyện viên nào đang chờ duyệt." :
+              activeTab === 1 ? "Chưa có thành viên nào được duyệt tham gia sự kiện." :
+              "Duyệt thành viên trước để quản lý vai trò của họ."
             } 
           />
         )}
@@ -364,10 +409,28 @@ const ParticipantManagement = () => {
         open={confirmDialog.open}
         onClose={() => setConfirmDialog({ open: false, action: null, participant: null })}
         onConfirm={handleConfirmAction}
-        title={confirmDialog.action === "approve" ? "Duyệt đăng ký?" : confirmDialog.action === "finish" ? "Đánh dấu hoàn thành?" : "Từ chối đăng ký?"}
-        message={`Bạn có chắc chắn muốn ${confirmDialog.action === "approve" ? "duyệt" : confirmDialog.action === "finish" ? "đánh dấu hoàn thành" : "từ chối"} đăng ký của "${confirmDialog.participant?.firstName || confirmDialog.participant?.username}"?`}
-        confirmLabel={confirmDialog.action === "approve" ? "Duyệt" : confirmDialog.action === "finish" ? "Hoàn thành" : "Từ chối"}
-        variant={confirmDialog.action === "approve" ? "success" : confirmDialog.action === "finish" ? "info" : "danger"}
+        title={
+          confirmDialog.action === "approve" ? "Duyệt đăng ký?" : 
+          confirmDialog.action === "finish" ? "Đánh dấu hoàn thành?" : 
+          confirmDialog.action === "delete" ? "Xóa khỏi sự kiện?" :
+          "Từ chối đăng ký?"
+        }
+        message={
+          confirmDialog.action === "delete" 
+            ? `Bạn có chắc chắn muốn xóa "${confirmDialog.participant?.firstName || confirmDialog.participant?.username}" khỏi sự kiện này?`
+            : `Bạn có chắc chắn muốn ${confirmDialog.action === "approve" ? "duyệt" : confirmDialog.action === "finish" ? "đánh dấu hoàn thành" : "từ chối"} đăng ký của "${confirmDialog.participant?.firstName || confirmDialog.participant?.username}"?`
+        }
+        confirmLabel={
+          confirmDialog.action === "approve" ? "Duyệt" : 
+          confirmDialog.action === "finish" ? "Hoàn thành" : 
+          confirmDialog.action === "delete" ? "Xóa" :
+          "Từ chối"
+        }
+        variant={
+          confirmDialog.action === "approve" ? "success" : 
+          confirmDialog.action === "finish" ? "info" : 
+          "danger"
+        }
       />
 
       {/* Batch confirm dialog */}
@@ -380,6 +443,36 @@ const ParticipantManagement = () => {
         confirmLabel={batchLoading ? "Đang xử lý..." : "Xác nhận"}
         variant="info"
       />
+
+      {/* Role change dialog */}
+      <Dialog open={roleDialog.open} onClose={() => setRoleDialog({ ...roleDialog, open: false })} maxWidth="xs" fullWidth>
+        <DialogTitle>Đổi vai trò</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Đổi vai trò của <strong>{roleDialog.participant?.firstName || roleDialog.participant?.username}</strong>:
+          </Typography>
+          <FormControl fullWidth size="small">
+            <InputLabel>Vai trò</InputLabel>
+            <Select
+              value={roleDialog.newRole}
+              label="Vai trò"
+              onChange={(e) => setRoleDialog({ ...roleDialog, newRole: e.target.value })}
+            >
+              <MenuItem value="ATTENDEE">Thành viên</MenuItem>
+              <MenuItem value="MANAGER">Quản lý sự kiện</MenuItem>
+            </Select>
+          </FormControl>
+          {roleDialog.newRole === "MANAGER" && (
+            <Alert severity="warning" sx={{ mt: 2, fontSize: "12px" }}>
+              Người này sẽ có quyền quản lý <strong>chỉ sự kiện này</strong>: duyệt TNV, đánh dấu hoàn thành, v.v.
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRoleDialog({ ...roleDialog, open: false })}>Hủy</Button>
+          <Button variant="contained" onClick={handleRoleChange}>Xác nhận</Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}

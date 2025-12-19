@@ -163,9 +163,9 @@ const EventManagement = () => {
       onClick: (row) => navigate(`/events/${row.eventId}`),
     },
     {
-      label: "Quản lý TNV",
+      label: "Quản lý",
       icon: <People sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(`/manage/events/${row.eventId}/participants`),
+      onClick: (row) => navigate(`/manage/events/${row.eventId}`),
     },
     {
       label: "Sửa",

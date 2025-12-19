@@ -325,20 +325,43 @@ const EventDetail = () => {
               {attendeeCount} tình nguyện viên
             </Typography>
           </Box>
-          {/* Like Event Button */}
-          <IconButton
-            onClick={handleLikeEvent}
-            disabled={likingEvent}
+          {/* Like Event Button - combined like Explore page */}
+          <Box
+            onClick={!likingEvent ? handleLikeEvent : undefined}
             sx={{
-              color: isEventLiked ? "error.main" : "text.secondary",
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
               ml: "auto",
+              mr: 1,
+              px: 1.5,
+              py: 0.5,
+              borderRadius: "9999px",
+              cursor: likingEvent ? "default" : "pointer",
+              backgroundColor: isEventLiked ? "rgba(239, 68, 68, 0.1)" : "transparent",
+              border: "1px solid",
+              borderColor: isEventLiked ? "rgba(239, 68, 68, 0.3)" : "grey.300",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                backgroundColor: isEventLiked ? "rgba(239, 68, 68, 0.15)" : "grey.100",
+              },
             }}
           >
-            {isEventLiked ? <Favorite /> : <FavoriteBorder />}
-          </IconButton>
-          <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
-            {eventLikeCount}
-          </Typography>
+            {isEventLiked ? (
+              <Favorite sx={{ fontSize: 18, color: "#ef4444" }} />
+            ) : (
+              <FavoriteBorder sx={{ fontSize: 18, color: "text.secondary" }} />
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: isEventLiked ? 600 : 400,
+                color: isEventLiked ? "#ef4444" : "text.secondary",
+              }}
+            >
+              {eventLikeCount}
+            </Typography>
+          </Box>
         </Box>
       </Box>
 

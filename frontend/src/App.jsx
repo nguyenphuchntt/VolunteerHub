@@ -17,6 +17,7 @@ import { Settings, ChangePassword, ProfileSettings } from "./pages/settings";
 import {
   ManagerDashboard,
   EventManagement,
+  EventDetailManagement,
   ParticipantManagement,
   EventForm,
 } from "./pages/manager";
@@ -104,9 +105,9 @@ function App() {
               <EventForm />
             </ProtectedRoute>
           } />
-          <Route path="/manage/events/:eventId/participants" element={
+          <Route path="/manage/events/:id" element={
             <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
-              <ParticipantManagement />
+              <EventDetailManagement />
             </ProtectedRoute>
           } />
           <Route path="/manage/participants" element={
