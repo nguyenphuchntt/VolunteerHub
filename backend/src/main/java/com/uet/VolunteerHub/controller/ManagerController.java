@@ -1,8 +1,10 @@
 package com.uet.VolunteerHub.controller;
 
+import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.dto.EventUser.EventUserSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.repository.EventUserRepository;
+import com.uet.VolunteerHub.service.EventSearchService;
 import com.uet.VolunteerHub.service.EventUserSearchService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,14 +20,15 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/manager/pending-users")
+@RequestMapping("/api/manager")
 @RequiredArgsConstructor
-public class ManagerPendingUsersController {
+public class ManagerController {
 
     private final EventUserSearchService eventUserSearchService;
     private final EventUserRepository eventUserRepository;
+    private final EventSearchService eventSearchService;
 
-    @GetMapping
+    @GetMapping("/pending-users")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<EventUserSearchDTO>> getAllPendingUsers(
             @AuthenticationPrincipal Account account,
@@ -48,5 +51,15 @@ public class ManagerPendingUsersController {
             @AuthenticationPrincipal Account account) {
         boolean isEventManager = eventUserRepository.isEventManager(account.getAccountId());
         return ResponseEntity.ok(Map.of("isEventManager", isEventManager));
+    }
+
+    @GetMapping("/me/managed-events")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<EventSearchDTO>> getManagedEvents(
+            @AuthenticationPrincipal Account account,
+            @PageableDefault(size = 20, page = 0) Pageable pageable) {
+        return ResponseEntity.ok(
+            eventSearchService.findManagedEvents(account.getAccountId(), pageable)
+        );
     }
 }

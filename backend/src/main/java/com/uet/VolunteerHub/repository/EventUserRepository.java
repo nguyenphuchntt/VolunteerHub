@@ -73,4 +73,10 @@ public interface EventUserRepository
            "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
     boolean isEventManager(UUID accountId);
 
+    @Query("SELECT eu FROM EventUser eu " +
+           "WHERE eu.accountId = :accountId " +
+           "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
+    @EntityGraph(attributePaths = { "account", "account.userInfo", "event" })
+    Page<EventUser> findManagedEventsByAccountId(UUID accountId, Pageable pageable);
+
 }
