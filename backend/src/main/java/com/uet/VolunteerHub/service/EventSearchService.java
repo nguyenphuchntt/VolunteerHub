@@ -14,6 +14,7 @@ import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -132,6 +133,7 @@ public class EventSearchService {
                 });
     }
 
+    @Cacheable(value = "events", key = "'top5ByLike'")
     @Transactional
     public List<EventSearchDTO> findTop5EventsByLikeCount() {
         List<Event> events = eventRepository.findTop5ByOrderByLikeCountDesc();
@@ -152,6 +154,7 @@ public class EventSearchService {
         }).toList();
     }
 
+    @Cacheable(value = "events", key = "'hot:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
         Page<Event> eventPage = eventRepository.findHotEvents(pageable);

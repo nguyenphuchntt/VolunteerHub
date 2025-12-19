@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -74,11 +76,13 @@ public class NotificationService {
         return notificationMapper.toDTO(savedNotification);
     }
 
+    @Cacheable(value = "notificationCounts", key = "#receiverId")
     @Transactional(readOnly = true)
     public Long getUnreadNotificationCount(UUID receiverId) {
         return notificationRepository.countByReceiverAccount_AccountIdAndIsReadFalseAndIsDeletedFalse(receiverId);
     }
 
+    @CacheEvict(value = "notificationCounts", key = "#receiverId")
     @Transactional
     public void markAllAsRead(UUID receiverId) {
         notificationRepository.markAllAsReadByReceiverId(receiverId);

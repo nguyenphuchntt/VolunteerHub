@@ -15,6 +15,8 @@ import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -287,6 +289,7 @@ public class EventUserWriteService {
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
     }
 
+    @CacheEvict(value = "managerDashboard", allEntries = true)
     @Transactional
     public EventUserSearchDTO updateStatus(UUID accountId, Long eventId, EventUserStatusUpdateDTO status) {
         EventUser eventUser = findEventUser(accountId, eventId);
@@ -313,6 +316,10 @@ public class EventUserWriteService {
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "managerDashboard", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public Map<String, Object> bulkApprove(Long eventId, List<UUID> accountIds) {
         if (!eventRepository.existsById(eventId)) {
@@ -345,6 +352,10 @@ public class EventUserWriteService {
         return response;
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "managerDashboard", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public Map<String, Object> bulkReject(Long eventId, List<UUID> accountIds) {
         if (!eventRepository.existsById(eventId)) {
