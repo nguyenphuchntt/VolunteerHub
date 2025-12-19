@@ -15,16 +15,15 @@ RUN mvn package -DskipTests -B
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-RUN mkdir -p /app/uploads && chmod 777 /app/uploads
-
 RUN addgroup -S spring && adduser -S spring -G spring
-USER spring:spring
 
 COPY --from=build /app/target/*.jar app.jar
 
+COPY ./images /app/uploads
+
+RUN chown -R spring:spring /app/uploads && chmod -R 775 /app/uploads
+
+USER spring:spring
+
 EXPOSE 8080
-
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
-
 ENTRYPOINT ["java", "-jar", "app.jar"]
