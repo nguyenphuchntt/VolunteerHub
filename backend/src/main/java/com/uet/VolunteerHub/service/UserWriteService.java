@@ -3,6 +3,7 @@ package com.uet.VolunteerHub.service;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.util.Pair;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -239,6 +240,7 @@ public class UserWriteService {
         accountRepository.save(account);
     }
 
+    @CacheEvict(value = "users", key = "#accountId")
     @Transactional
     public UserSearchDTO updateUserDetails(UUID accountId, UserProfileUpdateDTO userProfileUpdateDTO) {
         Account account = accountRepository.findById(accountId)

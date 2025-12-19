@@ -10,6 +10,9 @@ import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,7 @@ public class AdminDashboardService {
     private final EventLikeRepository eventLikeRepository;
     private final PostRepository postRepository;
 
+    @Cacheable(value = "adminDashboard", key = "'overview'")
     public DashboardOverviewDTO getDashboardOverview() {
         // Users Stats
         long totalUsers = accountRepository.count();
@@ -114,6 +118,7 @@ public class AdminDashboardService {
                 .build();
     }
 
+    @Cacheable(value = "adminDashboard", key = "'chart:' + #type")
     public ChartDataDTO getDashboardChart(String type) {
         OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
         List<Object[]> data = new ArrayList<>();
@@ -144,6 +149,7 @@ public class AdminDashboardService {
                 .build();
     }
 
+    @Cacheable(value = "adminDashboard", key = "'rankings:' + #type")
     public List<RankingItemDTO> getDashboardRankings(String type) {
         List<RankingItemDTO> rankings = new ArrayList<>();
 
@@ -212,6 +218,10 @@ public class AdminDashboardService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "adminDashboard", allEntries = true),
+        @CacheEvict(value = "events", allEntries = true)
+    })
     @Transactional
     public void updateEventStatus(Long eventId, String status) {
         Event event = eventRepository.findById(eventId)
