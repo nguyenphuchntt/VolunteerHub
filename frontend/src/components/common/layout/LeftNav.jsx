@@ -240,7 +240,7 @@ const LeftNav = ({ isMobile = false }) => {
           alignItems: "center",
           justifyContent: "center",
         }}
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/explore")}
       >
         <Box
           component="img"

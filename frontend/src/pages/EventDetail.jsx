@@ -345,13 +345,30 @@ const EventDetail = () => {
       {/* Banner */}
       <Box
         sx={{
-          height: 250,
-          backgroundImage: `url("${coverImage}")`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundColor: "#e0e0e0",
+          position: "relative",
+          paddingTop: "min(42.86%, 220px)", /* 21:9 aspect ratio, max 220px */
+          backgroundColor: "#f0f0f0",
+          overflow: "hidden",
+          maxHeight: 220,
         }}
-      />
+      >
+        <Box
+          component="img"
+          src={coverImage}
+          alt={event.title}
+          onError={(e) => {
+            e.target.style.display = "none";
+          }}
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      </Box>
 
       {/* Event Info */}
       <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "grey.200" }}>
