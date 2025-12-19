@@ -72,10 +72,12 @@ INSERT INTO event (event_id, title, description, category, location, status, cre
 (5, 'Chạy bộ từ thiện 5K', 'Chạy bộ gây quỹ cho trẻ em mồ côi', 'Charity', 'Hồ Hoàn Kiếm, Hà Nội', 'SCHEDULED', NOW() - INTERVAL 15 DAY, NOW() + INTERVAL 14 DAY, NOW() + INTERVAL 14 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
 (6, 'Dạy tiếng Anh miễn phí', 'Lớp học tiếng Anh cho trẻ em có hoàn cảnh khó khăn', 'Education', 'Nhà văn hóa Quận 7, HCM', 'SCHEDULED', NOW() - INTERVAL 20 DAY, NOW() + INTERVAL 21 DAY, NOW() + INTERVAL 90 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
 (7, 'Phát cơm từ thiện', 'Phát cơm miễn phí cho người vô gia cư', 'Charity', 'Quận 1, HCM', 'SCHEDULED', NOW() - INTERVAL 8 DAY, NOW() + INTERVAL 3 DAY, NOW() + INTERVAL 3 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
+(16, 'Phát khô gà', 'Phát khô gà miễn phí cho fan anh', 'Charity', 'Quận 3, HCM', 'SCHEDULED', NOW() - INTERVAL 8 DAY, NOW() + INTERVAL 3 DAY, NOW() + INTERVAL 3 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
 -- STARTED (3)
 (8, 'Thăm và tặng quà người già neo đơn', 'Thăm hỏi và tặng quà tại viện dưỡng lão', 'Healthcare', 'Viện dưỡng lão Thiên Ân, Hà Nội', 'STARTED', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 2 DAY, NOW() + INTERVAL 5 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
 (9, 'Dọn vệ sinh sông Tô Lịch', 'Hoạt động làm sạch dòng sông ô nhiễm', 'Environment', 'Sông Tô Lịch, Hà Nội', 'STARTED', NOW() - INTERVAL 25 DAY, NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 7 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000005'),
 (10, 'Xây nhà tình thương', 'Xây dựng nhà cho hộ nghèo tại Quảng Bình', 'Charity', 'Quảng Bình', 'STARTED', NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
+(17, 'Xây trường', 'Xây dựng trường học cho học sinh miền núi', 'Charity', 'Cao Bằng', 'STARTED', NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
 -- FINISHED (3)
 (11, 'Cứu trợ lũ lụt miền Trung', 'Phát quà cứu trợ cho bà con vùng lũ', 'Charity', 'Quảng Trị', 'FINISHED', NOW() - INTERVAL 60 DAY, NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 45 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
 (12, 'Khám bệnh miễn phí', 'Chương trình khám bệnh từ thiện cho người nghèo', 'Healthcare', 'Bình Phước', 'FINISHED', NOW() - INTERVAL 45 DAY, NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 33 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
@@ -103,7 +105,9 @@ INSERT INTO event_user (account_id, event_id, registered_at, status, event_user_
 ('b0000001-0000-0000-0000-000000000004', 12, NOW() - INTERVAL 45 DAY, 'APPROVED', 'MANAGER'),
 ('b0000001-0000-0000-0000-000000000005', 13, NOW() - INTERVAL 40 DAY, 'APPROVED', 'MANAGER'),
 ('b0000001-0000-0000-0000-000000000001', 14, NOW() - INTERVAL 50 DAY, 'APPROVED', 'MANAGER'),
-('b0000001-0000-0000-0000-000000000002', 15, NOW() - INTERVAL 55 DAY, 'APPROVED', 'MANAGER');
+('b0000001-0000-0000-0000-000000000002', 15, NOW() - INTERVAL 55 DAY, 'APPROVED', 'MANAGER'),
+('b0000001-0000-0000-0000-000000000004', 16, NOW() - INTERVAL 55 DAY, 'APPROVED', 'MANAGER'),
+('b0000001-0000-0000-0000-000000000002', 17, NOW() - INTERVAL 55 DAY, 'APPROVED', 'MANAGER');
 
 -- Attendees for events (mixed statuses)
 INSERT INTO event_user (account_id, event_id, registered_at, status, event_user_role) VALUES

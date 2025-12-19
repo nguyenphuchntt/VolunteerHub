@@ -17,6 +17,7 @@ import { Settings, ChangePassword, ProfileSettings } from "./pages/settings";
 import {
   ManagerDashboard,
   EventManagement,
+  EventDetailManagement,
   ParticipantManagement,
   EventForm,
 } from "./pages/manager";
@@ -85,12 +86,12 @@ function App() {
 
           {/* Protected Manager Routes */}
           <Route path="/manage" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <ManagerDashboard />
             </ProtectedRoute>
           } />
           <Route path="/manage/events" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <EventManagement />
             </ProtectedRoute>
           } />
@@ -104,13 +105,13 @@ function App() {
               <EventForm />
             </ProtectedRoute>
           } />
-          <Route path="/manage/events/:eventId/participants" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
-              <ParticipantManagement />
+          <Route path="/manage/events/:id" element={
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
+              <EventDetailManagement />
             </ProtectedRoute>
           } />
           <Route path="/manage/participants" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <ParticipantManagement />
             </ProtectedRoute>
           } />

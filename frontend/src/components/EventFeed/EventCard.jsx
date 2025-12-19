@@ -8,7 +8,6 @@ import {
   Box,
   Typography,
   Chip,
-  IconButton,
 } from "@mui/material";
 import {
   CalendarMonth,
@@ -162,33 +161,49 @@ const EventCard = ({ event }) => {
         },
       }}
     >
-      {/* Image Section */}
       <Box sx={{ position: "relative" }}>
         {hasImage ? (
-          <CardMedia
-            component="img"
-            height="180"
-            image={coverImage}
-            alt={event.title}
-            sx={{ objectFit: "cover", backgroundColor: "#e0e0e0" }}
-            onError={(e) => {
-              // Hide img and show placeholder on error
-              e.target.style.display = "none";
-            }}
-          />
+          <Box sx={{ 
+            position: "relative",
+            paddingTop: "56.25%", /* 16:9 aspect ratio */
+            backgroundColor: "#f0f0f0",
+            overflow: "hidden",
+          }}>
+            <Box
+              component="img"
+              src={coverImage}
+              alt={event.title}
+              onError={(e) => {
+                e.target.style.display = "none";
+              }}
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </Box>
         ) : (
           <Box
             sx={{
-              height: 180,
+              paddingTop: "56.25%", /* 16:9 aspect ratio */
+              position: "relative",
               background: getGradient(event.category),
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
             }}
           >
-            <Typography variant="h4" sx={{ color: "white", opacity: 0.6 }}>
-              🎯
-            </Typography>
+            <Box sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            }}>
+              <Typography variant="h4" sx={{ color: "white", opacity: 0.6 }}>
+                🎯
+              </Typography>
+            </Box>
           </Box>
         )}
 
@@ -320,21 +335,39 @@ const EventCard = ({ event }) => {
             </Typography>
           </Box>
 
-          {/* Likes - clickable */}
-          <IconButton
+          {/* Likes - button with count */}
+          <Box
             onClick={handleLike}
-            disabled={isLiking}
-            size="small"
             sx={{
-              color: hasLiked ? "error.main" : "text.secondary",
-              "&:hover": { color: "error.main" },
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+              cursor: "pointer",
+              padding: "4px 10px",
+              borderRadius: "20px",
+              backgroundColor: hasLiked ? "rgba(244, 67, 54, 0.08)" : "transparent",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                backgroundColor: hasLiked ? "rgba(244, 67, 54, 0.15)" : "rgba(0, 0, 0, 0.04)",
+              },
             }}
           >
-            {hasLiked ? <Favorite fontSize="small" /> : <FavoriteBorder fontSize="small" />}
-          </IconButton>
-          <Typography variant="caption" color="text.secondary">
-            {likeCount}
-          </Typography>
+            {hasLiked ? (
+              <Favorite sx={{ fontSize: 18, color: "error.main" }} />
+            ) : (
+              <FavoriteBorder sx={{ fontSize: 18, color: "text.secondary" }} />
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                color: hasLiked ? "error.main" : "text.secondary",
+                fontWeight: hasLiked ? 600 : 400,
+                minWidth: "16px",
+              }}
+            >
+              {likeCount}
+            </Typography>
+          </Box>
         </Box>
       </CardContent>
     </Card>
