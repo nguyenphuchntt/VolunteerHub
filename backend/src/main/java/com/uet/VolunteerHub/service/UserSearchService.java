@@ -9,6 +9,7 @@ import com.uet.VolunteerHub.repository.specification.UserSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -48,6 +49,7 @@ public class UserSearchService {
         return builder.build();
     }
 
+    @Cacheable(value = "users", key = "#accountId")
     @Transactional
     public Optional<UserSearchDTO> findUserById(UUID accountId) {
         Optional<Account> account = accountRepository.findById(accountId);

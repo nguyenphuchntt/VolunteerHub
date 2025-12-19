@@ -10,6 +10,8 @@ import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -47,12 +49,20 @@ public class EventWriteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public void deleteEvent(Long eventId) {
         Event event = findEvent(eventId);
         eventRepository.delete(event);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public EventSearchDTO registerEvent(Account account, EventManagerCreateDTO eventManagerCreateDTO) {
         if (eventManagerCreateDTO.getStartAt() != null && eventManagerCreateDTO.getEndAt() != null) {
@@ -95,6 +105,10 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, account);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public EventSearchDTO createEvent(Account account, EventAdminCreateDTO eventAdminCreateDTO) {
         if (eventAdminCreateDTO.getStartAt() != null && eventAdminCreateDTO.getEndAt() != null) {
@@ -141,6 +155,10 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, account);
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public EventSearchDTO updateEventStatus(Long eventId, EventStatusUpdateDTO eventStatusUpdateDTO) {
         Event event = findEvent(eventId);
@@ -153,6 +171,10 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     @Transactional
     public EventSearchDTO updateEventDetails(Long eventId, EventUpdateDTO eventUpdateDTO) {
         if (eventUpdateDTO.getStartAt() != null && eventUpdateDTO.getEndAt() != null) {

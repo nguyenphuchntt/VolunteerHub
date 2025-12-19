@@ -24,6 +24,21 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+  redis:
+    image: redis:7-alpine
+    container_name: volunteerhub-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - volunteerhub-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   backend:
     build:
@@ -37,12 +52,17 @@ services:
       SPRING_SQL_INIT_MODE: never
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       UPLOAD_DIR: /app/uploads
+      # Redis configuration
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     volumes:
-      - ./images:/app/uploads
+      - uploaded-files:/app/uploads
     ports:
       - "8080:8080"
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - volunteerhub-network
@@ -54,5 +74,6 @@ networks:
 
 volumes:
   mysql_data:
+  redis_data:
   uploaded-files:
 
