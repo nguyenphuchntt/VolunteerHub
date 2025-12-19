@@ -61,4 +61,7 @@ public class Event {
     @JoinColumn(name = "created_by_account_id")
     @OnDelete(action = OnDeleteAction.SET_NULL)
     private Account createdBy;
+
+    @OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
+    private java.util.List<EventMedia> media;
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ThreeColumnLayout } from "../components/common";
+import { ThreeColumnLayout, FollowListModal } from "../components/common";
 import { profileService, userService, myEventsService, postService } from "../api";
 import { useAuth } from "../context/AuthContext";
 
@@ -35,6 +35,10 @@ const Profile = () => {
   const [followingCount, setFollowingCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  
+  // Follow Modal states
+  const [followModalOpen, setFollowModalOpen] = useState(false);
+  const [followModalType, setFollowModalType] = useState('followers'); // 'followers' or 'following'
 
   const isOwnProfile = currentUser?.username === username;
 
@@ -301,7 +305,13 @@ const Profile = () => {
 
           {/* Stats */}
           <Box sx={{ display: "flex", gap: 3, mt: 2 }}>
-            <Box sx={{ display: "flex", gap: 0.5, cursor: "pointer" }}>
+            <Box 
+              sx={{ display: "flex", gap: 0.5, cursor: "pointer", '&:hover': { opacity: 0.8 } }}
+              onClick={() => {
+                setFollowModalType('followers');
+                setFollowModalOpen(true);
+              }}
+            >
               <Typography variant="body2" fontWeight={700}>
                 {followersCount}
               </Typography>
@@ -309,7 +319,13 @@ const Profile = () => {
                 người theo dõi
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 0.5, cursor: "pointer" }}>
+            <Box 
+              sx={{ display: "flex", gap: 0.5, cursor: "pointer", '&:hover': { opacity: 0.8 } }}
+              onClick={() => {
+                setFollowModalType('following');
+                setFollowModalOpen(true);
+              }}
+            >
               <Typography variant="body2" fontWeight={700}>
                 {followingCount}
               </Typography>
@@ -373,12 +389,15 @@ const Profile = () => {
                       height: 80,
                       borderRadius: "12px",
                       backgroundColor: "#e0e0e0",
+                      backgroundImage: eventUser.coverImageUrl ? `url(${eventUser.coverImageUrl})` : "none",
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />
+                    {!eventUser.coverImageUrl && <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />}
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="body1" fontWeight={600}>
@@ -505,6 +524,12 @@ const Profile = () => {
           )}
         </Box>
       )}
+      <FollowListModal
+        open={followModalOpen}
+        onClose={() => setFollowModalOpen(false)}
+        type={followModalType}
+        userId={profileUser.accountID}
+      />
     </ThreeColumnLayout>
   );
 };

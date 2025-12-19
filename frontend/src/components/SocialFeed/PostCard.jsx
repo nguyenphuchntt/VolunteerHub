@@ -37,6 +37,30 @@ import {
 import { postService, commentService, mediaService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
+// Helper to get display name
+const getDisplayName = (post) => {
+  if (post.ownerFirstName && post.ownerLastName) {
+    return `${post.ownerFirstName} ${post.ownerLastName}`;
+  }
+  return post.ownerUsername || post.author?.name || "Người dùng";
+};
+
+// Helper to get avatar letter
+const getAvatarLetter = (post) => {
+  if (post.ownerFirstName) {
+    return post.ownerFirstName.charAt(0).toUpperCase();
+  }
+  return (post.ownerUsername || "?").charAt(0).toUpperCase();
+};
+
+// Helper to get avatar letter from user object
+const getUserAvatarLetter = (user) => {
+  if (user?.firstName) {
+    return user.firstName.charAt(0).toUpperCase();
+  }
+  return (user?.username || "?").charAt(0).toUpperCase();
+};
+
 const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
   const { user, isAuthenticated } = useAuth();
   const [showComments, setShowComments] = useState(false);
@@ -243,7 +267,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
   };
 
   // Get author info (handle backend format)
-  const authorName = post.ownerUsername || post.author?.name || "Người dùng";
+  const authorName = getDisplayName(post);
   const authorBio = post.author?.bio || "";
   const authorAvatar = post.author?.avatar || null;
   const timestamp = formatTimestamp(post.createdAt || post.timestamp);
@@ -267,7 +291,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
         <CardHeader
           avatar={
             <Avatar src={authorAvatar} alt={authorName}>
-              {authorName.charAt(0).toUpperCase()}
+              {getAvatarLetter(post)}
             </Avatar>
           }
           action={
@@ -389,8 +413,8 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
             {/* Write Comment */}
             {isAuthenticated && (
               <Box sx={{ display: "flex", gap: 1.5, mt: 2 }}>
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  {(user?.username || "?").charAt(0).toUpperCase()}
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
+                  {getUserAvatarLetter(user)}
                 </Avatar>
                 <TextField
                   fullWidth

@@ -45,7 +45,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(BadCredentialsException.class)
     ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
-        return super.handleExceptionInternal(ex, "Wrong login details", new HttpHeaders(), HttpStatus.UNAUTHORIZED,
+        return super.handleExceptionInternal(ex, "Invalid username or password", new HttpHeaders(), HttpStatus.UNAUTHORIZED,
                 request);
     }
 

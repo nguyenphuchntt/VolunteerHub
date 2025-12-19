@@ -1,3 +1,5 @@
 export { default as Settings } from './Settings';
 export { default as ChangePassword } from './ChangePassword';
 export { default as ProfileSettings } from './ProfileSettings';
+export { default as ManagerRequest } from './ManagerRequest';
+

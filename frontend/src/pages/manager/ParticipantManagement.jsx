@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Box, Typography, Button, Chip, Avatar, Tabs, Tab, CircularProgress, Alert, Snackbar } from "@mui/material";
 import { CheckCircle, Cancel, Refresh } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog, EmptyState } from "../../components/common";
-import { eventUserService, eventService } from "../../api";
+import { eventUserService, eventService, managerService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
 const ParticipantManagement = () => {
@@ -37,16 +37,20 @@ const ParticipantManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      // Filter by eventId if provided, otherwise get all with PENDING status first
-      const params = eventId 
-        ? { eventId: eventId }
-        : activeTab === 1 
-          ? { status: "PENDING" } 
-          : activeTab === 2 
-            ? { status: "APPROVED" }
-            : {};
+      let response;
+      if (eventId) {
+        // Event specific view
+        const params = activeTab === 1 
+            ? { status: "PENDING" } 
+            : activeTab === 2 
+              ? { status: "APPROVED" }
+              : {};
+        response = await eventUserService.getEventUsersByEventId(eventId, params);
+      } else {
+        // General "Pending Volunteers" view
+        response = await managerService.getPendingUsers();
+      }
       
-      const response = await eventUserService.searchEventUsers(params);
       setParticipants(response.content || []);
     } catch (err) {
       console.error("Failed to fetch participants:", err);
@@ -139,12 +143,13 @@ const ParticipantManagement = () => {
         </Box>
       ),
     },
+    // Always show Event column, especially important for general view
     {
       id: "title",
       label: "Sự kiện",
-      render: (value) => (
-        <Typography variant="body2" sx={{ maxWidth: 200 }} noWrap title={value}>
-          {value}
+      render: (value, row) => (
+        <Typography variant="body2" sx={{ maxWidth: 200 }} noWrap title={row.title || value}>
+          {row.title || value}
         </Typography>
       )
     },
@@ -187,7 +192,7 @@ const ParticipantManagement = () => {
       <Box sx={{ borderBottom: "1px solid", borderColor: "grey.200" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 2 }}>
           <Typography variant="h6" fontWeight={700}>
-            {event ? `TNV - ${event.title}` : "Quản lý tình nguyện viên"}
+            {eventId ? (event ? `TNV - ${event.title}` : "Quản lý tình nguyện viên") : "Danh sách tnv chờ duyệt"}
           </Typography>
           <Button 
             size="small" 
@@ -199,7 +204,8 @@ const ParticipantManagement = () => {
           </Button>
         </Box>
 
-        {!eventId && (
+        {/* Only show tabs in Event context */}
+        {eventId && (
           <Tabs
             value={activeTab}
             onChange={(e, v) => setActiveTab(v)}
@@ -220,9 +226,9 @@ const ParticipantManagement = () => {
         ) : error ? (
           <Alert severity="error" sx={{ borderRadius: "12px" }}>{error}</Alert>
         ) : participants.length > 0 ? (
-          <DataTable columns={columns} data={participants} searchable searchPlaceholder="Tìm kiếm..." actions={actions} />
+          <DataTable columns={columns} data={participants} searchable searchPlaceholder="Tìm kiếm..." actions={actions} rowKey="accountId" />
         ) : (
-          <EmptyState title="Chưa có đăng ký" description="Chưa có ai đăng ký tham gia." />
+          <EmptyState title="Chưa có đăng ký" description={eventId ? "Chưa có ai đăng ký tham gia." : "Không có yêu cầu chờ duyệt nào."} />
         )}
       </Box>
 

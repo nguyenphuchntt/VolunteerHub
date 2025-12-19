@@ -15,6 +15,30 @@ import { Reply, ExpandMore, ExpandLess, Delete } from "@mui/icons-material";
 import { commentService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
+// Helper to get display name from comment
+const getDisplayName = (comment) => {
+  if (comment.ownerFirstName && comment.ownerLastName) {
+    return `${comment.ownerFirstName} ${comment.ownerLastName}`;
+  }
+  return comment.ownerUsername || comment.author?.name || "Người dùng";
+};
+
+// Helper to get avatar letter from comment
+const getAvatarLetter = (comment) => {
+  if (comment.ownerFirstName) {
+    return comment.ownerFirstName.charAt(0).toUpperCase();
+  }
+  return (comment.ownerUsername || "?").charAt(0).toUpperCase();
+};
+
+// Helper to get avatar letter from user object
+const getUserAvatarLetter = (user) => {
+  if (user?.firstName) {
+    return user.firstName.charAt(0).toUpperCase();
+  }
+  return (user?.username || "?").charAt(0).toUpperCase();
+};
+
 const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 }) => {
   const { user, isAuthenticated } = useAuth();
   const [showReplies, setShowReplies] = useState(false);
@@ -29,7 +53,7 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
 
   // Get comment data (handle both backend and mock format)
   const commentId = comment.commentId || comment.id;
-  const authorName = comment.ownerUsername || comment.author?.name || "Người dùng";
+  const authorName = getDisplayName(comment);
   const authorBio = comment.author?.bio || "";
   const authorAvatar = comment.author?.avatar || null;
   const content = comment.content || "";
@@ -117,9 +141,9 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
       <Avatar
         src={authorAvatar}
         alt={authorName}
-        sx={{ width: 32, height: 32 }}
+        sx={{ width: 32, height: 32, bgcolor: !authorAvatar ? "primary.main" : undefined }}
       >
-        {authorName.charAt(0).toUpperCase()}
+        {getAvatarLetter(comment)}
       </Avatar>
       <Box sx={{ flex: 1 }}>
         {/* Header */}
@@ -212,8 +236,8 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
         {/* Reply Input */}
         <Collapse in={showReplyInput}>
           <Box sx={{ display: "flex", gap: 1, mt: 1.5 }}>
-            <Avatar sx={{ width: 24, height: 24, fontSize: "0.75rem" }}>
-              {(user?.username || "?").charAt(0).toUpperCase()}
+            <Avatar sx={{ width: 24, height: 24, fontSize: "0.75rem", bgcolor: "primary.main" }}>
+              {getUserAvatarLetter(user)}
             </Avatar>
             <TextField
               fullWidth

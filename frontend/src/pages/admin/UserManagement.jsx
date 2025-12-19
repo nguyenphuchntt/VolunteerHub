@@ -326,6 +326,7 @@ const UserManagement = () => {
             searchPlaceholder="Tìm kiếm người dùng..."
             actions={actions}
             emptyMessage="Không có người dùng nào"
+            rowKey="username"
           />
         )}
       </Box>

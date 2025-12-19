@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -7,12 +8,11 @@ import {
   Card,
   CardContent,
   Avatar,
-  AvatarGroup,
-  Chip,
   Divider,
+  Skeleton,
 } from "@mui/material";
 import { Search, TrendingUp, CalendarMonth, LocationOn } from "@mui/icons-material";
-import { mockEvents } from "../../../data/mockEvents";
+import { eventService } from "../../../api";
 
 const RIGHT_WIDTH = 350;
 
@@ -21,21 +21,44 @@ const RIGHT_WIDTH = 350;
  */
 const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) => {
   const navigate = useNavigate();
+  const [trendingEvents, setTrendingEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get trending events (most participants)
-  const trendingEvents = [...mockEvents]
-    .sort((a, b) => b.stats.going - a.stats.going)
-    .slice(0, 4);
-
-  // Get upcoming events
-  const upcomingEvents = mockEvents
-    .filter((e) => e.status === "upcoming")
-    .slice(0, 3);
+  // Fetch events from API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [hotResponse, upcomingResponse] = await Promise.all([
+          eventService.getHotEvents(0, 4),
+          eventService.getUpcomingEvents(0, 3)
+        ]);
+        setTrendingEvents(hotResponse.content || []);
+        setUpcomingEvents(upcomingResponse.content || []);
+      } catch (err) {
+        console.error("Failed to fetch sidebar events:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const formatDate = (dateString) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     return date.toLocaleDateString("vi-VN", { day: "numeric", month: "short" });
   };
+
+  // Loading skeleton for events
+  const EventSkeleton = () => (
+    <Box sx={{ py: 1.5 }}>
+      <Skeleton variant="text" width="40%" height={16} />
+      <Skeleton variant="text" width="90%" height={20} />
+      <Skeleton variant="text" width="30%" height={14} />
+    </Box>
+  );
 
   return (
     <Box
@@ -97,58 +120,61 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
             </Typography>
           </Box>
 
-          {trendingEvents.map((event, index) => (
-            <Box key={event.id}>
-              <Box
-                onClick={() => navigate(`/events/${event.id}`)}
-                sx={{
-                  py: 1.5,
-                  cursor: "pointer",
-                  "&:hover": { opacity: 0.8 },
-                }}
-              >
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      {event.category} · #{index + 1} Trending
-                    </Typography>
-                    <Typography variant="body2" fontWeight={700} noWrap>
-                      {event.title}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {event.stats.going} người tham gia
-                    </Typography>
+          {loading ? (
+            <>
+              <EventSkeleton />
+              <Divider />
+              <EventSkeleton />
+              <Divider />
+              <EventSkeleton />
+            </>
+          ) : trendingEvents.length > 0 ? (
+            trendingEvents.map((event, index) => (
+              <Box key={event.eventId}>
+                <Box
+                  onClick={() => navigate(`/events/${event.eventId}`)}
+                  sx={{
+                    py: 1.5,
+                    cursor: "pointer",
+                    "&:hover": { opacity: 0.8 },
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {event.category || "Sự kiện"} · #{index + 1} Trending
+                      </Typography>
+                      <Typography variant="body2" fontWeight={700} noWrap>
+                        {event.title}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {event.attendeeCount || 0} người tham gia
+                      </Typography>
+                    </Box>
+                    {event.coverImageUrl && (
+                      <Box
+                        component="img"
+                        src={event.coverImageUrl}
+                        alt={event.title}
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: "12px",
+                          objectFit: "cover",
+                          ml: 1,
+                        }}
+                      />
+                    )}
                   </Box>
-                  <Box
-                    component="img"
-                    src={event.coverImage}
-                    alt={event.title}
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: "12px",
-                      objectFit: "cover",
-                      ml: 1,
-                    }}
-                  />
                 </Box>
+                {index < trendingEvents.length - 1 && <Divider />}
               </Box>
-              {index < trendingEvents.length - 1 && <Divider />}
-            </Box>
-          ))}
-
-          <Typography
-            variant="body2"
-            color="primary.main"
-            sx={{
-              mt: 1,
-              cursor: "pointer",
-              "&:hover": { textDecoration: "underline" },
-            }}
-            onClick={() => navigate("/events")}
-          >
-            Xem thêm
-          </Typography>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+              Chưa có sự kiện nổi bật
+            </Typography>
+          )}
         </CardContent>
       </Card>
 
@@ -168,60 +194,62 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
             </Typography>
           </Box>
 
-          {upcomingEvents.map((event, index) => (
-            <Box key={event.id}>
-              <Box
-                onClick={() => navigate(`/events/${event.id}`)}
-                sx={{
-                  py: 1.5,
-                  cursor: "pointer",
-                  "&:hover": { opacity: 0.8 },
-                }}
-              >
-                <Typography variant="body2" fontWeight={600} noWrap>
-                  {event.title}
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                  <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
-                  <Typography variant="caption" color="text.secondary">
-                    {formatDate(event.date)}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mx: 0.5 }}>
-                    ·
-                  </Typography>
-                  <LocationOn sx={{ fontSize: 14, color: "text.secondary" }} />
-                  <Typography variant="caption" color="text.secondary" noWrap>
-                    {event.location.split(",")[0]}
-                  </Typography>
-                </Box>
-                <AvatarGroup
-                  max={4}
+          {loading ? (
+            <>
+              <EventSkeleton />
+              <Divider />
+              <EventSkeleton />
+            </>
+          ) : upcomingEvents.length > 0 ? (
+            upcomingEvents.map((event, index) => (
+              <Box key={event.eventId}>
+                <Box
+                  onClick={() => navigate(`/events/${event.eventId}`)}
                   sx={{
-                    mt: 1,
-                    "& .MuiAvatar-root": { width: 24, height: 24, fontSize: 11 },
+                    py: 1.5,
+                    cursor: "pointer",
+                    "&:hover": { opacity: 0.8 },
                   }}
                 >
-                  {event.participants.slice(0, 4).map((p) => (
-                    <Avatar key={p.user.id} src={p.user.avatar} alt={p.user.name} />
-                  ))}
-                </AvatarGroup>
+                  <Typography variant="body2" fontWeight={600} noWrap>
+                    {event.title}
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                    <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
+                    <Typography variant="caption" color="text.secondary">
+                      {formatDate(event.startAt)}
+                    </Typography>
+                    {event.location && (
+                      <>
+                        <Typography variant="caption" color="text.secondary" sx={{ mx: 0.5 }}>
+                          ·
+                        </Typography>
+                        <LocationOn sx={{ fontSize: 14, color: "text.secondary" }} />
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {event.location.split(",")[0]}
+                        </Typography>
+                      </>
+                    )}
+                  </Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                    <Avatar 
+                      sx={{ width: 20, height: 20, fontSize: 10, bgcolor: "primary.main" }}
+                    >
+                      {event.attendeeCount || 0}
+                    </Avatar>
+                    <Typography variant="caption" color="text.secondary">
+                      người đã đăng ký
+                    </Typography>
+                  </Box>
+                </Box>
+                {index < upcomingEvents.length - 1 && <Divider />}
               </Box>
-              {index < upcomingEvents.length - 1 && <Divider />}
-            </Box>
-          ))}
-
-          <Typography
-            variant="body2"
-            color="primary.main"
-            sx={{
-              mt: 1,
-              cursor: "pointer",
-              "&:hover": { textDecoration: "underline" },
-            }}
-            onClick={() => navigate("/events")}
-          >
-            Xem tất cả sự kiện
-          </Typography>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+              Chưa có sự kiện sắp tới
+            </Typography>
+          )}
         </CardContent>
       </Card>
 

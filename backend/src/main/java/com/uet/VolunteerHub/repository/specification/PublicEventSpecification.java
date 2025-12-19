@@ -76,7 +76,8 @@ public class PublicEventSpecification {
                 predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("lastName")), "%" + criteria.getLastName().toLowerCase() + "%"));
             }
 
-            criteriaBuilder.not(root.get("status").in(EventStatus.CANCELLED, EventStatus.PENDING));
+            // Exclude PENDING and CANCELLED events from public search
+            predicates.add(root.get("status").in(EventStatus.SCHEDULED, EventStatus.STARTED, EventStatus.FINISHED));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

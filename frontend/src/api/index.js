@@ -11,5 +11,7 @@ export { commentService } from './services/comment.service';
 export { notificationService } from './services/notification.service';
 export { postLikeService } from './services/postLike.service';
 export { mediaService } from './services/media.service';
+export { requestService } from './services/request.service';
+export { managerService } from './services/manager.service';
 
 export { default as api } from './api';

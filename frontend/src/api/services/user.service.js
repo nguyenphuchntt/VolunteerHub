@@ -58,9 +58,9 @@ export const userService = {
     return response.data; // Page<FollowUserDTO>
   },
 
-  // GET /api/users/{id}/follow - Follow a user
+  // POST /api/users/{id}/follow - Follow a user
   async followUser(userId) {
-    const response = await api.get(`/users/${userId}/follow`);
+    const response = await api.post(`/users/${userId}/follow`);
     return response.data;
   },
 
