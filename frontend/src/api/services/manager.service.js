@@ -1,6 +1,20 @@
 import api from '../api';
 
 export const managerService = {
+  // Check if current user is event manager of any event
+  // GET /api/manager/is-event-manager
+  async checkIsEventManager() {
+    const response = await api.get('/manager/is-event-manager');
+    return response.data; // { isEventManager: boolean }
+  },
+
+  // Get events managed by current user
+  // GET /api/manager/me/managed-events
+  async getManagedEvents(params = {}) {
+    const response = await api.get('/manager/me/managed-events', { params });
+    return response.data; // Page<EventSearchDTO>
+  },
+
   // GET /api/manager/pending-users
   async getPendingUsers(params = {}) {
     const response = await api.get('/manager/pending-users', { params });

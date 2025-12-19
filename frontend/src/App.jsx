@@ -86,12 +86,12 @@ function App() {
 
           {/* Protected Manager Routes */}
           <Route path="/manage" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <ManagerDashboard />
             </ProtectedRoute>
           } />
           <Route path="/manage/events" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <EventManagement />
             </ProtectedRoute>
           } />
@@ -106,12 +106,12 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/manage/events/:id" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <EventDetailManagement />
             </ProtectedRoute>
           } />
           <Route path="/manage/participants" element={
-            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
+            <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <ParticipantManagement />
             </ProtectedRoute>
           } />

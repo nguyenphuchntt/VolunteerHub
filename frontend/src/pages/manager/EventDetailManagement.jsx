@@ -240,7 +240,7 @@ const EventDetailManagement = () => {
       ),
     },
     { 
-      id: "eventUserRole", 
+      id: "role", 
       label: "Vai trò",
       render: (value) => (
         <Chip label={getRoleLabel(value)} size="small" color={value?.toUpperCase() === "MANAGER" ? "primary" : "default"} sx={{ fontSize: "11px" }} />
@@ -270,7 +270,7 @@ const EventDetailManagement = () => {
       ];
     } else if (activeTab === 3) {
       return [
-        { label: "Đổi vai trò", icon: <AdminPanelSettings sx={{ fontSize: 16 }} />, onClick: (row) => setRoleDialog({ open: true, participant: row, newRole: row.eventUserRole?.toUpperCase() === "MANAGER" ? "ATTENDEE" : "MANAGER" }) },
+        { label: "Đổi vai trò", icon: <AdminPanelSettings sx={{ fontSize: 16 }} />, onClick: (row) => setRoleDialog({ open: true, participant: row, newRole: row.role?.toUpperCase() === "MANAGER" ? "ATTENDEE" : "MANAGER" }) },
       ];
     }
     return [];

@@ -4,6 +4,7 @@ import com.uet.VolunteerHub.dto.EventUser.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.EventUser;
+import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.entity.EventUserId;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventUserRole;
@@ -279,9 +280,41 @@ public class EventUserWriteService {
         return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
     }
 
+    @CacheEvict(value = "managerDashboard", allEntries = true)
     @Transactional
-    public EventUserSearchDTO updateRole(UUID accountId, Long eventId, EventUserRoleUpdateDTO role) {
+    public EventUserSearchDTO updateRole(UUID accountId, Long eventId, EventUserRoleUpdateDTO role, Account caller) {
         EventUser eventUser = findEventUser(accountId, eventId);
+        Event event = eventUser.getEvent();
+
+        // Prevent demoting the event creator from Manager to Attendee, unless by themselves or Admin
+        // Other managers can still "promote" Creator (re-assign Manager role if lost), but cannot demote.
+        if (accountId.equals(event.getCreatedBy().getAccountId())) {
+            boolean isSelf = caller.getAccountId().equals(accountId);
+            boolean isAdmin = caller.getRole() == UserRole.ADMIN;
+            boolean isDemoting = role.getEventUserRole() == EventUserRole.ATTENDEE;
+            
+            if (isDemoting && !isSelf && !isAdmin) {
+                throw new IllegalArgumentException("Cannot remove manager role from the Event Creator.");
+            }
+        }
+
+        // If demoting a manager, ensure at least one manager remains
+        if (eventUser.getRole() == EventUserRole.MANAGER && 
+            role.getEventUserRole() != null && 
+            role.getEventUserRole() != EventUserRole.MANAGER) {
+            
+            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
+            long managerCount = allEventUsers.stream()
+                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
+                    .count();
+            
+            if (managerCount <= 1) {
+                throw new IllegalStateException(
+                    "Cannot remove manager role. This user is the last manager of the event."
+                );
+            }
+        }
+
         if (role.getEventUserRole() != null) {
             eventUser.setRole(role.getEventUserRole());
         }

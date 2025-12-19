@@ -231,7 +231,7 @@ const ParticipantManagement = () => {
       ),
     },
     { 
-      id: "eventUserRole", 
+      id: "role", 
       label: "Vai trò",
       render: (value) => (
         <Chip 
@@ -291,7 +291,7 @@ const ParticipantManagement = () => {
         { 
           label: "Đổi vai trò", 
           icon: <AdminPanelSettings sx={{ fontSize: 16 }} />, 
-          onClick: (row) => setRoleDialog({ open: true, participant: row, newRole: row.eventUserRole?.toUpperCase() === "MANAGER" ? "ATTENDEE" : "MANAGER" }),
+          onClick: (row) => setRoleDialog({ open: true, participant: row, newRole: row.role?.toUpperCase() === "MANAGER" ? "ATTENDEE" : "MANAGER" }),
         },
       ];
     }

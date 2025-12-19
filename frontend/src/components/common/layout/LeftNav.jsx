@@ -55,7 +55,7 @@ const LeftNav = ({ isMobile = false }) => {
   const [managerAnchorEl, setManagerAnchorEl] = useState(null);
   
   // Get user and auth state from context
-  const { user, isAuthenticated, isAdmin, isManager, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isManager, isEventManager, logout } = useAuth();
 
   // Get display name from API format
   const displayName = user?.firstName && user?.lastName 
@@ -122,28 +122,34 @@ const LeftNav = ({ isMobile = false }) => {
     handleAdminClose();
   };
 
-  // Manager dropdown items
+  // Manager dropdown items - filter based on role
   const managerDropdownItems = [
-    {
-      label: "Dashboard",
-      path: "/manage",
-      icon: <Dashboard />,
-      description: "Tổng quan sự kiện",
-    },
+    // Dashboard and Create Event only for users with MANAGER role
+    ...(isManager ? [
+      {
+        label: "Dashboard",
+        path: "/manage",
+        icon: <Dashboard />,
+        description: "Tổng quan sự kiện",
+      },
+    ] : []),
     {
       label: "Sự kiện của tôi",
       path: "/manage/events",
       icon: <Event />,
-      description: "Quản lý sự kiện đã tạo",
+      description: "Quản lý sự kiện đang quản lý",
     },
+    // Create event only for MANAGER role
+    ...(isManager ? [
+      {
+        label: "Tạo sự kiện mới",
+        path: "/manage/events/new",
+        icon: <Add />,
+        description: "Thêm sự kiện mới",
+      },
+    ] : []),
     {
-      label: "Tạo sự kiện mới",
-      path: "/manage/events/new",
-      icon: <Add />,
-      description: "Thêm sự kiện mới",
-    },
-    {
-      label: "Quản lý TNV",
+      label: "Duyệt TNV",
       path: "/manage/participants",
       icon: <People />,
       description: "Duyệt/huỷ đăng ký TNV",
@@ -290,8 +296,8 @@ const LeftNav = ({ isMobile = false }) => {
             );
           })}
 
-        {/* Manager Dropdown - for manager users  */}
-        {isManager &&(
+        {/* Manager Dropdown - for manager users or event managers */}
+        {(isManager || isEventManager) && (
           <ListItem disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
               onClick={handleManagerClick}

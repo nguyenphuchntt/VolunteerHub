@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../api/services/auth.service';
 import { profileService } from '../api/services/profile.service';
+import { managerService } from '../api/services/manager.service';
 
 const AuthContext = createContext(null);
 
@@ -8,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isEventManager, setIsEventManager] = useState(false);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -21,6 +23,13 @@ export const AuthProvider = ({ children }) => {
             setError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.");
           } else {
             setUser(profile);
+            // Check if user is event manager of any event
+            try {
+              const { isEventManager: isEM } = await managerService.checkIsEventManager();
+              setIsEventManager(isEM);
+            } catch {
+              setIsEventManager(false);
+            }
           }
         } catch (err) {
           console.error('Failed to fetch profile:', err);
@@ -46,6 +55,13 @@ export const AuthProvider = ({ children }) => {
       }
       
       setUser(profile);
+      // Check if user is event manager of any event
+      try {
+        const { isEventManager: isEM } = await managerService.checkIsEventManager();
+        setIsEventManager(isEM);
+      } catch {
+        setIsEventManager(false);
+      }
       return profile;
     } catch (err) {
       const errorMessage = err.message || err.response?.data?.message || 'Đăng nhập thất bại';
@@ -58,6 +74,7 @@ export const AuthProvider = ({ children }) => {
     authService.logout();
     setUser(null);
     setError(null);
+    setIsEventManager(false);
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -91,6 +108,8 @@ export const AuthProvider = ({ children }) => {
     isAdmin: user?.role === 'ADMIN',
     isManager: user?.role === 'MANAGER',
     isVolunteer: user?.role === 'USER',
+    // Event manager status (manages at least one event)
+    isEventManager,
   };
 
   return (

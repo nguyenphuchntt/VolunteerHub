@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Add, Edit, Delete, Visibility, People, Refresh, Event } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog } from "../../components/common";
+import { managerService } from "../../api/services/manager.service";
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
@@ -29,12 +30,11 @@ const EventManagement = () => {
 
   // Fetch manager's events from API
   const fetchEvents = useCallback(async () => {
-    if (!user?.accountID) return;
     setLoading(true);
     setError(null);
     try {
-      // Get events owned by current manager
-      const response = await eventService.getEventsByAccountId(user.accountID);
+      // Get events managed by current user (uses /api/manager/me/managed-events)
+      const response = await managerService.getManagedEvents();
       setEvents(response.content || []);
     } catch (err) {
       console.error("Failed to fetch events:", err);
@@ -42,7 +42,7 @@ const EventManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [user?.accountID]);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
