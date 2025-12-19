@@ -4,6 +4,7 @@ services:
   mysql:
     image: mysql:8.0
     container_name: volunteerhub-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
       MYSQL_DATABASE: volunteer_hub
@@ -14,7 +15,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./src/main/resources/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     networks:
       - volunteerhub-network
     healthcheck:
@@ -30,14 +31,14 @@ services:
       dockerfile: Dockerfile
     container_name: volunteerhub-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_hub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_hub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-volunteer}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-volunteerpass}
       SPRING_SQL_INIT_MODE: never
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       UPLOAD_DIR: /app/uploads
     volumes:
-      - uploaded-files:/app/uploads
+      - ./images:/app/uploads
     ports:
       - "8080:8080"
     depends_on:
@@ -54,3 +55,4 @@ networks:
 volumes:
   mysql_data:
   uploaded-files:
+
