@@ -27,6 +27,7 @@ import {
 import { ThreeColumnLayout } from "../../components/common";
 import { eventService, mediaService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { buildEventUrl } from "../../utils/urlUtils";
 
 const categories = [
   "Environment",
@@ -159,7 +160,7 @@ const EventForm = () => {
       
       // Navigate to the event detail or management page
       setTimeout(() => {
-        navigate(`/events/${eventId}`);
+        navigate(buildEventUrl(createdEvent));
       }, 1500);
       
     } catch (err) {

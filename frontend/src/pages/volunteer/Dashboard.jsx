@@ -11,6 +11,7 @@ import {
 import { ThreeColumnLayout, StatsCard } from "../../components/common";
 import { myEventsService, eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { buildEventUrl } from "../../utils/urlUtils";
 
 const VolunteerDashboard = () => {
   const navigate = useNavigate();
@@ -364,7 +365,7 @@ const VolunteerDashboard = () => {
                 fullWidth 
                 onClick={() => {
                   setPreviewEvent(null);
-                  navigate(`/events/${previewEvent.eventId}`);
+                  navigate(buildEventUrl(previewEvent));
                 }}
                 sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
               >

@@ -41,7 +41,7 @@ function App() {
           <Route path="/signup" element={<Auth />} />
           <Route path="/signin" element={<Auth />} />
           <Route path="/explore" element={<EventFeed />} />
-          <Route path="/events/:eventId" element={<EventDetail />} />
+          <Route path="/events/:slug" element={<EventDetail />} />
 
 
           {/* Protected Volunteer Routes */}
@@ -100,12 +100,12 @@ function App() {
               <EventForm />
             </ProtectedRoute>
           } />
-          <Route path="/manage/events/:eventId/edit" element={
+          <Route path="/manage/events/:slug/edit" element={
             <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
               <EventForm />
             </ProtectedRoute>
           } />
-          <Route path="/manage/events/:id" element={
+          <Route path="/manage/events/:slug" element={
             <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <EventDetailManagement />
             </ProtectedRoute>

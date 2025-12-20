@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { Search, TrendingUp, CalendarMonth, LocationOn } from "@mui/icons-material";
 import { eventService } from "../../../api";
+import { buildEventUrl } from "../../../utils/urlUtils";
 
 const RIGHT_WIDTH = 350;
 
@@ -132,7 +133,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
             trendingEvents.map((event, index) => (
               <Box key={event.eventId}>
                 <Box
-                  onClick={() => navigate(`/events/${event.eventId}`)}
+                  onClick={() => navigate(buildEventUrl(event))}
                   sx={{
                     py: 1.5,
                     cursor: "pointer",
@@ -204,7 +205,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
             upcomingEvents.map((event, index) => (
               <Box key={event.eventId}>
                 <Box
-                  onClick={() => navigate(`/events/${event.eventId}`)}
+                  onClick={() => navigate(buildEventUrl(event))}
                   sx={{
                     py: 1.5,
                     cursor: "pointer",

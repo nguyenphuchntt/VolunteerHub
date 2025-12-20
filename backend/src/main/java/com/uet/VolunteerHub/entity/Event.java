@@ -57,6 +57,9 @@ public class Event {
     @Column(name = "like_count")
     private int likeCount;
 
+    @Column(name = "slug")
+    private String slug;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_account_id")
     @OnDelete(action = OnDeleteAction.SET_NULL)

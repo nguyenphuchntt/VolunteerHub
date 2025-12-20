@@ -12,10 +12,12 @@ import {
 import { ThreeColumnLayout, DataTable, ConfirmDialog, EmptyState } from "../../components/common";
 import { eventUserService, eventService, managerService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { extractEventIdFromSlug } from "../../utils/urlUtils";
 
 const EventDetailManagement = () => {
   const navigate = useNavigate();
-  const { id: eventId } = useParams(); // Changed from eventId to id
+  const { slug } = useParams();
+  const eventId = useMemo(() => extractEventIdFromSlug(slug), [slug]);
   const { user } = useAuth();
 
   // API states

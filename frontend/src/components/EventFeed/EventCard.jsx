@@ -18,6 +18,7 @@ import {
 } from "@mui/icons-material";
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { buildEventUrl } from "../../utils/urlUtils";
 
 
 const EventCard = ({ event }) => {
@@ -49,7 +50,7 @@ const EventCard = ({ event }) => {
   }, [eventId, isAuthenticated]);
 
   const handleCardClick = () => {
-    navigate(`/events/${eventId}`);
+    navigate(buildEventUrl(event));
   };
 
   const handleLike = async (e) => {

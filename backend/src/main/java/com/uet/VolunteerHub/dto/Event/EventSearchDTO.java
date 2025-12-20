@@ -12,6 +12,7 @@ import java.util.UUID;
 public class EventSearchDTO {
     private Long eventId;
     private String title;
+    private String slug;
     private OffsetDateTime createAt;
     private OffsetDateTime startAt;
     private OffsetDateTime endAt;

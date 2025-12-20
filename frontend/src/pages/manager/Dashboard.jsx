@@ -33,6 +33,7 @@ import { ThreeColumnLayout, StatsCard, ConfirmDialog } from "../../components/co
 import { managerService } from "../../api/services/manager.service";
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { buildEventUrl, buildManageEventUrl, buildEditEventUrl } from "../../utils/urlUtils";
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
@@ -265,7 +266,7 @@ const ManagerDashboard = () => {
               startIcon={<People />}
               onClick={() => {
                 setActionDialogOpen(false);
-                navigate(`/manage/events/${selectedEvent?.eventId}`);
+                navigate(buildManageEventUrl(selectedEvent));
               }}
               sx={{ 
                 justifyContent: "flex-start", 
@@ -283,7 +284,7 @@ const ManagerDashboard = () => {
               startIcon={<Edit />}
               onClick={() => {
                 setActionDialogOpen(false);
-                navigate(`/manage/events/${selectedEvent?.eventId}/edit`);
+                navigate(buildEditEventUrl(selectedEvent));
               }}
               sx={{ 
                 justifyContent: "flex-start", 
@@ -301,7 +302,7 @@ const ManagerDashboard = () => {
               startIcon={<Visibility />}
               onClick={() => {
                 setActionDialogOpen(false);
-                navigate(`/events/${selectedEvent?.eventId}`);
+                navigate(buildEventUrl(selectedEvent));
               }}
               sx={{ 
                 justifyContent: "flex-start", 
