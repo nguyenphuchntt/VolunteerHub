@@ -118,7 +118,16 @@ CREATE TABLE IF NOT EXISTS post_like (
 CREATE TABLE IF NOT EXISTS notification (
     notification_id BIGINT NOT NULL AUTO_INCREMENT,
     content TEXT NOT NULL,
-    type ENUM('POST_LIKE', 'POST_COMMENT', 'EVENT_START_REMINDER', 'EVENT_END_REMINDER', 'EVENT_JOIN_APPROVED', 'EVENT_JOIN_REJECTED', 'ROLE_REQUEST_APPROVED', 'ROLE_REQUEST_REJECTED', 'NEW_FOLLOWER', 'COMMENT_REPLY', 'OTHER', 'SYSTEM_ANNOUNCEMENT', 'NORMAL') NOT NULL,
+    type ENUM(
+        'POST_LIKE', 'POST_COMMENT', 'COMMENT_REPLY',
+        'EVENT_START_REMINDER', 'EVENT_END_REMINDER',
+        'EVENT_JOIN_APPROVED', 'EVENT_JOIN_REJECTED',
+        'EVENT_APPROVED', 'EVENT_REJECTED', 'EVENT_JOIN_REQUEST',
+        'MANAGER_ROLE_REQUEST',
+        'ROLE_REQUEST_APPROVED', 'ROLE_REQUEST_REJECTED',
+        'NEW_FOLLOWER',
+        'OTHER', 'SYSTEM_ANNOUNCEMENT', 'NORMAL'
+    ) NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     create_at DATETIME(6) NOT NULL,
@@ -199,3 +208,18 @@ CREATE INDEX idx_media_uploaded_at ON media(uploaded_at);
 CREATE INDEX idx_account_media_media_id ON account_media(media_id);
 CREATE INDEX idx_event_media_media_id ON event_media(media_id);
 CREATE INDEX idx_post_media_media_id ON post_media(media_id);
+
+-- Indexes for notification queries (role-based notifications)
+CREATE INDEX idx_notification_receiver_type_deleted ON notification(receiver_account_id, type, is_deleted);
+CREATE INDEX idx_notification_receiver_read_deleted ON notification(receiver_account_id, is_read, is_deleted);
+CREATE INDEX idx_notification_receiver_created ON notification(receiver_account_id, create_at DESC);
+
+-- Indexes for event_user queries (pending join requests, manager lookups)
+CREATE INDEX idx_event_user_status_role ON event_user(status, event_user_role);
+CREATE INDEX idx_event_user_account_role ON event_user(account_id, event_user_role);
+CREATE INDEX idx_event_user_status_registered ON event_user(status, registered_at DESC);
+
+-- Indexes for request queries (pending role requests)
+CREATE INDEX idx_request_status ON request(status);
+CREATE INDEX idx_request_account_status ON request(account_id, status);
+CREATE INDEX idx_request_status_created ON request(status, created_at DESC);
