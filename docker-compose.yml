@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: volunteerhub-mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: volunteer_hub
+      MYSQL_USER: ${MYSQL_USER:-volunteer}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-volunteerpass}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    networks:
+      - volunteerhub-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: volunteerhub-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - volunteerhub-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: volunteerhub-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_hub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-volunteer}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-volunteerpass}
+      SPRING_SQL_INIT_MODE: never
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      UPLOAD_DIR: /app/uploads
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      # Email configuration
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      # Frontend URLs
+      PASSWORD_RESET_FRONTEND_URL: ${PASSWORD_RESET_FRONTEND_URL:-http://localhost:5173/reset-password}
+      EMAIL_VERIFICATION_FRONTEND_URL: ${EMAIL_VERIFICATION_FRONTEND_URL:-http://localhost:5173/verify-email}
+    volumes:
+      - uploaded-files:/app/uploads
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - volunteerhub-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8080/api
+    container_name: volunteerhub-frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - volunteerhub-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  volunteerhub-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  uploaded-files:

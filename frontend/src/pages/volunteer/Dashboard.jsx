@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
+import {
   Box, Grid, Typography, Button, Card, CardContent, Chip, CircularProgress,
   Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Pagination,
   Divider
 } from "@mui/material";
-import { 
-  Event, TrendingUp, Notifications, ArrowForward, CalendarMonth, LocationOn, Close 
+import {
+  Event, TrendingUp, Notifications, ArrowForward, CalendarMonth, LocationOn, Close
 } from "@mui/icons-material";
 import { ThreeColumnLayout, StatsCard } from "../../components/common";
 import { myEventsService, eventService } from "../../api";
@@ -69,8 +69,8 @@ const VolunteerDashboard = () => {
     { title: "Thông báo mới", value: "0", icon: <Notifications />, color: "warning" },
   ];
 
-  const displayName = user?.firstName && user?.lastName 
-    ? `${user.firstName} ${user.lastName}` 
+  const displayName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
     : user?.username || "bạn";
 
   const formatDate = (dateString) => {
@@ -80,8 +80,8 @@ const VolunteerDashboard = () => {
 
   const formatFullDate = (dateString) => {
     if (!dateString) return "Chưa xác định";
-    return new Date(dateString).toLocaleDateString("vi-VN", { 
-      weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" 
+    return new Date(dateString).toLocaleDateString("vi-VN", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
     });
   };
 
@@ -102,6 +102,7 @@ const VolunteerDashboard = () => {
     REJECTED: { label: "Bị từ chối", color: "error" },
     FINISHED: { label: "Hoàn thành", color: "info" },
     COMPLETED: { label: "Hoàn thành", color: "info" },
+    UNFINISHED: { label: "Chưa hoàn thành", color: "warning" },
     CANCELLED: { label: "Đã hủy", color: "default" },
   };
 
@@ -170,22 +171,22 @@ const VolunteerDashboard = () => {
             </Typography>
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-             Vai trò: <strong>{roleText}</strong>
+            Vai trò: <strong>{roleText}</strong>
           </Typography>
         </Box>
-        
+
         <Box sx={{ display: "flex", alignItems: "center" }}>
-           <Chip
-              label={status.label}
-              size="small"
-              color={status.color}
-              variant={eventUser.status === "PENDING" ? "outlined" : "filled"}
-              sx={{
-                height: 24,
-                fontSize: "11px",
-                fontWeight: 600
-              }}
-            />
+          <Chip
+            label={status.label}
+            size="small"
+            color={status.color}
+            variant={eventUser.status === "PENDING" ? "outlined" : "filled"}
+            sx={{
+              height: 24,
+              fontSize: "11px",
+              fontWeight: 600
+            }}
+          />
         </Box>
       </Box>
     );
@@ -231,9 +232,9 @@ const VolunteerDashboard = () => {
                   <Typography variant="subtitle1" fontWeight={700}>
                     Sự kiện đã đăng ký
                   </Typography>
-                  <Button 
-                    size="small" 
-                    endIcon={<ArrowForward />} 
+                  <Button
+                    size="small"
+                    endIcon={<ArrowForward />}
                     onClick={() => setViewAllOpen(true)}
                     sx={{ textTransform: "none" }}
                   >
@@ -255,10 +256,10 @@ const VolunteerDashboard = () => {
       </Box>
 
       {/* View All Events Dialog */}
-      <Dialog 
-        open={viewAllOpen} 
-        onClose={() => setViewAllOpen(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={viewAllOpen}
+        onClose={() => setViewAllOpen(false)}
+        maxWidth="sm"
         fullWidth
         PaperProps={{ sx: { borderRadius: "16px" } }}
       >
@@ -279,9 +280,9 @@ const VolunteerDashboard = () => {
         </DialogContent>
         {totalPages > 1 && (
           <DialogActions sx={{ justifyContent: "center", py: 2 }}>
-            <Pagination 
-              count={totalPages} 
-              page={allEventsPage} 
+            <Pagination
+              count={totalPages}
+              page={allEventsPage}
               onChange={(e, page) => setAllEventsPage(page)}
               color="primary"
             />
@@ -290,10 +291,10 @@ const VolunteerDashboard = () => {
       </Dialog>
 
       {/* Event Preview Dialog */}
-      <Dialog 
-        open={Boolean(previewEvent)} 
-        onClose={() => setPreviewEvent(null)} 
-        maxWidth="xs" 
+      <Dialog
+        open={Boolean(previewEvent)}
+        onClose={() => setPreviewEvent(null)}
+        maxWidth="xs"
         fullWidth
         PaperProps={{ sx: { borderRadius: "16px" } }}
       >
@@ -318,7 +319,7 @@ const VolunteerDashboard = () => {
                     </Typography>
                   </Box>
                 </Box>
-                
+
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <LocationOn sx={{ color: "text.secondary" }} />
                   <Box>
@@ -336,7 +337,7 @@ const VolunteerDashboard = () => {
                     <Typography variant="caption" color="text.secondary">Vai trò của bạn</Typography>
                     <Typography variant="body2" fontWeight={600}>{roleConfig[previewEvent.role] || previewEvent.role || "Tình nguyện viên"}</Typography>
                   </Box>
-                  <Chip 
+                  <Chip
                     label={statusConfig[previewEvent.status]?.label || previewEvent.status}
                     color={statusConfig[previewEvent.status]?.color || "default"}
                     size="small"
@@ -350,8 +351,8 @@ const VolunteerDashboard = () => {
                     <Box>
                       <Typography variant="caption" color="text.secondary">Mô tả</Typography>
                       <Typography variant="body2" sx={{ mt: 0.5 }}>
-                        {previewEvent.description.length > 200 
-                          ? `${previewEvent.description.substring(0, 200)}...` 
+                        {previewEvent.description.length > 200
+                          ? `${previewEvent.description.substring(0, 200)}...`
                           : previewEvent.description}
                       </Typography>
                     </Box>
@@ -360,9 +361,9 @@ const VolunteerDashboard = () => {
               </Box>
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
-              <Button 
-                variant="contained" 
-                fullWidth 
+              <Button
+                variant="contained"
+                fullWidth
                 onClick={() => {
                   setPreviewEvent(null);
                   navigate(buildEventUrl(previewEvent));
