@@ -2,15 +2,14 @@
 importScripts('https://www.gstatic.com/firebasejs/11.1.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.1.0/firebase-messaging-compat.js');
 
-// TODO: Replace with your actual Firebase config
-// Same config as in src/config/firebase.config.js
+// Firebase config (same as in src/config/firebase.config.js)
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
+    apiKey: "AIzaSyDNnPhIWnN3ThZvzMiOEoqug_TY63YKNns",
     authDomain: "volunteerhub-af843.firebaseapp.com",
     projectId: "volunteerhub-af843",
     storageBucket: "volunteerhub-af843.firebasestorage.app",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    messagingSenderId: "385131798352",
+    appId: "1:385131798352:web:0b8873ebef82606df41655"
 };
 
 // Initialize Firebase

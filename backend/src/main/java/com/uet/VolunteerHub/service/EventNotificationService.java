@@ -46,7 +46,7 @@ public class EventNotificationService {
             ).toList();
             pushNotificationService.pushNotificationToMultipleUsers(
                     accountIds,
-                    "Upcoming event: " + event.getTitle() + " in 3 days"
+                    "Sự kiện sắp diễn ra trong 3 ngày: " + event.getTitle()
             );
         }
     }
@@ -68,7 +68,7 @@ public class EventNotificationService {
             ).toList();
             pushNotificationService.pushNotificationToMultipleUsers(
                     accountIds,
-                    "Event starts today: " + event.getTitle()
+                    "Sự kiện bắt đầu ngày hôm nay: " + event.getTitle()
             );
         }
     }

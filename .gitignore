@@ -62,5 +62,5 @@ build/
 
 fcmkey.json
 
-./src/config/firebase.config.js
-./public/firebase-messaging-sw.js
+frontend/src/config/firebase.config.js
+frontend/public/firebase-messaging-sw.js

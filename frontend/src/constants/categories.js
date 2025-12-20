@@ -1,17 +1,17 @@
 /**
  * Unified Category Configuration
  * 
- * Key: English (used for API)
+ * Key: Exact value expected by backend API
  * Label: Vietnamese (displayed in UI)
  */
 
 export const CATEGORIES = {
-  ENVIRONMENT: { key: 'ENVIRONMENT', label: 'Môi trường', icon: '🌱' },
-  EDUCATION: { key: 'EDUCATION', label: 'Giáo dục', icon: '📚' },
-  HEALTHCARE: { key: 'HEALTHCARE', label: 'Y tế', icon: '🏥' },
-  CHARITY: { key: 'CHARITY', label: 'Từ thiện', icon: '💝' },
-  COMMUNITY: { key: 'COMMUNITY', label: 'Cộng đồng', icon: '🤝' },
-  OTHER: { key: 'OTHER', label: 'Khác', icon: '📌' },
+  ENVIRONMENT: { key: 'Environment', label: 'Môi trường', icon: '🌱' },
+  COMMUNITY_SERVICE: { key: 'Community Service', label: 'Cộng đồng', icon: '🤝' },
+  EDUCATION: { key: 'Education', label: 'Giáo dục', icon: '📚' },
+  HEALTH_WELLNESS: { key: 'Health & Wellness', label: 'Y tế', icon: '🏥' },
+  ANIMAL_WELFARE: { key: 'Animal Welfare', label: 'Động vật', icon: '🐾' },
+  OTHER: { key: 'Other', label: 'Khác', icon: '📌' },
 };
 
 // Array format for filters and dropdowns
@@ -25,28 +25,27 @@ export const CATEGORY_OPTIONS = Object.values(CATEGORIES);
 
 /**
  * Get Vietnamese label from category key
- * @param {string} key - Category key (e.g., "ENVIRONMENT", "Environment", "environment")
+ * @param {string} key - Category key (e.g., "Environment", "Community Service")
  * @returns {string} Vietnamese label or original key if not found
  */
 export const getCategoryLabel = (key) => {
   if (!key) return 'Khác';
-  const upperKey = key.toUpperCase().replace(/\s+/g, '_').replace('&', '');
-  
-  // Direct match
-  if (CATEGORIES[upperKey]) {
-    return CATEGORIES[upperKey].label;
-  }
-  
-  // Legacy mappings
+
+  // Find by key value
+  const found = Object.values(CATEGORIES).find(cat => cat.key === key);
+  if (found) return found.label;
+
+  // Legacy mappings for old data
   const legacyMap = {
-    'HEALTH_WELLNESS': 'Y tế',
-    'HEALTHWELLNESS': 'Y tế',
-    'COMMUNITY_SERVICE': 'Cộng đồng',
-    'COMMUNITYSERVICE': 'Cộng đồng',
-    'ANIMAL_WELFARE': 'Khác',
-    'ANIMALWELFARE': 'Khác',
+    'ENVIRONMENT': 'Môi trường',
+    'EDUCATION': 'Giáo dục',
+    'HEALTHCARE': 'Y tế',
+    'CHARITY': 'Từ thiện',
+    'COMMUNITY': 'Cộng đồng',
+    'OTHER': 'Khác',
   };
-  
+
+  const upperKey = key.toUpperCase().replace(/\s+/g, '_').replace('&', '');
   return legacyMap[upperKey] || key;
 };
 
@@ -55,6 +54,7 @@ export const getCategoryLabel = (key) => {
  */
 export const getCategoryIcon = (key) => {
   if (!key || key === 'all') return '🌟';
-  const upperKey = key.toUpperCase();
-  return CATEGORIES[upperKey]?.icon || '📌';
+
+  const found = Object.values(CATEGORIES).find(cat => cat.key === key);
+  return found?.icon || '📌';
 };
