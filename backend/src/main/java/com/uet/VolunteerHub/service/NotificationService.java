@@ -121,4 +121,10 @@ public class NotificationService {
                 receiverId, com.uet.VolunteerHub.enums.NotificationType.SYSTEM_ANNOUNCEMENT);
         return notifications.stream().map(notificationMapper::toDTO).toList();
     }
+
+    @Transactional(readOnly = true)
+    public Page<NotificationReadDTO> findAllForUserOrSystemAnnouncementPaged(UUID receiverId, Pageable pageable) {
+        Page<Notification> notifications = notificationRepository.findAllForUserOrSystemAnnouncementPaged(receiverId, pageable);
+        return notifications.map(notificationMapper::toDTO);
+    }
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -10,6 +10,8 @@ import {
   Avatar,
   Divider,
   Skeleton,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
 import { Search, TrendingUp, CalendarMonth, LocationOn } from "@mui/icons-material";
 import { eventService } from "../../../api";
@@ -19,13 +21,46 @@ import { getCategoryLabel } from "../../../constants/categories";
 const RIGHT_WIDTH = 350;
 
 /**
- * Right Sidebar with search and trending events
+ * Right Sidebar with search autocomplete and trending events
  */
 const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) => {
   const navigate = useNavigate();
   const [trendingEvents, setTrendingEvents] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Autocomplete state
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [inputValue, setInputValue] = useState(searchQuery);
+
+  // Debounced fetch suggestions
+  useEffect(() => {
+    if (!inputValue || inputValue.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSuggestionsLoading(true);
+      try {
+        const results = await eventService.getSuggestions(inputValue, 6);
+        setSuggestions(results || []);
+      } catch (err) {
+        console.error("Failed to fetch suggestions:", err);
+        setSuggestions([]);
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [inputValue]);
+
+  // Sync inputValue with external searchQuery
+  useEffect(() => {
+    setInputValue(searchQuery);
+  }, [searchQuery]);
 
   // Fetch events from API
   useEffect(() => {
@@ -66,6 +101,15 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
     </Box>
   );
 
+  // Handle suggestion selection
+  const handleSuggestionSelect = (event, value) => {
+    if (value && value.eventId) {
+      navigate(`/events/${value.eventId}`);
+      setInputValue("");
+      onSearchChange?.("");
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -81,31 +125,106 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
         "&::-webkit-scrollbar": { width: 0 },
       }}
     >
-      {/* Search Bar */}
+      {/* Search Bar with Autocomplete */}
       {showSearch && (
-        <TextField
-          placeholder="Tìm kiếm"
-          value={searchQuery}
-          onChange={(e) => onSearchChange?.(e.target.value)}
-          fullWidth
-          size="small"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <Search sx={{ color: "grey.500" }} />
-              </InputAdornment>
-            ),
+        <Autocomplete
+          freeSolo
+          options={suggestions}
+          getOptionLabel={(option) => (typeof option === 'string' ? option : option.title || '')}
+          inputValue={inputValue}
+          onInputChange={(event, newInputValue, reason) => {
+            setInputValue(newInputValue);
+            // Don't trigger parent search here - only update local input
+            // Parent search will be triggered on Enter key
           }}
-          sx={{
-            mb: 2,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "9999px",
-              backgroundColor: "grey.100",
-              "& fieldset": { borderColor: "transparent" },
-              "&:hover fieldset": { borderColor: "grey.300" },
-              "&.Mui-focused fieldset": { borderColor: "primary.main" },
-            },
+          onChange={handleSuggestionSelect}
+          loading={suggestionsLoading}
+          noOptionsText="Không tìm thấy kết quả"
+          loadingText="Đang tìm..."
+          filterOptions={(x) => x} // Disable built-in filtering, use server results
+          onKeyDown={(event) => {
+            // Only trigger full search when user presses Enter with free text
+            if (event.key === 'Enter' && inputValue.trim()) {
+              // Check if any option is highlighted (via Autocomplete internal state)
+              // If no suggestion is selected, do a full search
+              const highlightedOption = suggestions.find(s => s.title === inputValue);
+              if (!highlightedOption) {
+                onSearchChange?.(inputValue);
+              }
+            }
           }}
+          renderOption={(props, option) => (
+            <Box
+              component="li"
+              {...props}
+              key={option.eventId}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1 }}
+            >
+              {option.coverImageUrl ? (
+                <Box
+                  component="img"
+                  src={option.coverImageUrl}
+                  alt={option.title}
+                  sx={{ width: 40, height: 40, borderRadius: '8px', objectFit: 'cover' }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '8px',
+                    backgroundColor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <CalendarMonth sx={{ fontSize: 20, color: 'primary.main' }} />
+                </Box>
+              )}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" fontWeight={600} noWrap>
+                  {option.title}
+                </Typography>
+                {option.category && (
+                  <Typography variant="caption" color="text.secondary">
+                    {option.category}
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          )}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              placeholder="Tìm kiếm sự kiện"
+              size="small"
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ color: "grey.500" }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <>
+                    {suggestionsLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+              sx={{
+                mb: 2,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "9999px",
+                  backgroundColor: "grey.100",
+                  "& fieldset": { borderColor: "transparent" },
+                  "&:hover fieldset": { borderColor: "grey.300" },
+                  "&.Mui-focused fieldset": { borderColor: "primary.main" },
+                },
+              }}
+            />
+          )}
         />
       )}
 
@@ -238,7 +357,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
                     )}
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                    <Avatar 
+                    <Avatar
                       sx={{ width: 20, height: 20, fontSize: 10, bgcolor: "primary.main" }}
                     >
                       {event.attendeeCount || 0}

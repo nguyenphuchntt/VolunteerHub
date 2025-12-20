@@ -57,8 +57,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
                     (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5 +
                     (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5
                 ) DESC
-            """,
-            countQuery = """
+            """, countQuery = """
                 SELECT COUNT(e) FROM Event e
                 WHERE e.status IN ('SCHEDULED', 'STARTED')
             """)
@@ -71,7 +70,10 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
             "ORDER BY e.startAt ASC")
     List<Event> findScheduledEventsBetweenTimes(@Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
 
-
-
+    @Query(value = "SELECT * FROM event e " +
+            "WHERE MATCH(e.title) AGAINST(CONCAT(:query, '*') IN BOOLEAN MODE) " +
+            "AND e.status IN ('SCHEDULED', 'STARTED') " +
+            "ORDER BY e.like_count DESC", nativeQuery = true)
+    List<Event> findSuggestionsByTitle(@Param("query") String query, Pageable pageable);
 
 }

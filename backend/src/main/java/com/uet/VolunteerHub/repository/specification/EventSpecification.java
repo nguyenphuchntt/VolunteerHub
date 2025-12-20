@@ -28,7 +28,9 @@ public class EventSpecification {
             }
 
             if (criteria.getTitle() != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")), "%" +criteria.getTitle().toLowerCase() + "%"));
+                // Keep %text% for title - users expect to find words anywhere in the title
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("title")),
+                        "%" + criteria.getTitle().toLowerCase() + "%"));
             }
 
             if (criteria.getCreateAtFrom() != null) {
@@ -56,11 +58,15 @@ public class EventSpecification {
             }
 
             if (criteria.getCategory() != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("category")), "%" + criteria.getCategory().toLowerCase() + "%"));
+                // Use prefix matching for index usage
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("category")),
+                        criteria.getCategory().toLowerCase() + "%"));
             }
 
             if (criteria.getLocation() != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("location")), "%" + criteria.getLocation().toLowerCase() + "%"));
+                // Use prefix matching for index usage
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("location")),
+                        criteria.getLocation().toLowerCase() + "%"));
             }
 
             if (criteria.getStatus() != null) {
@@ -68,15 +74,18 @@ public class EventSpecification {
             }
 
             if (criteria.getUsername() != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(account.get("username")), "%" + criteria.getUsername().toLowerCase() + "%"));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(account.get("username")),
+                        "%" + criteria.getUsername().toLowerCase() + "%"));
             }
 
             if (criteria.getFirstName() != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("firstName")), "%" + criteria.getFirstName().toLowerCase() + "%"));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("firstName")),
+                        "%" + criteria.getFirstName().toLowerCase() + "%"));
             }
 
             if (criteria.getLastName() != null) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("lastName")), "%" + criteria.getLastName().toLowerCase() + "%"));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(userInfo.get("lastName")),
+                        "%" + criteria.getLastName().toLowerCase() + "%"));
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

@@ -86,5 +86,16 @@ export const eventService = {
       params: { page, size, startAtFrom: now, sort: 'startAt,asc' } 
     });
     return response.data; // Page<EventSearchDTO>
+  },
+
+  // GET /api/events/suggestions - Gợi ý tìm kiếm (autocomplete)
+  async getSuggestions(query, limit = 5) {
+    if (!query || query.trim().length === 0) {
+      return [];
+    }
+    const response = await api.get('/events/suggestions', { 
+      params: { q: query, limit } 
+    });
+    return response.data; // List<EventSuggestionDTO>
   }
 };

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-
 @RestController
 @RequestMapping("/api/event-users")
 public class EventUserController {
@@ -28,7 +27,8 @@ public class EventUserController {
     private final EventUserSearchService eventUserSearchService;
 
     @Autowired
-    public EventUserController(EventUserWriteService eventUserWriteService, EventUserSearchService eventUserSearchService) {
+    public EventUserController(EventUserWriteService eventUserWriteService,
+            EventUserSearchService eventUserSearchService) {
         this.eventUserWriteService = eventUserWriteService;
         this.eventUserSearchService = eventUserSearchService;
     }
@@ -36,14 +36,14 @@ public class EventUserController {
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsers(EventUserSearchCriteriaDTO criteria,
-                                                                     @PageableDefault(size = 10, page = 0) Pageable pageable) {
+            @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
     }
 
     @GetMapping("/accounts/{accountId}")
     @PreAuthorize("authentication.principal.accountId.equals(#accountId) or hasRole('ADMIN')")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsersByAccountId(@PathVariable UUID accountId,
-                                                                                @PageableDefault(size = 10, page = 0) Pageable pageable) {
+            @PageableDefault(size = 10, page = 0) Pageable pageable) {
         return ResponseEntity.ok(eventUserSearchService.findByAccountId(accountId, pageable));
     }
 
@@ -54,7 +54,7 @@ public class EventUserController {
             @RequestParam(required = false) EventUserRole role,
             @RequestParam(required = false) EventUserStatus status,
             @PageableDefault(size = 10, page = 0) Pageable pageable) {
-        
+
         if (role != null || status != null) {
             EventUserSearchCriteriaDTO criteria = EventUserSearchCriteriaDTO.builder()
                     .eventId(eventId)
@@ -63,30 +63,30 @@ public class EventUserController {
                     .build();
             return ResponseEntity.ok(eventUserSearchService.findEventUsersBySpecification(criteria, pageable));
         }
-        
+
         return ResponseEntity.ok(eventUserSearchService.findByEventId(eventId, pageable));
     }
 
     @GetMapping("/{eventId}/{accountId}")
     @PreAuthorize("@eventUserSecurityService.isManager(#eventId) or authentication.principal.accountId.equals(#accountId)")
     public ResponseEntity<EventUserSearchDTO> searchEventUsersByAccountIdAndEventId(@PathVariable UUID accountId,
-                                                                                    @PathVariable Long eventId) {
+            @PathVariable Long eventId) {
         return ResponseEntity.ok(eventUserSearchService.findByAccountIdAndEventId(accountId, eventId));
     }
 
     @PostMapping("/{eventId}/{accountId}/create")
     @PreAuthorize("(hasRole('ADMIN')) or " +
-        "(@eventUserSecurityService.isManager(#eventId))")
+            "(@eventUserSecurityService.isManager(#eventId))")
     public ResponseEntity<EventUserSearchDTO> createEventUser(@PathVariable UUID accountId,
-                                                              @PathVariable Long eventId,
-                                                              @RequestBody @Valid EventUserCreateDTO createDTO) {
+            @PathVariable Long eventId,
+            @RequestBody @Valid EventUserCreateDTO createDTO) {
         return ResponseEntity.ok(eventUserWriteService.createEventUser(accountId, eventId, createDTO));
     }
 
     @DeleteMapping("/{eventId}/{accountId}/delete")
     @PreAuthorize("(hasRole('ADMIN')) or " +
-        "(@eventUserSecurityService.isManager(#eventId) and " +
-        "(authentication.principal.accountId.equals(#accountId) or not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId)))")
+            "(@eventUserSecurityService.isManager(#eventId) and " +
+            "(authentication.principal.accountId.equals(#accountId) or not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId)))")
     public ResponseEntity<Void> deleteEventUser(@PathVariable Long eventId, @PathVariable UUID accountId) {
         eventUserWriteService.deleteEventUser(accountId, eventId);
         return ResponseEntity.noContent().build();
@@ -95,20 +95,20 @@ public class EventUserController {
     @PatchMapping("/{eventId}/{accountId}/update-role")
     @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
     public ResponseEntity<EventUserSearchDTO> updateEventUserRole(@PathVariable Long eventId,
-                                                                  @PathVariable UUID accountId,
-                                                                  @RequestBody EventUserRoleUpdateDTO updateDTO,
-                                                                  @AuthenticationPrincipal Account caller) {
+            @PathVariable UUID accountId,
+            @RequestBody @Valid EventUserRoleUpdateDTO updateDTO,
+            @AuthenticationPrincipal Account caller) {
         return ResponseEntity.ok(eventUserWriteService.updateRole(accountId, eventId, updateDTO, caller));
     }
 
     @PatchMapping("/{eventId}/{accountId}/update-status")
     @PreAuthorize("hasRole('ADMIN') or " +
-    "(@eventUserSecurityService.isManager(#eventId)) and " +
-    "(not authentication.principal.accountId.equals(#accountId)) and " +
-    "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId))")
+            "(@eventUserSecurityService.isManager(#eventId)) and " +
+            "(not authentication.principal.accountId.equals(#accountId)) and " +
+            "(not @eventSecurityService.isCreatorOfEvent(#eventId, #accountId))")
     public ResponseEntity<EventUserSearchDTO> updateEventUserStatus(@PathVariable Long eventId,
-                                                                    @PathVariable UUID accountId,
-                                                                    @RequestBody EventUserStatusUpdateDTO updateDTO) {
+            @PathVariable UUID accountId,
+            @RequestBody @Valid EventUserStatusUpdateDTO updateDTO) {
         return ResponseEntity.ok(eventUserWriteService.updateStatus(accountId, eventId, updateDTO));
     }
 

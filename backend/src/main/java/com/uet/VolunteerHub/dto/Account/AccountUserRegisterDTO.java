@@ -2,14 +2,15 @@ package com.uet.VolunteerHub.dto.Account;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
 public class AccountUserRegisterDTO {
     @NotBlank(message = "Please enter your username")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
+    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Username can only contain letters and numbers")
     private String username;
 
     @NotBlank(message = "Please enter your password")
@@ -19,7 +20,7 @@ public class AccountUserRegisterDTO {
     @NotBlank(message = "Please confirm your password")
     private String confirmPassword;
 
-    @NotNull
-    @Email
+    @NotBlank(message = "Please enter your email")
+    @Email(message = "Please enter a valid email address")
     private String email;
 }

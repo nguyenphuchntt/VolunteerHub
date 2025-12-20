@@ -37,7 +37,7 @@ const EventFeed = () => {
       const statusMap = {};
       if (output && output.content) {
         output.content.forEach(item => {
-           if (item.eventId && item.status) {
+          if (item.eventId && item.status) {
             statusMap[item.eventId] = item.status;
           }
         });
@@ -56,43 +56,46 @@ const EventFeed = () => {
       setLoadingMore(true);
     }
     setError(null);
-    
+
     try {
       let response;
-      
-      // Build params with category filter
-      const params = { 
-        page: pageIndex, 
-        size: 10 
-      };
-      
-      if (selectedCategory !== "all") {
-        params.category = selectedCategory;
-      }
+
+      // If there's a search query, always search (ignore hot mode)
       if (debouncedSearchQuery.trim()) {
-        params.title = debouncedSearchQuery;
-      }
-      
-      if (viewMode === "hot") {
-        // Fetch hot events sorted by likeCount
-        params.sort = "likeCount,desc";
+        const params = {
+          page: pageIndex,
+          size: 10,
+          sort: "startAt,desc",
+          title: debouncedSearchQuery
+        };
+        if (selectedCategory !== "all") {
+          params.category = selectedCategory;
+        }
         response = await eventService.searchEvents(params);
+      } else if (viewMode === "hot") {
+        // Fetch hot events only when no search query
+        response = await eventService.getHotEvents(pageIndex, 10);
       } else {
         // Fetch newest events sorted by startAt desc
-        params.sort = "startAt,desc";
+        const params = {
+          page: pageIndex,
+          size: 10,
+          sort: "startAt,desc"
+        };
+        if (selectedCategory !== "all") {
+          params.category = selectedCategory;
+        }
         response = await eventService.searchEvents(params);
       }
-      
-      // Frontend filter to exclude FINISHED and CANCELLED events
-      const newEvents = (response.content || [])
-        .filter(event => event.status !== 'FINISHED' && event.status !== 'CANCELLED');
-      
+
+      const newEvents = response.content || [];
+
       if (pageIndex === 0) {
         setEvents(newEvents);
       } else {
         setEvents(prev => [...prev, ...newEvents]);
       }
-      
+
       const isEndOfPage = newEvents.length === 0 || response.last;
       setHasMore(!isEndOfPage);
       setPage(pageIndex);
@@ -107,7 +110,7 @@ const EventFeed = () => {
       setLoading(false);
       setLoadingMore(false);
       if (pageIndex === 0) {
-         fetchUserStatuses();
+        fetchUserStatuses();
       }
     }
   }, [selectedCategory, viewMode, debouncedSearchQuery, fetchUserStatuses]);
@@ -117,7 +120,7 @@ const EventFeed = () => {
     setPage(0);
     fetchEvents(0);
   }, [selectedCategory, viewMode, debouncedSearchQuery]);
-  
+
   // Infinite Scroll with Intersection Observer
   const observerTarget = useRef(null);
 
@@ -125,9 +128,9 @@ const EventFeed = () => {
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting) {
-           if (!loading && !loadingMore && hasMore) {
-             fetchEvents(page + 1);
-           }
+          if (!loading && !loadingMore && hasMore) {
+            fetchEvents(page + 1);
+          }
         }
       },
       { threshold: 0.1 }
@@ -228,12 +231,12 @@ const EventFeed = () => {
         {!loading && !error && filteredEvents.length > 0 ? (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {filteredEvents.map((event) => (
-              <EventCard 
-                key={event.eventId} 
+              <EventCard
+                key={event.eventId}
                 event={{
                   ...event,
                   participationStatus: userEventStatuses[event.eventId]
-                }} 
+                }}
               />
             ))}
             {loadingMore && (
