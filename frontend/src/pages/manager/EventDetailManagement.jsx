@@ -414,8 +414,8 @@ const EventDetailManagement = () => {
           <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", mt: 2 }}>
             <CardContent>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>Đăng ký theo thời gian</Typography>
-              <div style={{ width: '100%', height: 200, minWidth: 0 }}>
-                <ResponsiveContainer width="100%" height="100%">
+              <Box sx={{ width: '100%', height: 200, minHeight: 200, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={timeline.map(item => ({
                     date: item.date,
                     count: item.count || 0
@@ -440,7 +440,7 @@ const EventDetailManagement = () => {
                     />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
+              </Box>
             </CardContent>
           </Card>
         )}

@@ -32,6 +32,13 @@ import {
   LocationOn,
   FavoriteBorder,
   Favorite,
+  Schedule,
+  PlayCircle,
+  CheckCircle,
+  Cancel,
+  HourglassEmpty,
+  Groups,
+  Category,
 } from "@mui/icons-material";
 
 const EventDetail = () => {
@@ -217,9 +224,20 @@ const EventDetail = () => {
       fetchParticipants();
     } catch (err) {
       console.error("Unregister failed:", err);
+      
+      // Check if error is about being the last manager
+      const errorMessage = err.response?.data?.message || "";
+      let displayMessage = "Không thể hủy tham gia.";
+      
+      if (errorMessage.toLowerCase().includes("last manager")) {
+        displayMessage = "Bạn là quản lý cuối cùng của sự kiện này. Vui lòng chỉ định quản lý khác trước khi rời đi.";
+      } else if (errorMessage) {
+        displayMessage = errorMessage;
+      }
+      
       setSnackbar({ 
         open: true, 
-        message: err.response?.data?.message || "Không thể hủy tham gia.", 
+        message: displayMessage, 
         severity: "error" 
       });
     } finally {
@@ -240,7 +258,7 @@ const EventDetail = () => {
     });
   };
 
-  // Status Chip config
+  // Status Chip config for user participation
   const getParticipationConfig = (status) => {
     const configs = {
       APPROVED: { label: "Đã tham gia", bg: "#e8f5e9", color: "#2e7d32" },
@@ -249,6 +267,53 @@ const EventDetail = () => {
       FINISHED: { label: "Đã hoàn thành", bg: "#f3e5f5", color: "#7b1fa2" },
     };
     return configs[status] || null;
+  };
+
+  // Event status config with Vietnamese translations
+  const getEventStatusConfig = (status) => {
+    const configs = {
+      PENDING: { 
+        label: "Chờ duyệt", 
+        icon: <HourglassEmpty sx={{ fontSize: 16 }} />,
+        bg: "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
+        bgLight: "rgba(255, 152, 0, 0.1)",
+        color: "#f57c00",
+        border: "rgba(255, 152, 0, 0.3)"
+      },
+      SCHEDULED: { 
+        label: "Đã lên lịch", 
+        icon: <Schedule sx={{ fontSize: 16 }} />,
+        bg: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
+        bgLight: "rgba(33, 150, 243, 0.1)",
+        color: "#1976d2",
+        border: "rgba(33, 150, 243, 0.3)"
+      },
+      STARTED: { 
+        label: "Đang diễn ra", 
+        icon: <PlayCircle sx={{ fontSize: 16 }} />,
+        bg: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
+        bgLight: "rgba(76, 175, 80, 0.1)",
+        color: "#388e3c",
+        border: "rgba(76, 175, 80, 0.3)"
+      },
+      FINISHED: { 
+        label: "Đã kết thúc", 
+        icon: <CheckCircle sx={{ fontSize: 16 }} />,
+        bg: "linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)",
+        bgLight: "rgba(156, 39, 176, 0.1)",
+        color: "#7b1fa2",
+        border: "rgba(156, 39, 176, 0.3)"
+      },
+      CANCELLED: { 
+        label: "Đã hủy", 
+        icon: <Cancel sx={{ fontSize: 16 }} />,
+        bg: "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
+        bgLight: "rgba(244, 67, 54, 0.1)",
+        color: "#d32f2f",
+        border: "rgba(244, 67, 54, 0.3)"
+      },
+    };
+    return configs[status] || configs.SCHEDULED;
   };
   
   const participationConfig = getParticipationConfig(participationStatus);
@@ -307,6 +372,7 @@ const EventDetail = () => {
   
   const coverImage = getCoverImage();
   const statusDisplay = (event.status || "").toString();
+  const eventStatusConfig = getEventStatusConfig(statusDisplay);
 
   return (
     <ThreeColumnLayout user={user} role="volunteer" showRightSidebar={false} showSearch={false}>
@@ -368,14 +434,14 @@ const EventDetail = () => {
         </Box>
       </Box>
 
-      {/* Banner */}
+      {/* Banner with gradient overlay */}
       <Box
         sx={{
           position: "relative",
-          paddingTop: "min(42.86%, 220px)", /* 21:9 aspect ratio, max 220px */
-          backgroundColor: "#f0f0f0",
+          paddingTop: "min(50%, 280px)",
+          backgroundColor: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
           overflow: "hidden",
-          maxHeight: 220,
+          maxHeight: 280,
         }}
       >
         <Box
@@ -394,36 +460,181 @@ const EventDetail = () => {
             objectFit: "cover",
           }}
         />
+        {/* Gradient overlay */}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "60%",
+            background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)",
+          }}
+        />
+        {/* Status badge on banner */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+            px: 1.5,
+            py: 0.75,
+            borderRadius: "20px",
+            background: eventStatusConfig.bg,
+            color: "#fff",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+          }}
+        >
+          {eventStatusConfig.icon}
+          <Typography variant="caption" fontWeight={600}>
+            {eventStatusConfig.label}
+          </Typography>
+        </Box>
       </Box>
 
-      {/* Event Info */}
-      <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "grey.200" }}>
-        <Typography variant="h6" fontWeight={700}>
+      {/* Event Info Card */}
+      <Box 
+        sx={{ 
+          p: 2.5, 
+          mx: 2, 
+          mt: -4,
+          position: "relative",
+          zIndex: 2,
+          backgroundColor: "#fff",
+          borderRadius: "16px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          border: "1px solid",
+          borderColor: "grey.100",
+        }}
+      >
+        <Typography variant="h5" fontWeight={700} sx={{ mb: 1, lineHeight: 1.3 }}>
           {event.title}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.6 }}>
           {event.description || "Không có mô tả"}
         </Typography>
         
-        {/* Event details */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CalendarMonth sx={{ fontSize: 18, color: "text.secondary" }} />
-            <Typography variant="body2" color="text.secondary">
-              {formatDate(event.startAt)} - {formatDate(event.endAt)}
-            </Typography>
+        {/* Event details with icons */}
+        <Box 
+          sx={{ 
+            display: "flex", 
+            flexDirection: "column", 
+            gap: 1.5, 
+            p: 2,
+            backgroundColor: "grey.50",
+            borderRadius: "12px",
+            mb: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                backgroundColor: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <CalendarMonth sx={{ fontSize: 18, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                Thời gian
+              </Typography>
+              <Typography variant="body2" fontWeight={600}>
+                {formatDate(event.startAt)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                đến {formatDate(event.endAt)}
+              </Typography>
+            </Box>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <LocationOn sx={{ fontSize: 18, color: "text.secondary" }} />
-            <Typography variant="body2" color="text.secondary">
-              {event.location || "Địa điểm chưa xác định"}
-            </Typography>
+          
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                backgroundColor: "error.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <LocationOn sx={{ fontSize: 18, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                Địa điểm
+              </Typography>
+              <Typography variant="body2" fontWeight={600}>
+                {event.location || "Địa điểm chưa xác định"}
+              </Typography>
+            </Box>
+          </Box>
+          
+          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: "10px",
+                backgroundColor: "success.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Groups sx={{ fontSize: 18, color: "#fff" }} />
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                Tình nguyện viên
+              </Typography>
+              <Typography variant="body2" fontWeight={600}>
+                {attendeeCount} người tham gia
+              </Typography>
+            </Box>
           </Box>
         </Box>
         
-        <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
-          {event.category && <Chip label={getCategoryLabel(event.category)} size="small" color="primary" />}
-          {statusDisplay && <Chip label={statusDisplay} size="small" variant="outlined" />}
+        {/* Tags */}
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          {event.category && (
+            <Chip 
+              icon={<Category sx={{ fontSize: 16 }} />}
+              label={getCategoryLabel(event.category)} 
+              size="small" 
+              sx={{ 
+                fontWeight: 600,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "#fff",
+                "& .MuiChip-icon": { color: "#fff" },
+              }} 
+            />
+          )}
+          <Chip 
+            icon={eventStatusConfig.icon}
+            label={eventStatusConfig.label} 
+            size="small" 
+            sx={{ 
+              fontWeight: 600,
+              backgroundColor: eventStatusConfig.bgLight,
+              color: eventStatusConfig.color,
+              border: `1px solid ${eventStatusConfig.border}`,
+              "& .MuiChip-icon": { color: eventStatusConfig.color },
+            }} 
+          />
         </Box>
         
         {/* Participation Status or Register Button */}
