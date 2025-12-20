@@ -4,6 +4,7 @@ import com.uet.VolunteerHub.dto.password.ForgotPasswordRequestDTO;
 import com.uet.VolunteerHub.dto.password.PasswordResetResponseDTO;
 import com.uet.VolunteerHub.dto.password.ResetPasswordRequestDTO;
 import com.uet.VolunteerHub.entity.Account;
+import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,15 @@ public class PasswordResetService {
         Optional<Account> accountOptional = accountRepository.findByUsernameOrEmail(email, email);
         if (accountOptional.isPresent()) {
             Account account = accountOptional.get();
+            if (account.getAccountStatus() != AccountStatus.ACTIVE) {
+                if (account.getAccountStatus() == AccountStatus.INACTIVE) {
+                    log.debug("Password reset requested for inactive account: {}. User should verify email first.", email);
+                } else if (account.getAccountStatus() == AccountStatus.BANNED) {
+                    log.debug("Password reset requested for banned account: {}", email);
+                }
+                return PasswordResetResponseDTO.success(GENERIC_SUCCESS_MESSAGE);
+            }
+            
             // Generate unique token
             String token = generateToken();
             String redisKey = PASSWORD_RESET_TOKEN_PREFIX + token;

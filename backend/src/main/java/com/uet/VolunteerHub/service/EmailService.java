@@ -90,4 +90,47 @@ public class EmailService {
             log.error("Unexpected error while sending confirmation email to: {}. Error: {}", toEmail, e.getMessage());
         }
     }
+
+    /**
+     * Sends email verification email after registration.
+     *
+     * @param toEmail       Recipient's email address
+     * @param verifyLink    The verification link containing the token
+     * @param username      The user's username for personalization
+     * @param expiryMinutes Token expiry time in minutes
+     */
+    @Async
+    public void sendVerificationEmail(String toEmail, String verifyLink, String username, int expiryMinutes) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(
+                    message,
+                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
+                    StandardCharsets.UTF_8.name()
+            );
+
+            // Prepare Thymeleaf context
+            Context context = new Context();
+            context.setVariable("username", username);
+            context.setVariable("verifyLink", verifyLink);
+            context.setVariable("expiryMinutes", expiryMinutes);
+            context.setVariable("senderName", senderName);
+
+            // Process the email template
+            String htmlContent = templateEngine.process("email-verification", context);
+
+            helper.setTo(toEmail);
+            helper.setSubject("[" + senderName + "] Verify Your Email Address");
+            helper.setFrom(fromEmail, senderName);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            log.info("Verification email sent successfully to: {}", toEmail);
+
+        } catch (MessagingException e) {
+            log.error("Failed to send verification email to: {}. Error: {}", toEmail, e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error while sending verification email to: {}. Error: {}", toEmail, e.getMessage());
+        }
+    }
 }
