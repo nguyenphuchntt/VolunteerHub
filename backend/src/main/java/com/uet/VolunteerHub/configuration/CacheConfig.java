@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.config;
+package com.uet.VolunteerHub.configuration;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;

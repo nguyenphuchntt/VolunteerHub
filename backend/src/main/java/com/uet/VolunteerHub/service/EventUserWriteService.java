@@ -9,15 +9,19 @@ import com.uet.VolunteerHub.entity.EventUserId;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;
+import com.uet.VolunteerHub.events.event.EventJoinApprovedEvent;
+import com.uet.VolunteerHub.events.event.EventJoinRejectedEvent;
+import com.uet.VolunteerHub.events.event.EventJoinRequestEvent;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -29,21 +33,13 @@ import java.util.UUID;
 
 @Log
 @Service
+@RequiredArgsConstructor
 public class EventUserWriteService {
     private final EventUserRepository eventUserRepository;
     private final EventRepository eventRepository;
     private final AccountRepository accountRepository;
     private final PushNotificationService pushNotificationService;
-
-    @Autowired
-    public EventUserWriteService(EventUserRepository eventUserRepository,
-            EventRepository eventRepository,
-            AccountRepository accountRepository, PushNotificationService pushNotificationService) {
-        this.pushNotificationService = pushNotificationService;
-        this.eventUserRepository = eventUserRepository;
-        this.eventRepository = eventRepository;
-        this.accountRepository = accountRepository;
-    }
+    private final ApplicationEventPublisher eventPublisher;
 
     private EventUserSearchDTO mapToEventUserSearchDTO(EventUser eventUser, Account account,
             UserInfo userInfo, Event event) {
@@ -124,6 +120,9 @@ public class EventUserWriteService {
         } else {
             builder.role(EventUserRole.ATTENDEE)
                     .status(EventUserStatus.PENDING);
+            // Notify all managers of this event about the new join request
+            List<Account> eventManagers = accountRepository.findEventManagersByEventId(eventId);
+            eventPublisher.publishEvent(new EventJoinRequestEvent(this, account, event, eventManagers));
         }
         EventUser eventUser = eventUserRepository.save(builder.build());
 
@@ -142,10 +141,7 @@ public class EventUserWriteService {
         EventUser eventUser = findEventUser(account.getAccountId(), eventId);
 
         if (eventUser.getRole() == EventUserRole.MANAGER) {
-            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
-            long managerCount = allEventUsers.stream()
-                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
-                    .count();
+            long managerCount = eventUserRepository.countByEventIdAndRole(eventId, EventUserRole.MANAGER);
 
             if (managerCount <= 1) {
                 throw new IllegalStateException(
@@ -237,11 +233,7 @@ public class EventUserWriteService {
         EventUser eventUser = findEventUser(accountId, eventId);
 
         if (eventUser.getRole() == EventUserRole.MANAGER) {
-            // Count total managers in this event
-            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
-            long managerCount = allEventUsers.stream()
-                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
-                    .count();
+            long managerCount = eventUserRepository.countByEventIdAndRole(eventId, EventUserRole.MANAGER);
 
             if (managerCount <= 1) {
                 throw new IllegalStateException(
@@ -290,32 +282,30 @@ public class EventUserWriteService {
         EventUserRole currRole = eventUser.getRole();
         Event event = eventUser.getEvent();
 
-        // Prevent demoting the event creator from Manager to Attendee, unless by themselves or Admin
-        // Other managers can still "promote" Creator (re-assign Manager role if lost), but cannot demote.
+        // Prevent demoting the event creator from Manager to Attendee, unless by
+        // themselves or Admin
+        // Other managers can still "promote" Creator (re-assign Manager role if lost),
+        // but cannot demote.
         if (accountId.equals(event.getCreatedBy().getAccountId())) {
             boolean isSelf = caller.getAccountId().equals(accountId);
             boolean isAdmin = caller.getRole() == UserRole.ADMIN;
             boolean isDemoting = role.getEventUserRole() == EventUserRole.ATTENDEE;
-            
+
             if (isDemoting && !isSelf && !isAdmin) {
                 throw new IllegalArgumentException("Cannot remove manager role from the Event Creator.");
             }
         }
 
         // If demoting a manager, ensure at least one manager remains
-        if (eventUser.getRole() == EventUserRole.MANAGER && 
-            role.getEventUserRole() != null && 
-            role.getEventUserRole() != EventUserRole.MANAGER) {
-            
-            List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
-            long managerCount = allEventUsers.stream()
-                    .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
-                    .count();
-            
+        if (eventUser.getRole() == EventUserRole.MANAGER &&
+                role.getEventUserRole() != null &&
+                role.getEventUserRole() != EventUserRole.MANAGER) {
+
+            long managerCount = eventUserRepository.countByEventIdAndRole(eventId, EventUserRole.MANAGER);
+
             if (managerCount <= 1) {
                 throw new IllegalStateException(
-                    "Cannot remove manager role. This user is the last manager of the event."
-                );
+                        "Cannot remove manager role. This user is the last manager of the event.");
             }
         }
 
@@ -386,8 +376,8 @@ public class EventUserWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "managerDashboard", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "managerDashboard", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public Map<String, Object> bulkApprove(Long eventId, List<UUID> accountIds) {
@@ -415,8 +405,11 @@ public class EventUserWriteService {
         eventRepository.save(event);
 
         if (!approvedAccountIds.isEmpty()) {
-            pushNotificationService.pushNotificationToMultipleUsers(approvedAccountIds,
-                    "Your registration for the event: " + event.getTitle() + " has been approved.");
+            // Get approved user accounts and publish event
+            List<Account> approvedUsers = accountRepository.findAllById(approvedAccountIds);
+            // Use first manager or event creator as the actor
+            Account manager = event.getCreatedBy();
+            eventPublisher.publishEvent(new EventJoinApprovedEvent(this, manager, event, approvedUsers));
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -426,8 +419,8 @@ public class EventUserWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "managerDashboard", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "managerDashboard", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public Map<String, Object> bulkReject(Long eventId, List<UUID> accountIds) {
@@ -458,8 +451,11 @@ public class EventUserWriteService {
         eventRepository.save(event);
 
         if (!rejectedAccountIds.isEmpty()) {
-            pushNotificationService.pushNotificationToMultipleUsers(rejectedAccountIds,
-                    "Your registration for the event: " + event.getTitle() + " has been rejected.");
+            // Get rejected user accounts and publish event
+            List<Account> rejectedUsers = accountRepository.findAllById(rejectedAccountIds);
+            // Use first manager or event creator as the actor
+            Account manager = event.getCreatedBy();
+            eventPublisher.publishEvent(new EventJoinRejectedEvent(this, manager, event, rejectedUsers));
         }
 
         Map<String, Object> response = new HashMap<>();

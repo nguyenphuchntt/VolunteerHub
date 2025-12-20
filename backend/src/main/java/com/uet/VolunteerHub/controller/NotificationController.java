@@ -1,7 +1,7 @@
 package com.uet.VolunteerHub.controller;
 
 import java.security.Principal;
-import java.util.List;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -39,15 +39,6 @@ public class NotificationController {
         boolean newReadStatus = notificationService.toggleIsRead(notificationId);
         return ResponseEntity.ok(Map.of("isRead", newReadStatus));
     }
-
-//    @PreAuthorize("@notificationSecurityService.isReceiver(#notificationId)")
-//    @PatchMapping("/{notificationId}/type")
-//    public ResponseEntity<NotificationReadDTO> updateNotificationType(
-//            @PathVariable Long notificationId,
-//            @RequestBody @Valid NotificationUpdateTypeDTO dto) {
-//        NotificationReadDTO updatedNotification = notificationService.updateNotificationType(notificationId, dto);
-//        return ResponseEntity.ok(updatedNotification);
-//    }
 
     @GetMapping("/search")
     public ResponseEntity<org.springframework.data.domain.Page<NotificationReadDTO>> searchNotification(
@@ -88,20 +79,13 @@ public class NotificationController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<NotificationReadDTO>> getMyNotifications(Principal principal) {
+    public ResponseEntity<org.springframework.data.domain.Page<NotificationReadDTO>> getMyNotifications(
+            Principal principal,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable) {
         UUID receiverId = getCurrentUserId(principal);
-        List<NotificationReadDTO> notifications = notificationService.findAllForUserOrSystemAnnouncement(receiverId);
+        org.springframework.data.domain.Page<NotificationReadDTO> notifications =
+                notificationService.findAllForUserOrSystemAnnouncementPaged(receiverId, pageable);
         return ResponseEntity.ok(notifications);
     }
-
-//    @PreAuthorize("@notificationSecurityService.isReceiver(#notificationId)")
-//    @DeleteMapping("/{notificationId}")
-//    public ResponseEntity<Void> deleteNotification(@PathVariable Long notificationId) {
-//        boolean isDeleted = notificationService.deleteNotification(notificationId);
-//        if (isDeleted) {
-//            return ResponseEntity.noContent().build();
-//        } else {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
 }

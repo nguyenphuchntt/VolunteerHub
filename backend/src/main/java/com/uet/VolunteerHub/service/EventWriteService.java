@@ -3,28 +3,32 @@ package com.uet.VolunteerHub.service;
 import com.uet.VolunteerHub.dto.Event.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.EventStatus;
+import com.uet.VolunteerHub.enums.UserRole;
+import com.uet.VolunteerHub.events.event.EventApprovedEvent;
+import com.uet.VolunteerHub.events.event.EventCancelledEvent;
+import com.uet.VolunteerHub.events.event.EventRejectedEvent;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.util.SlugUtils;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class EventWriteService {
     private final EventRepository eventRepository;
-
-    @Autowired
-    public EventWriteService(EventRepository eventRepository, AccountRepository accountRepository) {
-        this.eventRepository = eventRepository;
-    }
+    private final AccountRepository accountRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private EventSearchDTO mapToEventSearchDTO(Event event, Account account) {
         var builder = EventSearchDTO.builder()
@@ -165,6 +169,27 @@ public class EventWriteService {
         @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
+    public EventSearchDTO updateEventStatus(Long eventId, EventStatusUpdateDTO eventStatusUpdateDTO, Account admin) {
+        Event event = findEvent(eventId);
+        EventStatus oldStatus = event.getStatus();
+        EventStatus newStatus = eventStatusUpdateDTO.getStatus() != null 
+                ? eventStatusUpdateDTO.getStatus() 
+                : EventStatus.PENDING;
+        
+        event.setStatus(newStatus);
+        eventRepository.save(event);
+        if (oldStatus != newStatus) {
+            publishStatusChangeNotification(event, oldStatus, newStatus, admin, eventStatusUpdateDTO.getReason());
+        }
+
+        return mapToEventSearchDTO(event, event.getCreatedBy());
+    }
+
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
+    @Transactional
     public EventSearchDTO updateEventStatus(Long eventId, EventStatusUpdateDTO eventStatusUpdateDTO) {
         Event event = findEvent(eventId);
         if (eventStatusUpdateDTO.getStatus() != null) {
@@ -173,6 +198,38 @@ public class EventWriteService {
             event.setStatus(EventStatus.PENDING);
         }
         eventRepository.save(event);
+        return mapToEventSearchDTO(event, event.getCreatedBy());
+    }
+
+    private void publishStatusChangeNotification(Event event, EventStatus oldStatus, 
+                                                   EventStatus newStatus, Account admin, String reason) {
+        if (oldStatus == EventStatus.PENDING && newStatus == EventStatus.SCHEDULED) {
+            eventPublisher.publishEvent(new EventApprovedEvent(this, admin, event));
+        }
+        else if (oldStatus == EventStatus.PENDING && 
+                 newStatus != EventStatus.SCHEDULED && 
+                 newStatus != EventStatus.STARTED && 
+                 newStatus != EventStatus.FINISHED) {
+        }
+        else if (newStatus == EventStatus.CANCELLED) {
+            // Get all approved participants to notify them
+            List<Account> participants = accountRepository.findApprovedParticipantsByEventId(event.getEventId());
+            eventPublisher.publishEvent(new EventCancelledEvent(this, admin, event, participants, reason));
+        }
+    }
+
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
+    @Transactional
+    public EventSearchDTO rejectEvent(Long eventId, Account admin, String reason) {
+        Event event = findEvent(eventId);
+        if (event.getStatus() != EventStatus.PENDING) {
+            throw new IllegalArgumentException("Only PENDING events can be rejected");
+        }
+        eventPublisher.publishEvent(new EventRejectedEvent(this, admin, event, reason));
+        
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 
@@ -217,8 +274,5 @@ public class EventWriteService {
         eventRepository.save(event);
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
-
-
-
-
 }
+

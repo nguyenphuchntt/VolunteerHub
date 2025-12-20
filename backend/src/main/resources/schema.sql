@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS notification (
         'EVENT_START_REMINDER', 'EVENT_END_REMINDER',
         'EVENT_JOIN_APPROVED', 'EVENT_JOIN_REJECTED',
         'EVENT_APPROVED', 'EVENT_REJECTED', 'EVENT_JOIN_REQUEST',
+        'EVENT_CANCELLED',
         'MANAGER_ROLE_REQUEST',
         'ROLE_REQUEST_APPROVED', 'ROLE_REQUEST_REJECTED',
         'NEW_FOLLOWER',
@@ -209,17 +210,40 @@ CREATE INDEX idx_account_media_media_id ON account_media(media_id);
 CREATE INDEX idx_event_media_media_id ON event_media(media_id);
 CREATE INDEX idx_post_media_media_id ON post_media(media_id);
 
--- Indexes for notification queries (role-based notifications)
+CREATE INDEX idx_event_start_at ON event(start_at);
+CREATE INDEX idx_event_end_at ON event(end_at);
+CREATE INDEX idx_event_status_start_at ON event(status, start_at);
+
+CREATE INDEX idx_notification_receiver_full ON notification(receiver_account_id, is_read, is_deleted);
+
+CREATE INDEX idx_comment_reply_to ON comment(reply_to);
+
+CREATE INDEX idx_follow_user_followed_by ON follow_user(followed_by_account_id);
+
+CREATE INDEX idx_request_account_id ON request(account_id);
+
+CREATE INDEX idx_fcm_token_account_id ON fcm_token(account_id);
+
+CREATE FULLTEXT INDEX idx_event_title_fulltext ON event(title) WITH PARSER ngram;
+
+CREATE INDEX idx_event_user_event_role ON event_user(event_id, event_user_role);
+
+CREATE INDEX idx_event_status_like ON event(status, like_count DESC);
+
+CREATE INDEX idx_event_category ON event(category);
+
+CREATE INDEX idx_event_location ON event(location);
+
+CREATE INDEX idx_account_create_at ON account(create_at);
+
 CREATE INDEX idx_notification_receiver_type_deleted ON notification(receiver_account_id, type, is_deleted);
 CREATE INDEX idx_notification_receiver_read_deleted ON notification(receiver_account_id, is_read, is_deleted);
 CREATE INDEX idx_notification_receiver_created ON notification(receiver_account_id, create_at DESC);
 
--- Indexes for event_user queries (pending join requests, manager lookups)
 CREATE INDEX idx_event_user_status_role ON event_user(status, event_user_role);
 CREATE INDEX idx_event_user_account_role ON event_user(account_id, event_user_role);
 CREATE INDEX idx_event_user_status_registered ON event_user(status, registered_at DESC);
 
--- Indexes for request queries (pending role requests)
 CREATE INDEX idx_request_status ON request(status);
 CREATE INDEX idx_request_account_status ON request(account_id, status);
 CREATE INDEX idx_request_status_created ON request(status, created_at DESC);

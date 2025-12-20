@@ -36,8 +36,8 @@ public class EventController {
 
     @Autowired
     public EventController(EventSearchService eventSearchService, EventWriteService eventWriteService,
-                           EventUserWriteService eventUserWriteService, EventLikeService eventLikeService,
-                           EventUserSearchService eventUserSearchService) {
+            EventUserWriteService eventUserWriteService, EventLikeService eventLikeService,
+            EventUserSearchService eventUserSearchService) {
         this.eventSearchService = eventSearchService;
         this.eventWriteService = eventWriteService;
         this.eventUserWriteService = eventUserWriteService;
@@ -48,20 +48,29 @@ public class EventController {
     @GetMapping("search")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventSearchDTO>> searchEvents(EventSearchCriteriaDTO criteria,
-                                                             @PageableDefault(page = 0, size = 10) Pageable pageable) {
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventBySpecification(criteria, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
     @GetMapping("search-public")
     public ResponseEntity<Page<EventSearchDTO>> searchPublicEvents(EventSearchCriteriaDTO criteria,
-                                                                   @PageableDefault(page = 0, size = 10) Pageable pageable) {
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findPublicEventBySpecification(criteria, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    @GetMapping("suggestions")
+    public ResponseEntity<List<EventSuggestionDTO>> getSuggestions(
+            @RequestParam("q") String query,
+            @RequestParam(value = "limit", defaultValue = "5") int limit) {
+        List<EventSuggestionDTO> suggestions = eventSearchService.getSuggestions(query, Math.min(limit, 10));
+        return ResponseEntity.ok(suggestions);
+    }
+
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId, @AuthenticationPrincipal Account account) {
+    public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId,
+            @AuthenticationPrincipal Account account) {
         UUID accountId = (account != null) ? account.getAccountId() : null;
         Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, accountId);
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
@@ -79,16 +88,16 @@ public class EventController {
     @GetMapping("/accounts/{accountId}")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and #accountId == #account.accountId)")
     public ResponseEntity<Page<EventSearchDTO>> getEventsByAccountId(@PathVariable UUID accountId,
-                                                                     @AuthenticationPrincipal Account account,
-                                                                     @PageableDefault(page = 0, size = 10) Pageable pageable) {
+            @AuthenticationPrincipal Account account,
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsByAccountId(accountId, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
-    
+
     @GetMapping("/liked-by/{accountId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventSearchDTO>> getEventsLikedByAccount(@PathVariable UUID accountId,
-                                                                        @PageableDefault(page = 0, size = 10) Pageable pageable) {
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
         Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findEventsLikedByAccount(accountId, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
@@ -102,18 +111,18 @@ public class EventController {
     @PostMapping("/register-event")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<EventSearchDTO> registerEvent(@AuthenticationPrincipal Account account,
-                                                        @RequestBody @Valid EventManagerCreateDTO eventManagerCreateDTO) {
+            @RequestBody @Valid EventManagerCreateDTO eventManagerCreateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.registerEvent(account, eventManagerCreateDTO);
         EventUserRegisterDTO eventUserRegisterDTO = new EventUserRegisterDTO(
                 eventSearchDTO.getStartAt(), eventSearchDTO.getEndAt());
-        eventUserWriteService.registerEventUser(account,eventSearchDTO.getEventId(), eventUserRegisterDTO);
+        eventUserWriteService.registerEventUser(account, eventSearchDTO.getEventId(), eventUserRegisterDTO);
         return ResponseEntity.ok(eventSearchDTO);
     }
 
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventSearchDTO> createEvent(@AuthenticationPrincipal Account account,
-                                                      @RequestBody @Valid EventAdminCreateDTO eventAdminCreateDTO) {
+            @RequestBody @Valid EventAdminCreateDTO eventAdminCreateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.createEvent(account, eventAdminCreateDTO);
         EventUserRegisterDTO eventUserRegisterDTO = new EventUserRegisterDTO(
                 eventSearchDTO.getStartAt(), eventSearchDTO.getEndAt());
@@ -124,7 +133,7 @@ public class EventController {
     @PatchMapping("/{eventId}/event-status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventSearchDTO> updateEventStatus(@PathVariable Long eventId,
-                                                            @RequestBody @Valid EventStatusUpdateDTO eventStatusUpdateDTO) {
+            @RequestBody @Valid EventStatusUpdateDTO eventStatusUpdateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.updateEventStatus(eventId, eventStatusUpdateDTO);
         return ResponseEntity.ok(eventSearchDTO);
     }
@@ -139,24 +148,27 @@ public class EventController {
     @PatchMapping("/{eventId}/update")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') and @eventSecurityService.isCreatorOfEvent(#eventId)")
     public ResponseEntity<EventSearchDTO> updateEventDetails(@PathVariable Long eventId,
-                                                             @RequestBody @Valid EventUpdateDTO eventUpdateDTO) {
+            @RequestBody @Valid EventUpdateDTO eventUpdateDTO) {
         EventSearchDTO eventSearchDTO = eventWriteService.updateEventDetails(eventId, eventUpdateDTO);
         return ResponseEntity.ok(eventSearchDTO);
     }
 
     @PostMapping("/{eventId}/like")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<EventLikeDTO> likeEvent(@AuthenticationPrincipal Account account, @PathVariable Long eventId) {
+    public ResponseEntity<EventLikeDTO> likeEvent(@AuthenticationPrincipal Account account,
+            @PathVariable Long eventId) {
         Optional<EventLikeDTO> eventLikeDTO = eventLikeService.toggleLikeEvent(account, eventId);
         return eventLikeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/{eventId}/liked")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Boolean> isEventLikedByUser(@AuthenticationPrincipal Account account, @PathVariable Long eventId) {
+    public ResponseEntity<Boolean> isEventLikedByUser(@AuthenticationPrincipal Account account,
+            @PathVariable Long eventId) {
         boolean isLiked = eventLikeService.isEventLikedByUser(account, eventId);
         return ResponseEntity.ok(isLiked);
     }
+
     @GetMapping("/find-all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EventSearchDTO>> findAllEvents() {
