@@ -623,18 +623,6 @@ const EventDetail = () => {
               }} 
             />
           )}
-          <Chip 
-            icon={eventStatusConfig.icon}
-            label={eventStatusConfig.label} 
-            size="small" 
-            sx={{ 
-              fontWeight: 600,
-              backgroundColor: eventStatusConfig.bgLight,
-              color: eventStatusConfig.color,
-              border: `1px solid ${eventStatusConfig.border}`,
-              "& .MuiChip-icon": { color: eventStatusConfig.color },
-            }} 
-          />
         </Box>
         
         {/* Participation Status or Register Button */}
@@ -786,7 +774,7 @@ const EventDetail = () => {
                 key={post.postId || post.id} 
                 post={post} 
                 onPostUpdated={fetchPosts}
-                disableInteraction={event?.status?.toUpperCase() === 'FINISHED'}
+                disableInteraction={event?.status?.toUpperCase() === 'FINISHED' || participationStatus !== 'APPROVED'}
               />
             ))
           ) : (

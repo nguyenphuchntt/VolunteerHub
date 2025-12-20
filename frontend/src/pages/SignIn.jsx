@@ -14,7 +14,7 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import { Close, Google, Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
+import { Close, Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import { keyframes } from "@mui/system";
 import { useAuth } from "../context/AuthContext";
 import { userService, passwordService, emailService } from "../api";
@@ -262,10 +262,6 @@ const SignIn = () => {
     }
   };
 
-
-  const handleGoogleAuth = () => {
-    console.log("Google Auth");
-  };
 
   // Light green theme colors
   const colors = {
@@ -631,14 +627,7 @@ const SignIn = () => {
 
           {signInStep === 1 ? (
             <Box sx={{ animation: `${slideUp} 0.3s ease-out` }}>
-              <Button
-                variant="contained"
-                startIcon={<Google />}
-                onClick={handleGoogleAuth}
-                sx={{ ...filledButtonSx, maxWidth: "100%", mb: 3 }}
-              >
-                Đăng nhập với Google
-              </Button>
+              
 
               <Divider sx={{ my: 2.5 }}>
                 <Typography sx={{ color: colors.textSecondary, fontSize: 14 }}>hoặc</Typography>
@@ -1149,16 +1138,6 @@ const SignIn = () => {
           <Divider sx={{ my: 2.5 }}>
             <Typography sx={{ color: colors.textSecondary, fontSize: 14 }}>hoặc</Typography>
           </Divider>
-
-          <Button
-            variant="contained"
-            fullWidth
-            startIcon={<Google />}
-            onClick={handleGoogleAuth}
-            sx={{ ...filledButtonSx, maxWidth: "100%" }}
-          >
-            Đăng ký với Google
-          </Button>
 
           <Typography
             sx={{
