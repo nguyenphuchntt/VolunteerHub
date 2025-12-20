@@ -35,7 +35,8 @@ public class RateLimitService {
         DEFAULT,
         LOGIN,
         REGISTER,
-        PUBLIC
+        PUBLIC,
+        FORGOT_PASSWORD
     }
 
     public RateLimitService(RateLimitProperties properties, StringRedisTemplate redisTemplate) {
@@ -111,6 +112,7 @@ public class RateLimitService {
             case LOGIN -> properties.getLogin();
             case REGISTER -> properties.getRegister();
             case PUBLIC -> properties.getPublic();
+            case FORGOT_PASSWORD -> properties.getForgotPassword();
             default -> properties.getDefaultLimit();
         };
     }

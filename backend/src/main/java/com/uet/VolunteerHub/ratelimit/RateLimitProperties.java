@@ -10,6 +10,7 @@ public class RateLimitProperties {
     private LimitConfig login = new LimitConfig(5, 60);
     private LimitConfig register = new LimitConfig(3, 60);
     private LimitConfig publicEndpoint = new LimitConfig(50, 60);
+    private LimitConfig forgotPassword = new LimitConfig(3, 60);
 
     public boolean isEnabled() {
         return enabled;
@@ -49,6 +50,14 @@ public class RateLimitProperties {
 
     public void setPublic(LimitConfig publicEndpoint) {
         this.publicEndpoint = publicEndpoint;
+    }
+
+    public LimitConfig getForgotPassword() {
+        return forgotPassword;
+    }
+
+    public void setForgotPassword(LimitConfig forgotPassword) {
+        this.forgotPassword = forgotPassword;
     }
 
     public static class LimitConfig {

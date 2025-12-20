@@ -102,6 +102,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/signup")) {
             return RateLimitService.RateLimitType.REGISTER;
         }
+        // Forgot password - stricter limit to prevent email spam
+        if (path.startsWith("/api/auth/password/forgot") || path.startsWith("/api/auth/password/reset")) {
+            return RateLimitService.RateLimitType.FORGOT_PASSWORD;
+        }
         if (isPublicEndpoint(path, method)) {
             return RateLimitService.RateLimitType.PUBLIC;
         }
