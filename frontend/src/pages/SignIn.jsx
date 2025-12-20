@@ -16,7 +16,7 @@ import {
 import { Close, Google, Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import { keyframes } from "@mui/system";
 import { useAuth } from "../context/AuthContext";
-import { userService } from "../api";
+import { userService, passwordService } from "../api";
 
 // Animations
 const fadeIn = keyframes`
@@ -58,6 +58,12 @@ const SignIn = () => {
     password: "",
     confirmPassword: "",
   });
+
+  // Forgot Password State
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordStatus, setForgotPasswordStatus] = useState("idle"); // idle, loading, success, error
+  const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
 
   // Redirect if already authenticated
   const from = location.state?.from?.pathname || "/dashboard";
@@ -104,13 +110,19 @@ const SignIn = () => {
         console.error("Sign in error:", err);
         // Better error messages for common cases
         const status = err.response?.status;
-        const serverMessage = err.response?.data?.message;
+        const serverMessage = err.response?.data?.message || err.response?.data;
         
-        if (status === 401 || status === 403) {
-          setError("Mật khẩu không chính xác. Vui lòng thử lại.");
+        // Check for banned account
+        if (serverMessage === "Your account has been banned" || 
+            (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
+          setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
+        } else if (serverMessage === "Invalid username or password" || status === 401) {
+          setError("Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.");
+        } else if (status === 403) {
+          setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
         } else if (status === 404) {
           setError("Tài khoản không tồn tại. Vui lòng kiểm tra lại tên đăng nhập.");
-        } else if (serverMessage) {
+        } else if (typeof serverMessage === "string" && serverMessage) {
           setError(serverMessage);
         } else if (err.message) {
           setError(err.message);
@@ -138,6 +150,36 @@ const SignIn = () => {
     setError("");
   };
 
+  // Handle Forgot Password
+  const handleForgotPasswordOpen = () => {
+    setSignInOpen(false);
+    setForgotPasswordOpen(true);
+    setForgotPasswordStatus("idle");
+    setForgotPasswordEmail("");
+    setForgotPasswordMessage("");
+  };
+
+  const handleForgotPasswordClose = () => {
+    setForgotPasswordOpen(false);
+    setSignInOpen(true);
+  };
+
+  const handleForgotPasswordSubmit = async () => {
+    if (!forgotPasswordEmail) return;
+
+    setForgotPasswordStatus("loading");
+    setForgotPasswordMessage("");
+
+    try {
+      const response = await passwordService.forgotPassword(forgotPasswordEmail);
+      setForgotPasswordStatus("success");
+      setForgotPasswordMessage(response.message || "Chúng tôi đã gửi link đặt lại mật khẩu vào email của bạn.");
+    } catch (err) {
+      setForgotPasswordStatus("error");
+      setForgotPasswordMessage(err.response?.data?.message || "Không thể gửi email. Vui lòng thử lại sau.");
+    }
+  };
+
   const handleSignUpSubmit = async () => {
     // Frontend validation
     if (signUpData.username.length < 3) {
@@ -162,10 +204,26 @@ const SignIn = () => {
         password: signUpData.password,
         confirmPassword: signUpData.confirmPassword,
       });
-      // After successful registration, log them in
-      await login(signUpData.username, signUpData.password);
+      
+      // Don't auto-login. Show success message asking to verify email.
       handleSignUpClose();
-      navigate(from, { replace: true });
+      // Use a small delay to ensure modal close animation finishes if needed, or just navigate/show alert
+      // Ideally show a success dialog or alert. For now, let's reuse setError to show success on the main screen 
+      // OR navigate to a specific "Check Email" page? 
+      // The implementation plan suggested: "Hiện thông báo kiểm tra email xác nhận"
+      // We can use a simple alert() for now or navigate to a specialized page if we had one.
+      // Let's navigate to /verify-email without a token but with a state
+      // actually, since we don't have a "CheckEmail" page, let's redirect to a verify-email page 
+      // that is slightly modified to show "Check your email" instruction if no token is present?
+      // Or just navigate to / with a state message.
+      
+      // Better: Show a success dialog here. But to keep it simple as per plan:
+      // "Sau đăng ký thành công, hiện thông báo kiểm tra email"
+      
+      // Let's create a temporary success state
+      alert("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.");
+      handleSignInOpen();
+
     } catch (err) {
       console.error("Sign up error:", err);
       // Handle different error response formats
@@ -269,7 +327,7 @@ const SignIn = () => {
         display: "flex",
         minHeight: "100vh",
         background: colors.bgGradient,
-        fontFamily: "'Outfit', 'Segoe UI', sans-serif",
+        fontFamily: "'Roboto', 'Inter', sans-serif",
         position: "relative",
         overflow: "hidden",
       }}
@@ -405,7 +463,7 @@ const SignIn = () => {
         <Typography
           variant="h1"
           sx={{
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Roboto', 'Inter', sans-serif",
             fontWeight: 800,
             fontSize: { xs: 40, md: 52, lg: 60 },
             color: colors.text,
@@ -420,7 +478,7 @@ const SignIn = () => {
         <Typography
           variant="h2"
           sx={{
-            fontFamily: "'Outfit', sans-serif",
+            fontFamily: "'Roboto', 'Inter', sans-serif",
             fontWeight: 600,
             fontSize: { xs: 22, md: 28 },
             color: colors.textSecondary,
@@ -637,6 +695,7 @@ const SignIn = () => {
                     color: colors.primary,
                   },
                 }}
+                onClick={handleForgotPasswordOpen}
               >
                 Quên mật khẩu?
               </Button>
@@ -757,6 +816,7 @@ const SignIn = () => {
                 Quên mật khẩu?{" "}
                 <Typography
                   component="span"
+                  onClick={handleForgotPasswordOpen}
                   sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500, "&:hover": { textDecoration: "underline" } }}
                 >
                   Đặt lại
@@ -1058,6 +1118,157 @@ const SignIn = () => {
               Đăng nhập
             </Typography>
           </Typography>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forgot Password Modal */}
+      <Dialog
+        open={forgotPasswordOpen}
+        onClose={handleForgotPasswordClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: colors.white,
+            borderRadius: "24px",
+            maxWidth: 500,
+            padding: 2,
+            boxShadow: "0 25px 60px rgba(67, 160, 71, 0.2)",
+          },
+        }}
+        BackdropProps={{
+          sx: {
+            backgroundColor: "rgba(46, 125, 50, 0.15)",
+            backdropFilter: "blur(4px)",
+          },
+        }}
+      >
+        <Box sx={{ position: "relative", p: 1 }}>
+          <IconButton
+            onClick={handleForgotPasswordClose}
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              color: colors.textSecondary,
+              "&:hover": { backgroundColor: "rgba(67, 160, 71, 0.1)" },
+            }}
+          >
+            <Close />
+          </IconButton>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              textAlign: "center",
+              color: colors.text,
+              mt: 1,
+            }}
+          >
+            Quên mật khẩu
+          </Typography>
+        </Box>
+
+        <DialogContent sx={{ px: { xs: 4, md: 6 }, pb: 5 }}>
+          <Typography
+            sx={{
+              textAlign: "center",
+              color: colors.textSecondary,
+              mb: 4,
+              fontSize: 15,
+            }}
+          >
+            Nhập email của bạn để nhận liên kết đặt lại mật khẩu.
+          </Typography>
+
+          {forgotPasswordStatus === "success" ? (
+            <Box sx={{ textAlign: "center", py: 2 }}>
+              <Alert severity="success" sx={{ mb: 3, borderRadius: "12px", textAlign: "left" }}>
+                {forgotPasswordMessage}
+              </Alert>
+              <Button
+                variant="contained"
+                onClick={handleForgotPasswordClose}
+                sx={greenFilledButtonSx}
+              >
+                Quay lại đăng nhập
+              </Button>
+            </Box>
+          ) : (
+            <>
+              {forgotPasswordStatus === "error" && (
+                <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }}>
+                  {forgotPasswordMessage}
+                </Alert>
+              )}
+
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={forgotPasswordEmail}
+                onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && forgotPasswordEmail) {
+                    handleForgotPasswordSubmit();
+                  }
+                }}
+                variant="outlined"
+                sx={{
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "12px",
+                    backgroundColor: "#f8fdf8",
+                    "& fieldset": { borderColor: colors.border },
+                    "&:hover fieldset": { borderColor: colors.primary },
+                    "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+                  },
+                  "& .MuiInputLabel-root": { color: colors.textSecondary },
+                  "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+                }}
+              />
+
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={!forgotPasswordEmail || forgotPasswordStatus === "loading"}
+                onClick={handleForgotPasswordSubmit}
+                sx={{
+                  height: 48,
+                  borderRadius: "50px",
+                  background: forgotPasswordEmail 
+                    ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
+                    : "#e0e0e0",
+                  color: forgotPasswordEmail ? colors.white : "#9e9e9e",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  textTransform: "none",
+                  boxShadow: forgotPasswordEmail ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
+                  "&:hover": {
+                    background: forgotPasswordEmail 
+                      ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
+                      : "#e0e0e0",
+                  },
+                }}
+              >
+                {forgotPasswordStatus === "loading" ? <CircularProgress size={24} color="inherit" /> : "Gửi link đặt lại mật khẩu"}
+              </Button>
+            </>
+          )}
+
+          <Button
+            variant="text"
+            fullWidth
+            onClick={handleForgotPasswordClose}
+            sx={{
+              mt: 2,
+              color: colors.primary,
+              fontWeight: 600,
+              textTransform: "none",
+            }}
+          >
+            Quay lại đăng nhập
+          </Button>
         </DialogContent>
       </Dialog>
     </Box>

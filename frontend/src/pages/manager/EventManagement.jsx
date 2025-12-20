@@ -14,6 +14,7 @@ import { ThreeColumnLayout, DataTable, ConfirmDialog } from "../../components/co
 import { managerService } from "../../api/services/manager.service";
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { buildEventUrl, buildManageEventUrl, buildEditEventUrl } from "../../utils/urlUtils";
 
 const EventManagement = () => {
   const navigate = useNavigate();
@@ -160,17 +161,17 @@ const EventManagement = () => {
     {
       label: "Xem",
       icon: <Visibility sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(`/events/${row.eventId}`),
+      onClick: (row) => navigate(buildEventUrl(row)),
     },
     {
       label: "Quản lý",
       icon: <People sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(`/manage/events/${row.eventId}`),
+      onClick: (row) => navigate(buildManageEventUrl(row)),
     },
     {
       label: "Sửa",
       icon: <Edit sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(`/manage/events/${row.eventId}/edit`),
+      onClick: (row) => navigate(buildEditEventUrl(row)),
     },
     {
       label: "Xóa",

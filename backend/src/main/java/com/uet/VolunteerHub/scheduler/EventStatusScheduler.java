@@ -5,6 +5,8 @@ import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.EventRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,10 @@ public class EventStatusScheduler {
      */
     @Scheduled(fixedRate = 300000) // 5 minutes = 300,000 ms
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "events", allEntries = true),
+        @CacheEvict(value = "adminDashboard", allEntries = true)
+    })
     public void updateEventStatuses() {
         OffsetDateTime now = OffsetDateTime.now();
         

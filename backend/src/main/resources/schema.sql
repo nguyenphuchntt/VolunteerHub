@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS media (
 CREATE TABLE IF NOT EXISTS event (
     event_id BIGINT NOT NULL AUTO_INCREMENT,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255),
     description TEXT,
     category VARCHAR(255) NOT NULL,
     location VARCHAR(255),

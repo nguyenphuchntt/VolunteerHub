@@ -57,7 +57,7 @@ const AppFooter = ({ variant = "minimal" }) => {
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           {/* Brand */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Typography
               variant="h5"
               fontWeight={700}
@@ -97,7 +97,7 @@ const AppFooter = ({ variant = "minimal" }) => {
           </Grid>
 
           {/* About Links */}
-          <Grid item xs={6} sm={3} md={2}>
+          <Grid size={{ xs: 6, sm: 3, md: 2 }}>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
               Về Chúng Tôi
             </Typography>
@@ -118,7 +118,7 @@ const AppFooter = ({ variant = "minimal" }) => {
           </Grid>
 
           {/* Activity Links */}
-          <Grid item xs={6} sm={3} md={2}>
+          <Grid size={{ xs: 6, sm: 3, md: 2 }}>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
               Hoạt Động
             </Typography>
@@ -139,7 +139,7 @@ const AppFooter = ({ variant = "minimal" }) => {
           </Grid>
 
           {/* Resources Links */}
-          <Grid item xs={6} sm={3} md={2}>
+          <Grid size={{ xs: 6, sm: 3, md: 2 }}>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
               Tài Nguyên
             </Typography>
@@ -160,7 +160,7 @@ const AppFooter = ({ variant = "minimal" }) => {
           </Grid>
 
           {/* Support Links */}
-          <Grid item xs={6} sm={3} md={2}>
+          <Grid size={{ xs: 6, sm: 3, md: 2 }}>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>
               Hỗ Trợ
             </Typography>

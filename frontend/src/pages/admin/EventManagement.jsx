@@ -23,10 +23,14 @@ import {
   Delete,
   Refresh,
   Event,
+  People,
+  Edit,
 } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog } from "../../components/common";
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import { buildEventUrl, buildManageEventUrl, buildEditEventUrl } from "../../utils/urlUtils";
+import { getCategoryLabel } from "../../constants/categories";
 
 const AdminEventManagement = () => {
   const navigate = useNavigate();
@@ -142,7 +146,7 @@ const AdminEventManagement = () => {
       id: "category",
       label: "Danh mục",
       render: (value) => (
-        <Chip label={value || "Khác"} size="small" sx={{ fontSize: "11px" }} />
+        <Chip label={getCategoryLabel(value)} size="small" sx={{ fontSize: "11px" }} />
       ),
     },
     {
@@ -223,7 +227,17 @@ const AdminEventManagement = () => {
     {
       label: "Xem",
       icon: <Visibility sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(`/events/${row.eventId}`),
+      onClick: (row) => navigate(buildEventUrl(row)),
+    },
+    {
+      label: "Quản lý",
+      icon: <People sx={{ fontSize: 18 }} />,
+      onClick: (row) => navigate(buildManageEventUrl(row)),
+    },
+    {
+      label: "Sửa",
+      icon: <Edit sx={{ fontSize: 18 }} />,
+      onClick: (row) => navigate(buildEditEventUrl(row)),
     },
     {
       label: "Duyệt",

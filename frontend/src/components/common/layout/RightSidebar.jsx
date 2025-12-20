@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import { Search, TrendingUp, CalendarMonth, LocationOn } from "@mui/icons-material";
 import { eventService } from "../../../api";
+import { buildEventUrl } from "../../../utils/urlUtils";
+import { getCategoryLabel } from "../../../constants/categories";
 
 const RIGHT_WIDTH = 350;
 
@@ -31,10 +33,14 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
       setLoading(true);
       try {
         const [hotResponse, upcomingResponse] = await Promise.all([
-          eventService.getHotEvents(0, 4),
+          eventService.getHotEvents(0, 8), // Fetch more to account for filtering
           eventService.getUpcomingEvents(0, 3)
         ]);
-        setTrendingEvents(hotResponse.content || []);
+        // Filter out FINISHED and CANCELLED events from hot events
+        const activeHotEvents = (hotResponse.content || [])
+          .filter(event => event.status !== 'FINISHED' && event.status !== 'CANCELLED')
+          .slice(0, 4);
+        setTrendingEvents(activeHotEvents);
         setUpcomingEvents(upcomingResponse.content || []);
       } catch (err) {
         console.error("Failed to fetch sidebar events:", err);
@@ -132,7 +138,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
             trendingEvents.map((event, index) => (
               <Box key={event.eventId}>
                 <Box
-                  onClick={() => navigate(`/events/${event.eventId}`)}
+                  onClick={() => navigate(buildEventUrl(event))}
                   sx={{
                     py: 1.5,
                     cursor: "pointer",
@@ -142,7 +148,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="caption" color="text.secondary">
-                        {event.category || "Sự kiện"} · #{index + 1} Trending
+                        {getCategoryLabel(event.category) || "Sự kiện"} · #{index + 1} Trending
                       </Typography>
                       <Typography variant="body2" fontWeight={700} noWrap>
                         {event.title}
@@ -204,7 +210,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
             upcomingEvents.map((event, index) => (
               <Box key={event.eventId}>
                 <Box
-                  onClick={() => navigate(`/events/${event.eventId}`)}
+                  onClick={() => navigate(buildEventUrl(event))}
                   sx={{
                     py: 1.5,
                     cursor: "pointer",

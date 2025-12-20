@@ -147,52 +147,52 @@ const AdminDashboard = () => {
       </Box>
 
       <Box sx={{ p: 2 }}>
-        {/* Stats Grid */}
+        {/* Stats Grid - 2 cards in a row, fill evenly */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {statsCards.map((stat, index) => (
-            <Grid item xs={6} md={3} key={index}>
-              <StatsCard {...stat} />
+            <Grid size={6} key={index} sx={{ display: 'flex' }}>
+              <StatsCard {...stat} sx={{ flex: 1, height: '100%' , width: '40%'}} />
             </Grid>
           ))}
         </Grid>
 
-        {/* Detailed Stats Cards */}
+        {/* Detailed Stats Cards - 2 columns layout */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-           <Grid item xs={12} md={12}>
+           <Grid size={{ xs: 12, sm: 6 }}>
                 <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
-                    <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <CheckCircle color="success" />
-                            <Typography variant="subtitle1" fontWeight={600}>Hiệu suất sự kiện</Typography>
+                    <CardContent sx={{ p: 2.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                            <CheckCircle color="success" sx={{ fontSize: 20 }} />
+                            <Typography variant="subtitle2" fontWeight={600}>Hiệu suất sự kiện</Typography>
                         </Box>
-                        <Typography variant="body2" color="text.secondary">Tổng người tham gia: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.totalAttendees}</Typography></Typography>
-                        <Typography variant="body2" color="text.secondary">Tỷ lệ hoàn thành: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.completionRate?.toFixed(2)}%</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Tổng người tham gia: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.totalAttendees}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Tỷ lệ hoàn thành: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.completionRate?.toFixed(2)}%</Typography></Typography>
                         <Typography variant="body2" color="text.secondary">TB người/sự kiện: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.performance?.avgAttendeesPerEvent?.toFixed(2)}</Typography></Typography>
                     </CardContent>
                 </Card>
            </Grid>
-           <Grid item xs={12} md={12}>
+           <Grid size={{ xs: 12, sm: 6 }}>
                 <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
-                    <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <AccessTime color="info" />
-                            <Typography variant="subtitle1" fontWeight={600}>Trạng thái sự kiện</Typography>
+                    <CardContent sx={{ p: 2.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                            <AccessTime color="info" sx={{ fontSize: 20 }} />
+                            <Typography variant="subtitle2" fontWeight={600}>Trạng thái sự kiện</Typography>
                         </Box>
-                        <Typography variant="body2" color="text.secondary">Đang diễn ra: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.ongoing}</Typography></Typography>
-                        <Typography variant="body2" color="text.secondary">Đã kết thúc: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.finished}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Đang diễn ra: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.ongoing}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Đã kết thúc: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.finished}</Typography></Typography>
                         <Typography variant="body2" color="text.secondary">Đã hủy: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.events?.summary?.cancelled}</Typography></Typography>
                     </CardContent>
                 </Card>
            </Grid>
-           <Grid item xs={12} md={12}>
+           <Grid size={{ xs: 12, sm: 6 }}>
                 <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
-                    <CardContent>
-                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <People color="primary" />
-                            <Typography variant="subtitle1" fontWeight={600}>Phân loại người dùng</Typography>
+                    <CardContent sx={{ p: 2.5 }}>
+                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                            <People color="primary" sx={{ fontSize: 20 }} />
+                            <Typography variant="subtitle2" fontWeight={600}>Phân loại người dùng</Typography>
                         </Box>
-                        <Typography variant="body2" color="text.secondary">Người dùng: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.USER}</Typography></Typography>
-                        <Typography variant="body2" color="text.secondary">Quản lý: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.MANAGER}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Người dùng: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.USER}</Typography></Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>Quản lý: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.MANAGER}</Typography></Typography>
                         <Typography variant="body2" color="text.secondary">Admin: <Typography component="span" fontWeight="bold" color="text.primary">{overview?.users?.byRole?.ADMIN}</Typography></Typography>
                     </CardContent>
                 </Card>

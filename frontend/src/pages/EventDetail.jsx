@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import ConfirmJoinDialog from "../components/events/ConfirmJoinDialog";
 import WritePost from "../components/SocialFeed/WritePost";
@@ -6,6 +6,8 @@ import PostCard from "../components/SocialFeed/PostCard";
 import { ThreeColumnLayout, ConfirmDialog } from "../components/common";
 import { eventService, myEventsService, postService, eventUserService, mediaService } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { extractEventIdFromSlug, buildEventUrl } from "../utils/urlUtils";
+import { getCategoryLabel } from "../constants/categories";
 
 import {
   Box,
@@ -33,12 +35,13 @@ import {
 } from "@mui/icons-material";
 
 const EventDetail = () => {
-  const { eventId } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, isManager } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
 
-  
+  // Extract eventId from slug-id pattern (e.g., "chuong-trinh-123" -> "123")
+  const eventId = useMemo(() => extractEventIdFromSlug(slug), [slug]);
   // API states
   const [event, setEvent] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -419,7 +422,7 @@ const EventDetail = () => {
         </Box>
         
         <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
-          {event.category && <Chip label={event.category} size="small" color="primary" />}
+          {event.category && <Chip label={getCategoryLabel(event.category)} size="small" color="primary" />}
           {statusDisplay && <Chip label={statusDisplay} size="small" variant="outlined" />}
         </Box>
         
@@ -559,7 +562,7 @@ const EventDetail = () => {
       {/* Feed Tab */}
       {activeTab === 0 && (
         <Box sx={{ p: 2 }}>
-          {isAuthenticated && participationStatus === 'APPROVED' && (
+          {isAuthenticated && participationStatus === 'APPROVED' && event?.status?.toUpperCase() !== 'FINISHED' && (
             <WritePost 
               currentUser={user} 
               eventId={parseInt(eventId)} 
@@ -572,6 +575,7 @@ const EventDetail = () => {
                 key={post.postId || post.id} 
                 post={post} 
                 onPostUpdated={fetchPosts}
+                disableInteraction={event?.status?.toUpperCase() === 'FINISHED'}
               />
             ))
           ) : (
@@ -616,7 +620,7 @@ const EventDetail = () => {
           {participants.length > 0 ? (
             <Grid container spacing={1}>
               {participants.map((participant) => (
-                <Grid item xs={6} key={participant.accountId || participant.id}>
+              <Grid size={6} key={participant.accountId || participant.id}>
                   <Box
                     onClick={() => participant.username && navigate(`/profiles/${participant.username}`)}
                     sx={{

@@ -6,6 +6,8 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import EventFeed from "./pages/EventFeed";
 import EventDetail from "./pages/EventDetail";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 
 // Volunteer Pages
 import { VolunteerDashboard, Notifications } from "./pages/volunteer";
@@ -41,7 +43,9 @@ function App() {
           <Route path="/signup" element={<Auth />} />
           <Route path="/signin" element={<Auth />} />
           <Route path="/explore" element={<EventFeed />} />
-          <Route path="/events/:eventId" element={<EventDetail />} />
+          <Route path="/events/:slug" element={<EventDetail />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
 
           {/* Protected Volunteer Routes */}
@@ -100,12 +104,12 @@ function App() {
               <EventForm />
             </ProtectedRoute>
           } />
-          <Route path="/manage/events/:eventId/edit" element={
+          <Route path="/manage/events/:slug/edit" element={
             <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
               <EventForm />
             </ProtectedRoute>
           } />
-          <Route path="/manage/events/:id" element={
+          <Route path="/manage/events/:slug" element={
             <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
               <EventDetailManagement />
             </ProtectedRoute>

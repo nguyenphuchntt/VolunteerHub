@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -17,9 +17,10 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Avatar,
   Alert,
   Snackbar,
+  CircularProgress,
+  TextField,
 } from "@mui/material";
 import {
   Download,
@@ -27,51 +28,118 @@ import {
   People,
   TableChart,
   Code,
-  CalendarMonth,
   CheckCircle,
+  Refresh,
 } from "@mui/icons-material";
 import { ThreeColumnLayout } from "../../components/common";
-import { mockUsers as currentUser } from "../../data/mockData";
-import { mockEvents } from "../../data/mockEvents";
-import { mockAllUsers } from "../../data/mockAdminData";
+import { useAuth } from "../../context/AuthContext";
+import { adminService } from "../../api";
+import { getCategoryLabel } from "../../constants/categories";
 
 const DataExport = () => {
-  const user = currentUser[0];
+  const { user } = useAuth();
   
-  const [exportType, setExportType] = useState("events");
+  const [exportType, setExportType] = useState("events"); // events, eventUsers
   const [exportFormat, setExportFormat] = useState("csv");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Data states
+  const [eventsData, setEventsData] = useState([]);
+  const [eventUsersData, setEventUsersData] = useState([]);
+  
+  // Filter states
+  const [filterEventId, setFilterEventId] = useState("");
+  const [filterAccountId, setFilterAccountId] = useState("");
 
-  // Prepare data for preview
-  const eventsData = mockEvents.map((e) => ({
-    id: e.id,
-    title: e.title,
-    category: e.category,
-    date: e.date,
-    location: e.location,
-    status: e.status,
-    participants: e.participants.length,
-    interested: e.stats.interested,
-    going: e.stats.going,
-  }));
+  // Fetch all events
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await adminService.getAllEvents();
+      setEventsData(data || []);
+    } catch (err) {
+      console.error("Failed to fetch events:", err);
+      setError("Không thể tải dữ liệu sự kiện.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const volunteersData = mockAllUsers
-    .filter((u) => u.role === "volunteer")
-    .map((u) => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      status: u.status,
-      eventsJoined: u.eventsJoined,
-      hoursVolunteered: u.hoursVolunteered,
-      registeredAt: u.registeredAt,
-      lastActive: u.lastActive,
+  // Fetch event users based on filter
+  const fetchEventUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let data;
+      if (filterEventId) {
+        data = await adminService.getAllEventUsersByEvent(filterEventId);
+      } else if (filterAccountId) {
+        data = await adminService.getAllEventUsersByAccount(filterAccountId);
+      } else {
+        data = await adminService.getAllEventUsers();
+      }
+      setEventUsersData(data || []);
+    } catch (err) {
+      console.error("Failed to fetch event users:", err);
+      setError("Không thể tải dữ liệu đăng ký.");
+    } finally {
+      setLoading(false);
+    }
+  }, [filterEventId, filterAccountId]);
+
+  // Initial fetch based on export type
+  useEffect(() => {
+    if (exportType === "events") {
+      fetchEvents();
+    } else {
+      fetchEventUsers();
+    }
+  }, [exportType, fetchEvents, fetchEventUsers]);
+
+  // Get preview data
+  const previewData = exportType === "events" ? eventsData : eventUsersData;
+
+  // Prepare export data with proper columns
+  const prepareEventsExport = () => {
+    return eventsData.map((e) => ({
+      eventId: e.eventId,
+      title: e.title,
+      category: e.category,
+      location: e.location,
+      status: e.status,
+      startAt: e.startAt,
+      endAt: e.endAt,
+      attendeeCount: e.attendeeCount || 0,
+      likeCount: e.likeCount || 0,
+      createdAt: e.createAt,
     }));
+  };
 
-  const previewData = exportType === "events" ? eventsData : volunteersData;
+  const prepareEventUsersExport = () => {
+    return eventUsersData.map((eu) => ({
+      eventId: eu.eventId,
+      eventTitle: eu.title,
+      accountId: eu.accountId,
+      username: eu.username,
+      firstName: eu.firstName,
+      lastName: eu.lastName,
+      role: eu.role,
+      status: eu.status,
+      registeredAt: eu.registeredAt,
+    }));
+  };
 
   const handleExport = () => {
-    const data = exportType === "events" ? eventsData : volunteersData;
+    const data = exportType === "events" ? prepareEventsExport() : prepareEventUsersExport();
+    
+    if (data.length === 0) {
+      setError("Không có dữ liệu để xuất.");
+      return;
+    }
+
     let content = "";
     let filename = "";
     let mimeType = "";
@@ -79,10 +147,18 @@ const DataExport = () => {
     if (exportFormat === "csv") {
       // Convert to CSV
       const headers = Object.keys(data[0]).join(",");
-      const rows = data.map((row) => Object.values(row).join(",")).join("\n");
+      const rows = data.map((row) => 
+        Object.values(row).map(val => {
+          // Escape commas and quotes in CSV
+          if (typeof val === "string" && (val.includes(",") || val.includes('"'))) {
+            return `"${val.replace(/"/g, '""')}"`;
+          }
+          return val ?? "";
+        }).join(",")
+      ).join("\n");
       content = `${headers}\n${rows}`;
       filename = `${exportType}_export_${new Date().toISOString().split("T")[0]}.csv`;
-      mimeType = "text/csv";
+      mimeType = "text/csv;charset=utf-8";
     } else {
       // Convert to JSON
       content = JSON.stringify(data, null, 2);
@@ -90,8 +166,9 @@ const DataExport = () => {
       mimeType = "application/json";
     }
 
-    // Create download link
-    const blob = new Blob([content], { type: mimeType });
+    // Create download link with BOM for UTF-8 CSV
+    const bom = exportFormat === "csv" ? "\uFEFF" : "";
+    const blob = new Blob([bom + content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -104,6 +181,19 @@ const DataExport = () => {
     setShowSuccess(true);
   };
 
+  const getStatusLabel = (status) => {
+    const labels = {
+      PENDING: "Chờ duyệt",
+      SCHEDULED: "Đã duyệt",
+      STARTED: "Đang diễn ra",
+      FINISHED: "Hoàn thành",
+      CANCELLED: "Đã hủy",
+      APPROVED: "Đã duyệt",
+      REJECTED: "Từ chối",
+    };
+    return labels[status?.toUpperCase()] || status;
+  };
+
   return (
     <ThreeColumnLayout user={user} role="admin" showRightSidebar={true} showSearch={false}>
       {/* Header */}
@@ -112,10 +202,26 @@ const DataExport = () => {
           <Typography variant="h6" fontWeight={700}>
             Xuất dữ liệu
           </Typography>
+          <Button
+            size="small"
+            startIcon={<Refresh />}
+            onClick={exportType === "events" ? fetchEvents : fetchEventUsers}
+            disabled={loading}
+            sx={{ textTransform: "none" }}
+          >
+            Làm mới
+          </Button>
         </Box>
       </Box>
 
       <Box sx={{ p: 2 }}>
+        {/* Error Alert */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2, borderRadius: "12px" }} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+
         {/* Export Options */}
         <Card
           elevation={0}
@@ -148,9 +254,9 @@ const DataExport = () => {
                     Sự kiện
                   </Button>
                   <Button
-                    variant={exportType === "volunteers" ? "contained" : "outlined"}
+                    variant={exportType === "eventUsers" ? "contained" : "outlined"}
                     startIcon={<People />}
-                    onClick={() => setExportType("volunteers")}
+                    onClick={() => setExportType("eventUsers")}
                     sx={{
                       flex: 1,
                       borderRadius: "12px",
@@ -159,7 +265,7 @@ const DataExport = () => {
                       py: 1.5,
                     }}
                   >
-                    Tình nguyện viên
+                    Đăng ký SK
                   </Button>
                 </Box>
               </Box>
@@ -202,6 +308,30 @@ const DataExport = () => {
               </Box>
             </Box>
 
+            {/* Filters for Event Users */}
+            {exportType === "eventUsers" && (
+              <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+                <TextField
+                  label="Lọc theo Event ID"
+                  size="small"
+                  value={filterEventId}
+                  onChange={(e) => {
+                    setFilterEventId(e.target.value);
+                    setFilterAccountId("");
+                  }}
+                  sx={{ minWidth: 180 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={fetchEventUsers}
+                  disabled={loading}
+                  sx={{ textTransform: "none" }}
+                >
+                  Áp dụng
+                </Button>
+              </Box>
+            )}
+
             {/* Export Summary */}
             <Box
               sx={{
@@ -220,7 +350,7 @@ const DataExport = () => {
                   Sẽ xuất
                 </Typography>
                 <Typography variant="h6" fontWeight={700} color="primary.main">
-                  {previewData.length} {exportType === "events" ? "sự kiện" : "tình nguyện viên"}
+                  {loading ? "Đang tải..." : `${previewData.length} ${exportType === "events" ? "sự kiện" : "bản ghi"}`}
                 </Typography>
               </Box>
               <Chip
@@ -246,72 +376,92 @@ const DataExport = () => {
               Xem trước dữ liệu
             </Typography>
 
-            <TableContainer
-              component={Paper}
-              elevation={0}
-              sx={{ border: "1px solid", borderColor: "grey.200", borderRadius: "12px" }}
-            >
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    {exportType === "events" ? (
-                      <>
-                        <TableCell sx={{ fontWeight: 700 }}>Tên sự kiện</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Danh mục</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Ngày</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Trạng thái</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Tham gia</TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell sx={{ fontWeight: 700 }}>Tên</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Trạng thái</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Sự kiện</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Giờ TN</TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {previewData.slice(0, 5).map((row, index) => (
-                    <TableRow key={index}>
+            {loading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : previewData.length > 0 ? (
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{ border: "1px solid", borderColor: "grey.200", borderRadius: "12px" }}
+              >
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
                       {exportType === "events" ? (
                         <>
-                          <TableCell>{row.title}</TableCell>
-                          <TableCell>
-                            <Chip label={row.category} size="small" />
-                          </TableCell>
-                          <TableCell>{new Date(row.date).toLocaleDateString("vi-VN")}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={row.status}
-                              size="small"
-                              color={row.status === "upcoming" ? "primary" : "default"}
-                            />
-                          </TableCell>
-                          <TableCell>{row.going}</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Tên sự kiện</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Danh mục</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Trạng thái</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>TNV</TableCell>
                         </>
                       ) : (
                         <>
-                          <TableCell>{row.name}</TableCell>
-                          <TableCell>{row.email}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={row.status === "active" ? "Hoạt động" : "Đã khóa"}
-                              size="small"
-                              color={row.status === "active" ? "success" : "error"}
-                            />
-                          </TableCell>
-                          <TableCell>{row.eventsJoined}</TableCell>
-                          <TableCell>{row.hoursVolunteered}h</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Event ID</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Sự kiện</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Người dùng</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Vai trò</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Trạng thái</TableCell>
                         </>
                       )}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {previewData.slice(0, 5).map((row, index) => (
+                      <TableRow key={index}>
+                        {exportType === "events" ? (
+                          <>
+                            <TableCell>{row.eventId}</TableCell>
+                            <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {row.title}
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={getCategoryLabel(row.category)} size="small" />
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={getStatusLabel(row.status)}
+                                size="small"
+                                color={row.status === "SCHEDULED" || row.status === "STARTED" ? "primary" : "default"}
+                              />
+                            </TableCell>
+                            <TableCell>{row.attendeeCount || 0}</TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell>{row.eventId}</TableCell>
+                            <TableCell sx={{ maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {row.title}
+                            </TableCell>
+                            <TableCell>{row.firstName} {row.lastName || row.username}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={row.role === "MANAGER" ? "Quản lý" : "Thành viên"}
+                                size="small"
+                                color={row.role === "MANAGER" ? "primary" : "default"}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={getStatusLabel(row.status)}
+                                size="small"
+                                color={row.status === "APPROVED" ? "success" : row.status === "PENDING" ? "warning" : "default"}
+                              />
+                            </TableCell>
+                          </>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
+                Không có dữ liệu
+              </Typography>
+            )}
 
             {previewData.length > 5 && (
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
@@ -328,6 +478,7 @@ const DataExport = () => {
           fullWidth
           startIcon={<Download />}
           onClick={handleExport}
+          disabled={loading || previewData.length === 0}
           sx={{
             borderRadius: "12px",
             textTransform: "none",

@@ -8,6 +8,7 @@ import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
+import com.uet.VolunteerHub.util.SlugUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -101,6 +102,8 @@ public class EventWriteService {
         builder.likeCount(0);
         builder.status(EventStatus.PENDING);
         Event event = builder.build();
+        // Generate slug from title
+        event.setSlug(SlugUtils.generateSlug(event.getTitle()));
         eventRepository.save(event);
         return mapToEventSearchDTO(event, account);
     }
@@ -151,6 +154,8 @@ public class EventWriteService {
         }
         builder.likeCount(0);
         Event event = builder.build();
+        // Generate slug from title
+        event.setSlug(SlugUtils.generateSlug(event.getTitle()));
         eventRepository.save(event);
         return mapToEventSearchDTO(event, account);
     }
@@ -206,6 +211,8 @@ public class EventWriteService {
         }
         if (eventUpdateDTO.getTitle() != null) {
             event.setTitle(eventUpdateDTO.getTitle());
+            // Update slug when title changes
+            event.setSlug(SlugUtils.generateSlug(eventUpdateDTO.getTitle()));
         }
         eventRepository.save(event);
         return mapToEventSearchDTO(event, event.getCreatedBy());

@@ -51,6 +51,7 @@ public class EventSearchService {
         var builder = EventSearchDTO.builder()
                 .eventId(event.getEventId())
                 .title(event.getTitle())
+                .slug(event.getSlug())
                 .description(event.getDescription())
                 .status(event.getStatus())
                 .attendeeCount(event.getAttendeeCount())

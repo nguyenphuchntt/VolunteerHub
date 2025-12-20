@@ -61,7 +61,7 @@ const getUserAvatarLetter = (user) => {
   return (user?.username || "?").charAt(0).toUpperCase();
 };
 
-const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
+const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = false }) => {
   const { user, isAuthenticated } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -410,8 +410,8 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
               </Typography>
             )}
 
-            {/* Write Comment */}
-            {isAuthenticated && (
+            {/* Write Comment - hide when event is finished */}
+            {isAuthenticated && !disableInteraction && (
               <Box sx={{ display: "flex", gap: 1.5, mt: 2 }}>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
                   {getUserAvatarLetter(user)}
@@ -530,6 +530,7 @@ PostCard.propTypes = {
   }).isRequired,
   onPostUpdated: PropTypes.func,
   onPostDeleted: PropTypes.func,
+  disableInteraction: PropTypes.bool,
 };
 
 export default PostCard;

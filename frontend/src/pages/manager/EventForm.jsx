@@ -27,15 +27,8 @@ import {
 import { ThreeColumnLayout } from "../../components/common";
 import { eventService, mediaService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
-
-const categories = [
-  "Environment",
-  "Community Service", 
-  "Education",
-  "Health & Wellness",
-  "Animal Welfare",
-  "Other",
-];
+import { buildEventUrl } from "../../utils/urlUtils";
+import { CATEGORY_OPTIONS } from "../../constants/categories";
 
 const EventForm = () => {
   const navigate = useNavigate();
@@ -159,7 +152,7 @@ const EventForm = () => {
       
       // Navigate to the event detail or management page
       setTimeout(() => {
-        navigate(`/events/${eventId}`);
+        navigate(buildEventUrl(createdEvent));
       }, 1500);
       
     } catch (err) {
@@ -228,8 +221,8 @@ const EventForm = () => {
               onChange={handleChange}
               label="Danh mục"
             >
-              {categories.map(cat => (
-                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+              {CATEGORY_OPTIONS.map(cat => (
+                <MenuItem key={cat.key} value={cat.key}>{cat.label}</MenuItem>
               ))}
             </Select>
           </FormControl>
