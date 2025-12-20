@@ -239,7 +239,6 @@ CREATE INDEX idx_event_location ON event(location);
 
 CREATE INDEX idx_account_create_at ON account(create_at);
 
-CREATE INDEX idx_notification_receiver_type_deleted ON notification(receiver_account_id, type, is_deleted);
 CREATE INDEX idx_notification_receiver_read_deleted ON notification(receiver_account_id, is_read, is_deleted);
 CREATE INDEX idx_notification_receiver_created ON notification(receiver_account_id, create_at DESC);
 
@@ -247,6 +246,5 @@ CREATE INDEX idx_event_user_status_role ON event_user(status, event_user_role);
 CREATE INDEX idx_event_user_account_role ON event_user(account_id, event_user_role);
 CREATE INDEX idx_event_user_status_registered ON event_user(status, registered_at DESC);
 
-CREATE INDEX idx_request_status ON request(status);
 CREATE INDEX idx_request_account_status ON request(account_id, status);
 CREATE INDEX idx_request_status_created ON request(status, created_at DESC);
