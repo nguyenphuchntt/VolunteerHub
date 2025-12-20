@@ -6,8 +6,6 @@ import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.service.RoleBasedNotificationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,21 +24,19 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/manager/notifications")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('MANAGER')")
 public class ManagerNotificationController {
 
     private final RoleBasedNotificationService roleBasedNotificationService;
     private final AccountRepository accountRepository;
 
+    @PreAuthorize("hasRole('MANAGER')")
     @GetMapping("/events")
     public ResponseEntity<Page<ManagerEventNotificationDTO>> getEventNotifications(
             Principal principal,
             @PageableDefault(size = 20, sort = "createAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        
         UUID managerId = getCurrentUserId(principal);
         Page<ManagerEventNotificationDTO> notifications = 
                 roleBasedNotificationService.getManagerEventNotifications(managerId, pageable);
-        
         return ResponseEntity.ok(notifications);
     }
 
@@ -48,17 +44,28 @@ public class ManagerNotificationController {
     public ResponseEntity<Page<ManagerJoinRequestNotificationDTO>> getJoinRequestNotifications(
             Principal principal,
             @PageableDefault(size = 20, sort = "registeredAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        UUID managerId = getCurrentUserId(principal);
+        UUID userId = getCurrentUserId(principal);
         Page<ManagerJoinRequestNotificationDTO> notifications = 
-                roleBasedNotificationService.getManagerJoinRequestNotifications(managerId, pageable);
+                roleBasedNotificationService.getManagerJoinRequestNotifications(userId, pageable);
         return ResponseEntity.ok(notifications);
     }
 
     @GetMapping("/counts")
-    public ResponseEntity<Map<String, Long>> getNotificationCounts(Principal principal) {
-        UUID managerId = getCurrentUserId(principal);
-        long unreadEventNotifications = roleBasedNotificationService.countUnreadManagerEventNotifications(managerId);
-        long pendingJoinRequests = roleBasedNotificationService.countPendingJoinRequests(managerId);
+    public ResponseEntity<Map<String, Object>> getNotificationCounts(Principal principal) {
+        UUID userId = getCurrentUserId(principal);
+        
+        // Check if user has UserRole.MANAGER for event notifications
+        Account account = accountRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        long unreadEventNotifications = 0;
+        if (account.getRole() == com.uet.VolunteerHub.enums.UserRole.MANAGER) {
+            unreadEventNotifications = roleBasedNotificationService.countUnreadManagerEventNotifications(userId);
+        }
+        
+        // Pending join requests - for EventUserRole.MANAGER (query handles security)
+        long pendingJoinRequests = roleBasedNotificationService.countPendingJoinRequests(userId);
+        
         return ResponseEntity.ok(Map.of(
                 "unreadEventNotifications", unreadEventNotifications,
                 "pendingJoinRequests", pendingJoinRequests,

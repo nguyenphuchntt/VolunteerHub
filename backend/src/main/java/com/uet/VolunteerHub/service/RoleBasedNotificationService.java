@@ -40,10 +40,8 @@ public class RoleBasedNotificationService {
                 NotificationType.EVENT_APPROVED,
                 NotificationType.EVENT_REJECTED
         );
-
         Page<Notification> notifications = notificationRepository.findManagerEventNotifications(
                 managerId, types, pageable);
-
         return notifications.map(this::toManagerEventNotificationDTO);
     }
 
