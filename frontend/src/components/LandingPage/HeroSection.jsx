@@ -1,6 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="hero">
       <div className="container">
@@ -30,7 +33,7 @@ const HeroSection = () => {
               dọn rác, từ thiện, bình dân học vụ số và nhiều hoạt động ý nghĩa
               khác
             </p>
-            <button className="btn-primary">
+            <button className="btn-primary" onClick={() => navigate("/explore")}>
               <span>Tìm Hiểu Thêm</span>
               <img src="/images/arrow-up-right.svg" alt="" />
             </button>

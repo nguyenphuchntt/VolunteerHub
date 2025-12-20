@@ -9,6 +9,7 @@ import EventFeed from "./pages/EventFeed";
 import EventDetail from "./pages/EventDetail";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 
 // Volunteer Pages
 import { VolunteerDashboard, Notifications } from "./pages/volunteer";
@@ -122,32 +123,35 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* Protected Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/events" element={
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <AdminEventManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/users" element={
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <UserManagement />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/export" element={
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <DataExport />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/requests" element={
-              <ProtectedRoute requiredRoles={['ADMIN']}>
-                <RequestManagement />
-              </ProtectedRoute>
-            } />
+          {/* Protected Admin Routes */}
+          <Route path="/admin" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/events" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <AdminEventManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/users" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <UserManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/export" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <DataExport />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/requests" element={
+            <ProtectedRoute requiredRoles={['ADMIN']}>
+              <RequestManagement />
+            </ProtectedRoute>
+          } />
+
+          {/* 404 Not Found Route */}
+          <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </NotificationProvider>

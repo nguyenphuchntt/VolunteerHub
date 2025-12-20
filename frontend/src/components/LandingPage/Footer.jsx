@@ -16,16 +16,16 @@ const Footer = () => {
               <h4>Về Chúng Tôi</h4>
               <ul>
                 <li>
-                  <a href="#about">Giới thiệu</a>
+                  <a>Giới thiệu</a>
                 </li>
                 <li>
-                  <a href="#mission">Sứ mệnh</a>
+                  <a>Sứ mệnh</a>
                 </li>
                 <li>
-                  <a href="#team">Đội ngũ</a>
+                  <a>Đội ngũ</a>
                 </li>
                 <li>
-                  <a href="#contact">Liên hệ</a>
+                  <a>Liên hệ</a>
                 </li>
               </ul>
             </div>
@@ -34,16 +34,16 @@ const Footer = () => {
               <h4>Hoạt Động</h4>
               <ul>
                 <li>
-                  <a href="#events">Sự kiện</a>
+                  <a>Sự kiện</a>
                 </li>
                 <li>
-                  <a href="#campaigns">Chiến dịch</a>
+                  <a>Chiến dịch</a>
                 </li>
                 <li>
-                  <a href="#projects">Dự án</a>
+                  <a>Dự án</a>
                 </li>
                 <li>
-                  <a href="#volunteer">Tình nguyện</a>
+                  <a>Tình nguyện</a>
                 </li>
               </ul>
             </div>
@@ -52,36 +52,18 @@ const Footer = () => {
               <h4>Tài Nguyên</h4>
               <ul>
                 <li>
-                  <a href="#blog">Blog</a>
+                  <a>Blog</a>
                 </li>
                 <li>
-                  <a href="#news">Tin tức</a>
+                  <a>Tin tức</a>
                 </li>
                 <li>
-                  <a href="#gallery">Thư viện</a>
+                  <a>Thư viện</a>
                 </li>
                 <li>
-                  <a href="#faq">FAQ</a>
+                  <a>FAQ</a>
                 </li>
               </ul>
-            </div>
-
-            <div className="footer-column">
-              <h4>Kết Nối</h4>
-              <div className="social-links">
-                <a href="#" aria-label="Facebook">
-                  <i className="fab fa-facebook"></i>
-                </a>
-                <a href="#" aria-label="Instagram">
-                  <i className="fab fa-instagram"></i>
-                </a>
-                <a href="#" aria-label="Twitter">
-                  <i className="fab fa-twitter"></i>
-                </a>
-                <a href="#" aria-label="LinkedIn">
-                  <i className="fab fa-linkedin"></i>
-                </a>
-              </div>
             </div>
           </div>
         </div>
@@ -89,9 +71,9 @@ const Footer = () => {
         <div className="footer-bottom">
           <p>&copy; 2025 VolunteerHub. All rights reserved.</p>
           <div className="footer-legal">
-            <a href="#privacy">Chính sách bảo mật</a>
+            <a>Chính sách bảo mật</a>
             <span>|</span>
-            <a href="#terms">Điều khoản sử dụng</a>
+            <a>Điều khoản sử dụng</a>
           </div>
         </div>
       </div>
