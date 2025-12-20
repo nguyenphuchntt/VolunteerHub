@@ -8,6 +8,12 @@ export const eventService = {
     return response.data; // Page<EventSearchDTO>
   },
 
+  // GET /api/events/search (ADMIN only - returns all events including PENDING)
+  async searchAllEvents(params = {}) {
+    const response = await api.get('/events/search', { params });
+    return response.data; // Page<EventSearchDTO>
+  },
+
   // GET /api/events/{eventId} (public)
   async getEventById(eventId) {
     const response = await api.get(`/events/${eventId}`);

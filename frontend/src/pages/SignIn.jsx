@@ -569,6 +569,11 @@ const SignIn = () => {
                 label="Email hoặc tên người dùng"
                 value={signInData.username}
                 onChange={(e) => setSignInData({ ...signInData, username: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && signInData.username) {
+                    handleSignInNext();
+                  }
+                }}
                 variant="outlined"
                 sx={{
                   mb: 3,
@@ -662,6 +667,11 @@ const SignIn = () => {
                 label="Mật khẩu"
                 value={signInData.password}
                 onChange={(e) => setSignInData({ ...signInData, password: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && signInData.password && !loading) {
+                    handleSignInNext();
+                  }
+                }}
                 variant="outlined"
                 autoFocus
                 InputProps={{
@@ -850,6 +860,12 @@ const SignIn = () => {
               label="Tên người dùng"
               value={signUpData.username}
               onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  document.getElementById("signup-email")?.focus();
+                }
+              }}
               variant="outlined"
               sx={{
                 mb: 2.5,
@@ -865,13 +881,19 @@ const SignIn = () => {
               }}
             />
 
-
             <TextField
               fullWidth
+              id="signup-email"
               type="email"
               label="Email"
               value={signUpData.email}
               onChange={(e) => setSignUpData({ ...signUpData, email: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  document.getElementById("signup-password")?.focus();
+                }
+              }}
               variant="outlined"
               sx={{
                 mb: 2.5,
@@ -889,10 +911,17 @@ const SignIn = () => {
 
             <TextField
               fullWidth
+              id="signup-password"
               type={showPassword ? "text" : "password"}
               label="Mật khẩu"
               value={signUpData.password}
               onChange={(e) => setSignUpData({ ...signUpData, password: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  document.getElementById("signup-confirm-password")?.focus();
+                }
+              }}
               variant="outlined"
               InputProps={{
                 endAdornment: (
@@ -922,10 +951,16 @@ const SignIn = () => {
 
             <TextField
               fullWidth
+              id="signup-confirm-password"
               type={showConfirmPassword ? "text" : "password"}
               label="Xác nhận mật khẩu"
               value={signUpData.confirmPassword}
               onChange={(e) => setSignUpData({ ...signUpData, confirmPassword: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword && !loading) {
+                  handleSignUpSubmit();
+                }
+              }}
               variant="outlined"
               InputProps={{
                 endAdornment: (

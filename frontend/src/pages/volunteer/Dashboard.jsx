@@ -97,9 +97,18 @@ const VolunteerDashboard = () => {
 
   const statusConfig = {
     PENDING: { label: "Chờ duyệt", color: "warning" },
-    APPROVED: { label: "Đã tham gia", color: "success" },
+    APPROVED: { label: "Đã duyệt", color: "success" },
     REJECTED: { label: "Bị từ chối", color: "error" },
-    FINISHED: { label: "Đã xong", color: "info" },
+    FINISHED: { label: "Hoàn thành", color: "info" },
+    COMPLETED: { label: "Hoàn thành", color: "info" },
+    CANCELLED: { label: "Đã hủy", color: "default" },
+  };
+
+  // Role translation map
+  const roleConfig = {
+    MANAGER: "Quản lý",
+    ATTENDEE: "Thành viên",
+    VOLUNTEER: "Tình nguyện viên",
   };
 
   // Paginated events for View All dialog
@@ -117,6 +126,7 @@ const VolunteerDashboard = () => {
   // Render event item (reusable)
   const renderEventItem = (eventUser, index) => {
     const status = statusConfig[eventUser.status] || { label: eventUser.status, color: "default" };
+    const roleText = roleConfig[eventUser.role] || eventUser.role || "Tình nguyện viên";
 
     return (
       <Box
@@ -139,14 +149,14 @@ const VolunteerDashboard = () => {
             width: 60,
             height: 60,
             borderRadius: "8px",
-            background: getGradient(index),
+            background: eventUser.coverImageUrl ? `url(${eventUser.coverImageUrl}) center/cover` : getGradient(index),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0
           }}
         >
-          <Event sx={{ color: "white", fontSize: 24 }} />
+          {!eventUser.coverImageUrl && <Event sx={{ color: "white", fontSize: 24 }} />}
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="body2" fontWeight={600} noWrap>
@@ -155,11 +165,11 @@ const VolunteerDashboard = () => {
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
             <CalendarMonth sx={{ fontSize: 12, color: "text.secondary" }} />
             <Typography variant="caption" color="text.secondary">
-              {formatDate(eventUser.startAt)}
+              {formatDate(eventUser.eventStartAt)}
             </Typography>
           </Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-             Vai trò: <strong>{eventUser.role || "TNV"}</strong>
+             Vai trò: <strong>{roleText}</strong>
           </Typography>
         </Box>
         
@@ -303,7 +313,7 @@ const VolunteerDashboard = () => {
                   <Box>
                     <Typography variant="caption" color="text.secondary">Thời gian</Typography>
                     <Typography variant="body2" fontWeight={500}>
-                      {formatFullDate(previewEvent.startAt)}
+                      {formatFullDate(previewEvent.eventStartAt)}
                     </Typography>
                   </Box>
                 </Box>
@@ -323,7 +333,7 @@ const VolunteerDashboard = () => {
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">Vai trò của bạn</Typography>
-                    <Typography variant="body2" fontWeight={600}>{previewEvent.role || "Tình nguyện viên"}</Typography>
+                    <Typography variant="body2" fontWeight={600}>{roleConfig[previewEvent.role] || previewEvent.role || "Tình nguyện viên"}</Typography>
                   </Box>
                   <Chip 
                     label={statusConfig[previewEvent.status]?.label || previewEvent.status}

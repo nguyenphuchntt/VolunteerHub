@@ -62,7 +62,7 @@ const DataTable = ({
   // Selection
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      const newSelected = filteredData.map((row) => row.id);
+      const newSelected = filteredData.map((row, index) => getRowKey(row, index));
       setSelected(newSelected);
       onSelectionChange?.(newSelected);
     } else {

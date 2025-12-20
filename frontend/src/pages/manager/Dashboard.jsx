@@ -30,6 +30,7 @@ import {
   Delete,
 } from "@mui/icons-material";
 import { ThreeColumnLayout, StatsCard, ConfirmDialog } from "../../components/common";
+import { managerService } from "../../api/services/manager.service";
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 
@@ -49,17 +50,17 @@ const ManagerDashboard = () => {
 
   // Fetch manager's events
   const fetchEvents = useCallback(async () => {
-    if (!user?.accountID) return;
     setLoading(true);
     try {
-      const response = await eventService.getEventsByAccountId(user.accountID);
+      // Get events managed by current user (uses /api/manager/me/managed-events)
+      const response = await managerService.getManagedEvents();
       setMyEvents(response.content || []);
     } catch (err) {
       console.error("Failed to fetch events:", err);
     } finally {
       setLoading(false);
     }
-  }, [user?.accountID]);
+  }, []);
 
   useEffect(() => {
     fetchEvents();
@@ -264,7 +265,7 @@ const ManagerDashboard = () => {
               startIcon={<People />}
               onClick={() => {
                 setActionDialogOpen(false);
-                navigate(`/manage/events/${selectedEvent?.eventId}/participants`);
+                navigate(`/manage/events/${selectedEvent?.eventId}`);
               }}
               sx={{ 
                 justifyContent: "flex-start", 
@@ -274,7 +275,7 @@ const ManagerDashboard = () => {
                 fontWeight: 600,
               }}
             >
-              Quản lý tình nguyện viên
+              Quản lý
             </Button>
             <Button
               fullWidth

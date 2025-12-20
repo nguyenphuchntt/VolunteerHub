@@ -28,4 +28,6 @@ public class EventUserSearchDTO {
     private String location;
     private EventStatus eventStatus;
     private String coverImageUrl;
+    private OffsetDateTime eventStartAt;
+    private OffsetDateTime eventEndAt;
 }

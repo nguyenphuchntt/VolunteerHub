@@ -361,7 +361,6 @@ const Profile = () => {
           }}
         >
           <Tab label="Lịch sử tham gia" />
-          <Tab label="Thông tin" />
           {isOwnProfile && <Tab label="Sự kiện đã thích" />}
         </Tabs>
       </Box>
@@ -370,57 +369,76 @@ const Profile = () => {
       {activeTab === 0 && (
         <Box>
           {participatedEvents.length > 0 ? (
-            participatedEvents.map((eventUser) => (
-              <Box
-                key={eventUser.eventId || eventUser.id}
-                onClick={() => navigate(`/events/${eventUser.eventId}`)}
-                sx={{
-                  p: 2,
-                  borderBottom: "1px solid",
-                  borderColor: "grey.200",
-                  cursor: "pointer",
-                  "&:hover": { backgroundColor: "grey.50" },
-                }}
-              >
-                <Box sx={{ display: "flex", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: "12px",
-                      backgroundColor: "#e0e0e0",
-                      backgroundImage: eventUser.coverImageUrl ? `url(${eventUser.coverImageUrl})` : "none",
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {!eventUser.coverImageUrl && <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />}
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography variant="body1" fontWeight={600}>
-                      {eventUser.eventTitle || `Sự kiện #${eventUser.eventId}`}
-                    </Typography>
-                    <Typography variant="caption" color="primary.main" fontWeight={500}>
-                      {eventUser.eventUserRole || "Tình nguyện viên"}
-                    </Typography>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                      <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(eventUser.startAt)}
-                      </Typography>
+            participatedEvents.map((eventUser) => {
+              // Status translation
+              const statusMap = {
+                PENDING: "Chờ duyệt",
+                APPROVED: "Đã duyệt",
+                REJECTED: "Bị từ chối",
+                FINISHED: "Hoàn thành",
+                CANCELLED: "Đã hủy"
+              };
+              // Role translation
+              const roleMap = {
+                MANAGER: "Quản lý",
+                ATTENDEE: "Thành viên",
+                VOLUNTEER: "Tình nguyện viên"
+              };
+              const statusText = statusMap[eventUser.status] || eventUser.status || "Chờ duyệt";
+              const roleText = roleMap[eventUser.role] || eventUser.role || "Tình nguyện viên";
+              
+              return (
+                <Box
+                  key={eventUser.eventId || eventUser.id}
+                  onClick={() => navigate(`/events/${eventUser.eventId}`)}
+                  sx={{
+                    p: 2,
+                    borderBottom: "1px solid",
+                    borderColor: "grey.200",
+                    cursor: "pointer",
+                    "&:hover": { backgroundColor: "grey.50" },
+                  }}
+                >
+                  <Box sx={{ display: "flex", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: "12px",
+                        backgroundColor: "#e0e0e0",
+                        backgroundImage: eventUser.coverImageUrl ? `url(${eventUser.coverImageUrl})` : "none",
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {!eventUser.coverImageUrl && <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />}
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Trạng thái: {eventUser.status || "PENDING"}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body1" fontWeight={600}>
+                        {eventUser.title || `Sự kiện #${eventUser.eventId}`}
                       </Typography>
+                      <Typography variant="caption" color="primary.main" fontWeight={500}>
+                        {roleText}
+                      </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                        <CalendarMonth sx={{ fontSize: 14, color: "text.secondary" }} />
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(eventUser.eventStartAt)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Trạng thái: {statusText}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
-              </Box>
-            ))
+              );
+            })
           ) : (
             <Box sx={{ textAlign: "center", py: 8 }}>
               <Typography variant="body1" color="text.secondary">
@@ -431,36 +449,10 @@ const Profile = () => {
         </Box>
       )}
 
-      {activeTab === 1 && (
-        <Box sx={{ p: 2 }}>
-          <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
-            Thông tin tài khoản
-          </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            <Typography variant="body2">
-              <strong>Tên người dùng:</strong> {profileUser.username}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Email:</strong> {profileUser.email || "Chưa cung cấp"}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Họ:</strong> {profileUser.firstName || "Chưa cung cấp"}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Tên:</strong> {profileUser.lastName || "Chưa cung cấp"}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Vai trò:</strong> {profileUser.role || "USER"}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Trạng thái:</strong> {profileUser.status || "ACTIVE"}
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
       {/* Liked Events Tab */}
-      {activeTab === 2 && isOwnProfile && (
+      {activeTab === 1 && isOwnProfile && (
+
+
         <Box>
           {likedEvents.length > 0 ? (
             likedEvents.map((event) => (
@@ -482,14 +474,14 @@ const Profile = () => {
                       height: 80,
                       borderRadius: "12px",
                       backgroundColor: "#e0e0e0",
-                      backgroundImage: event.coverImage ? `url(${event.coverImage})` : "none",
+                      backgroundImage: event.coverImageUrl ? `url(${event.coverImageUrl})` : "none",
                       backgroundSize: "cover",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                     }}
                   >
-                    {!event.coverImage && <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />}
+                    {!event.coverImageUrl && <CalendarMonth sx={{ fontSize: 32, color: "text.secondary" }} />}
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="body1" fontWeight={600}>

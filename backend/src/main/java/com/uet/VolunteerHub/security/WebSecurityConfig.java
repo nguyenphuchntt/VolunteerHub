@@ -65,7 +65,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(
                         authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
                                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
-//                                .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "ADMIN")
+                                // .requestMatchers("/api/manager/**").isAuthenticated()
                                 .requestMatchers("/api/posts/**").permitAll()
                                 .requestMatchers("/api/users/**").permitAll()
                                 .requestMatchers("/api/auth/**").permitAll()

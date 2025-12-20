@@ -1,5 +1,6 @@
 package com.uet.VolunteerHub.service;
 
+import com.uet.VolunteerHub.controller.PushNotificationController;
 import com.uet.VolunteerHub.dto.Request.RequestCreateDTO;
 import com.uet.VolunteerHub.dto.Request.RequestReadDTO;
 import com.uet.VolunteerHub.dto.Request.RequestReviewDTO;
@@ -24,7 +25,8 @@ public class RequestService {
     private final AccountRepository accountRepository;
 
     @Autowired
-    public RequestService(RequestRepository requestRepository, AccountRepository accountRepository) {
+    public RequestService(RequestRepository requestRepository,
+                          AccountRepository accountRepository, PushNotificationService pushNotificationService) {
         this.requestRepository = requestRepository;
         this.accountRepository = accountRepository;
     }

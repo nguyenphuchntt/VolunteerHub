@@ -66,7 +66,9 @@ public class EventUserSearchService {
                     .description(event.getDescription())
                     .location(event.getLocation())
                     .eventStatus(event.getStatus())
-                    .coverImageUrl(coverImageUrl);
+                    .coverImageUrl(coverImageUrl)
+                    .eventStartAt(event.getStartAt())
+                    .eventEndAt(event.getEndAt());
         }
         return builder.build();
     }

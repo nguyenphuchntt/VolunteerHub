@@ -48,7 +48,7 @@ const AdminEventManagement = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await eventService.searchEvents({ size: 100 });
+      const response = await eventService.searchAllEvents({ size: 100 });
       setAllEvents(response.content || []);
     } catch (err) {
       console.error("Failed to fetch events:", err);
@@ -107,10 +107,10 @@ const AdminEventManagement = () => {
       label: "Sự kiện",
       render: (value, row) => (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          {row.coverImage ? (
+          {row.coverImageUrl ? (
             <Box
               component="img"
-              src={row.coverImage}
+              src={row.coverImageUrl}
               alt={value}
               sx={{ width: 48, height: 48, borderRadius: "8px", objectFit: "cover" }}
             />
