@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -58,4 +59,19 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
     List<Object[]> countNewUsersByDate(java.time.OffsetDateTime startDate);
 
     List<Account> findAllByRoleNot(UserRole role);
+
+    List<Account> findAllByRoleAndAccountStatus(UserRole role, AccountStatus status);
+
+    @Query("SELECT eu.account FROM EventUser eu " +
+           "WHERE eu.event.eventId = :eventId " +
+           "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER " +
+           "AND eu.account.accountStatus = com.uet.VolunteerHub.enums.AccountStatus.ACTIVE")
+    List<Account> findEventManagersByEventId(@Param("eventId") Long eventId);
+
+    @Query("SELECT eu.account FROM EventUser eu " +
+           "WHERE eu.event.eventId = :eventId " +
+           "AND eu.status = com.uet.VolunteerHub.enums.EventUserStatus.APPROVED " +
+           "AND eu.account.accountStatus = com.uet.VolunteerHub.enums.AccountStatus.ACTIVE")
+    List<Account> findApprovedParticipantsByEventId(@Param("eventId") Long eventId);
 }
+

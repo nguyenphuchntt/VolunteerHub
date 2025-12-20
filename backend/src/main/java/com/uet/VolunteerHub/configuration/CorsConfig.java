@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.config;
+package com.uet.VolunteerHub.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
