@@ -3,6 +3,7 @@ package com.uet.VolunteerHub.controller;
 import com.uet.VolunteerHub.dto.FcmTokenDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.PushNotificationService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,15 +23,15 @@ public class PushNotificationController {
     }
 
     @PostMapping("/subscribe")
-    public ResponseEntity<String> subscribeToPushNotifications(@RequestBody FcmTokenDTO request,
-                                                               @AuthenticationPrincipal Account account) {
+    public ResponseEntity<String> subscribeToPushNotifications(@RequestBody @Valid FcmTokenDTO request,
+            @AuthenticationPrincipal Account account) {
         pushNotificationService.subscribeToken(account.getAccountId(), request);
         return ResponseEntity.ok("Subscribed to push notifications successfully.");
     }
 
     @DeleteMapping("/unsubscribe")
-    public ResponseEntity<String> unsubscribeFromPushNotifications(@RequestBody FcmTokenDTO request,
-                                                                 @AuthenticationPrincipal Account account) {
+    public ResponseEntity<String> unsubscribeFromPushNotifications(@RequestBody @Valid FcmTokenDTO request,
+            @AuthenticationPrincipal Account account) {
         pushNotificationService.unsubscribeToken(request);
         return ResponseEntity.ok("Unsubscribed from push notifications successfully.");
     }
@@ -43,7 +44,7 @@ public class PushNotificationController {
 
     @PostMapping("/send")
     public ResponseEntity<String> sendPushNotification(@RequestParam String content,
-                                                       @AuthenticationPrincipal Account account) {
+            @AuthenticationPrincipal Account account) {
         pushNotificationService.pushNotificationToUser(account.getAccountId(), content);
         return ResponseEntity.ok("Push notification sent to user " + account.getAccountId() + "successfully.");
     }

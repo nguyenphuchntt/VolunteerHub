@@ -17,7 +17,7 @@ import java.util.UUID;
 public class CommentCreateDTO {
 
     @NotBlank(message = "Content cannot be blank")
-    @Size(min = 1, max = 300, message = "Comment's length should be between 1 and 300 characters")
+    @Size(min = 1, max = 200, message = "Comment must be between 1 and 200 characters")
     private String content;
 
     @NotNull(message = "PostId cannot be null")

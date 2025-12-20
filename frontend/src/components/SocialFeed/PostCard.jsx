@@ -65,7 +65,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
   const { user, isAuthenticated } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
-  
+
   // API states
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -75,6 +75,12 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
   const [loadingLike, setLoadingLike] = useState(false);
   const [loadingComment, setLoadingComment] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
+
+  // Pagination states for comments
+  const [commentPage, setCommentPage] = useState(0);
+  const [hasMoreComments, setHasMoreComments] = useState(true);
+  const [loadingMoreComments, setLoadingMoreComments] = useState(false);
+  const COMMENTS_PER_PAGE = 10;
 
   // Menu and dialog states
   const [anchorEl, setAnchorEl] = useState(null);
@@ -144,23 +150,50 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
     fetchPostMetadata();
   }, [fetchPostMetadata]);
 
-  // Fetch comments when expanded
-  const fetchComments = useCallback(async () => {
+  // Fetch comments with pagination (newest first)
+  const fetchComments = useCallback(async (page = 0, append = false) => {
     if (!postId) return;
-    setLoadingComments(true);
+
+    if (page === 0) {
+      setLoadingComments(true);
+    } else {
+      setLoadingMoreComments(true);
+    }
+
     try {
-      const response = await postService.getComments(postId, { page: 0, size: 20 });
-      setComments(response.content || []);
+      const response = await postService.getComments(postId, {
+        page,
+        size: COMMENTS_PER_PAGE,
+        sort: 'createAt,desc'  // Sort newest first (field name is 'createAt' not 'createdAt')
+      });
+
+      const newComments = response.content || [];
+
+      if (append) {
+        setComments(prev => [...prev, ...newComments]);
+      } else {
+        setComments(newComments);
+      }
+
+      // Check if there are more comments to load
+      setHasMoreComments(!response.last && newComments.length > 0);
+      setCommentPage(page);
     } catch (err) {
       console.error("Failed to fetch comments:", err);
     } finally {
       setLoadingComments(false);
+      setLoadingMoreComments(false);
     }
   }, [postId]);
 
+  // Load more comments handler
+  const handleLoadMoreComments = () => {
+    fetchComments(commentPage + 1, true);
+  };
+
   useEffect(() => {
     if (showComments && comments.length === 0) {
-      fetchComments();
+      fetchComments(0, false);
     }
   }, [showComments, fetchComments, comments.length]);
 
@@ -395,15 +428,39 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
                 <CircularProgress size={24} />
               </Box>
             ) : comments.length > 0 ? (
-              comments.map((comment) => (
-                <Comment 
-                  key={comment.commentId || comment.id} 
-                  comment={comment}
-                  postId={postId}
-                  onReplyCreated={fetchComments}
-                  onCommentDeleted={handleCommentDeleted}
-                />
-              ))
+              <>
+                {comments.map((comment) => (
+                  <Comment
+                    key={comment.commentId || comment.id}
+                    comment={comment}
+                    postId={postId}
+                    onReplyCreated={() => fetchComments(0, false)}
+                    onCommentDeleted={handleCommentDeleted}
+                  />
+                ))}
+
+                {/* Load More Button */}
+                {hasMoreComments && (
+                  <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                    <Button
+                      size="small"
+                      onClick={handleLoadMoreComments}
+                      disabled={loadingMoreComments}
+                      sx={{
+                        textTransform: "none",
+                        color: "primary.main",
+                        fontWeight: 500,
+                        "&:hover": { backgroundColor: "primary.lighter" },
+                      }}
+                    >
+                      {loadingMoreComments ? (
+                        <CircularProgress size={16} sx={{ mr: 1 }} />
+                      ) : null}
+                      {loadingMoreComments ? "Đang tải..." : "Xem thêm bình luận"}
+                    </Button>
+                  </Box>
+                )}
+              </>
             ) : (
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 2 }}>
                 Chưa có bình luận nào
@@ -478,9 +535,9 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
           <Button onClick={handleEditClose} disabled={saving}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleEditSave} 
-            variant="contained" 
+          <Button
+            onClick={handleEditSave}
+            variant="contained"
             disabled={saving || !editContent.trim()}
           >
             {saving ? <CircularProgress size={20} /> : "Lưu"}
@@ -500,9 +557,9 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
           <Button onClick={handleDeleteClose} disabled={saving}>
             Hủy
           </Button>
-          <Button 
-            onClick={handleDeleteConfirm} 
-            color="error" 
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
             variant="contained"
             disabled={saving}
           >

@@ -6,7 +6,7 @@ import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.specification.UserSpecification;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,6 +20,7 @@ import java.util.*;
 
 @Log
 @Service
+@Transactional(readOnly = true)
 public class UserSearchService {
     private final AccountRepository accountRepository;
 
