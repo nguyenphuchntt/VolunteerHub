@@ -10,8 +10,10 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,4 +64,14 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
             """)
     @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
     Page<Event> findHotEvents(Pageable pageable);
+
+    @Query("SELECT e FROM Event e " +
+            "WHERE e.startAt BETWEEN :start AND :end " +
+            "AND e.status = com.uet.VolunteerHub.enums.EventStatus.SCHEDULED " +
+            "ORDER BY e.startAt ASC")
+    List<Event> findScheduledEventsBetweenTimes(@Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
+
+
+
+
 }

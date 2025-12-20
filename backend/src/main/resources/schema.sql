@@ -175,6 +175,13 @@ CREATE TABLE IF NOT EXISTS request (
         REFERENCES account(account_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE IF NOT EXISTS fcm_token (
+    fcm_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    account_id VARCHAR(36) NOT NULL,
+    token TEXT NOT NULL,
+    CONSTRAINT fk_fcm_token_account FOREIGN KEY (account_id) REFERENCES account(account_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
 CREATE INDEX idx_event_created_by ON event(created_by_account_id);
 CREATE INDEX idx_event_status ON event(status);
 CREATE INDEX idx_event_user_event_id ON event_user(event_id);

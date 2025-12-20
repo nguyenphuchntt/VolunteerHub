@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -58,25 +59,30 @@ public interface EventUserRepository
     List<Object[]> findTopActiveUsers(Pageable pageable);
 
     @Query("SELECT eu FROM EventUser eu " +
-           "WHERE eu.status = :status " +
-           "AND eu.eventId IN (" +
-           "  SELECT eu2.eventId FROM EventUser eu2 " +
-           "  WHERE eu2.accountId = :managerId " +
-           "  AND eu2.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER" +
-           ")")
+            "WHERE eu.status = :status " +
+            "AND eu.eventId IN (" +
+            "  SELECT eu2.eventId FROM EventUser eu2 " +
+            "  WHERE eu2.accountId = :managerId " +
+            "  AND eu2.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER" +
+            ")")
     @EntityGraph(attributePaths = { "account", "account.userInfo", "event" })
     Page<EventUser> findPendingUsersByManagerId(UUID managerId, EventUserStatus status, Pageable pageable);
 
     @Query("SELECT CASE WHEN COUNT(eu) > 0 THEN true ELSE false END " +
-           "FROM EventUser eu " +
-           "WHERE eu.accountId = :accountId " +
-           "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
+            "FROM EventUser eu " +
+            "WHERE eu.accountId = :accountId " +
+            "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
     boolean isEventManager(UUID accountId);
+
+    @Query("SELECT eu FROM EventUser eu " +
+            "WHERE eu.eventId = :eventId " +
+            "AND eu.status = com.uet.VolunteerHub.enums.EventUserStatus.APPROVED")
+    List<EventUser> findApprovedEventUser(@Param("eventId") Long eventId);
 
     @Query("SELECT eu FROM EventUser eu " +
            "WHERE eu.accountId = :accountId " +
            "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
     @EntityGraph(attributePaths = { "account", "account.userInfo", "event" })
-    Page<EventUser> findManagedEventsByAccountId(UUID accountId, Pageable pageable);
+    Page<EventUser> findManagedEventsByAccountId(@Param("accountId") UUID accountId, Pageable pageable);
 
 }

@@ -38,14 +38,17 @@ public class UserWriteService {
     private final EventRepository eventRepository;
     private final PasswordEncoder passwordEncoder;
     private final EventUserRepository eventUserRepository;
+    private final EmailVerificationService emailVerificationService;
 
     @Autowired
     public UserWriteService(AccountRepository accountRepository, EventRepository eventRepository,
-                            PasswordEncoder passwordEncoder, EventUserRepository eventUserRepository) {
+                            PasswordEncoder passwordEncoder, EventUserRepository eventUserRepository,
+                            EmailVerificationService emailVerificationService) {
         this.accountRepository = accountRepository;
         this.eventRepository = eventRepository;
         this.passwordEncoder = passwordEncoder;
         this.eventUserRepository = eventUserRepository;
+        this.emailVerificationService = emailVerificationService;
     }
 
     private UserSearchDTO mapToUserSearchDTO(Account account, UserInfo userInfo) {
@@ -164,7 +167,7 @@ public class UserWriteService {
         accountBuilder.email(accountUserRegisterDTO.getEmail());
         accountBuilder.username(accountUserRegisterDTO.getUsername());
         accountBuilder.password(passwordEncoder.encode(accountUserRegisterDTO.getPassword()));
-        accountBuilder.accountStatus(AccountStatus.ACTIVE);
+        accountBuilder.accountStatus(AccountStatus.INACTIVE);
         accountBuilder.role(UserRole.USER);
         Account account = accountBuilder.build();
         UserInfo userInfo = new UserInfo();
@@ -181,6 +184,7 @@ public class UserWriteService {
                 throw new ResourceAlreadyExistsException("Username " + accountUserRegisterDTO.getUsername() + " is already in use");
             } else throw new RuntimeException("Error: " + error);
         }
+        emailVerificationService.sendVerificationEmail(account);
         return mapToUserSearchDTO(account, userInfo);
     }
 
