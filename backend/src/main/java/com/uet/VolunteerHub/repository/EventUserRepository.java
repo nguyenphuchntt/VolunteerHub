@@ -78,5 +78,9 @@ public interface EventUserRepository
             "WHERE eu.eventId = :eventId " +
             "AND eu.status = com.uet.VolunteerHub.enums.EventUserStatus.APPROVED")
     List<EventUser> findApprovedEventUser(@Param("eventId") Long eventId);
+           "WHERE eu.accountId = :accountId " +
+           "AND eu.role = com.uet.VolunteerHub.enums.EventUserRole.MANAGER")
+    @EntityGraph(attributePaths = { "account", "account.userInfo", "event" })
+    Page<EventUser> findManagedEventsByAccountId(UUID accountId, Pageable pageable);
 
 }

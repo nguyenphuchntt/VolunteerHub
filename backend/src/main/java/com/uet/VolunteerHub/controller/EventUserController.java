@@ -3,6 +3,7 @@ package com.uet.VolunteerHub.controller;
 import com.uet.VolunteerHub.dto.EventUser.*;
 import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;
+import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.EventUserSearchService;
 import com.uet.VolunteerHub.service.EventUserWriteService;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -91,13 +93,12 @@ public class EventUserController {
     }
 
     @PatchMapping("/{eventId}/{accountId}/update-role")
-    @PreAuthorize("hasRole('ADMIN') or " +
-        "(@eventUserSecurityService.isManager(#eventId) and " +
-        "(#updateDTO.eventUserRole.name() == 'MANAGER' or @eventSecurityService.isCreatorOfEvent(#eventId, authentication.principal.accountId)))")
+    @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
     public ResponseEntity<EventUserSearchDTO> updateEventUserRole(@PathVariable Long eventId,
                                                                   @PathVariable UUID accountId,
-                                                                  @RequestBody EventUserRoleUpdateDTO updateDTO) {
-        return ResponseEntity.ok(eventUserWriteService.updateRole(accountId, eventId, updateDTO));
+                                                                  @RequestBody EventUserRoleUpdateDTO updateDTO,
+                                                                  @AuthenticationPrincipal Account caller) {
+        return ResponseEntity.ok(eventUserWriteService.updateRole(accountId, eventId, updateDTO, caller));
     }
 
     @PatchMapping("/{eventId}/{accountId}/update-status")

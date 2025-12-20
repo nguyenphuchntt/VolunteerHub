@@ -3,8 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
 import PropTypes from 'prop-types';
 
-const ProtectedRoute = ({ children, requiredRoles = [] }) => {
-  const { user, loading, isAuthenticated } = useAuth();
+const ProtectedRoute = ({ children, requiredRoles = [], allowEventManager = false }) => {
+  const { user, loading, isAuthenticated, isEventManager } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -28,8 +28,12 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
   }
 
   // Check for required roles if specified
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user?.role)) {
-    // User doesn't have required role, redirect to dashboard
+  // If allowEventManager is true, allow access if user is an event manager regardless of role
+  const hasRole = requiredRoles.length === 0 || requiredRoles.includes(user?.role);
+  const isAllowedEventManager = allowEventManager && isEventManager;
+
+  if (!hasRole && !isAllowedEventManager) {
+    // User doesn't have required role AND is not an allowed event manager
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -39,6 +43,7 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
 ProtectedRoute.propTypes = {
   children: PropTypes.node.isRequired,
   requiredRoles: PropTypes.arrayOf(PropTypes.string),
+  allowEventManager: PropTypes.bool,
 };
 
 export default ProtectedRoute;

@@ -10,6 +10,7 @@ import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.EventUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ public class ManagerDashboardService {
     private final EventUserRepository eventUserRepository;
     private final EventRepository eventRepository;
 
+    @Cacheable(value = "managerDashboard", key = "'stats:' + #eventId")
     @Transactional(readOnly = true)
     public EventStatsDTO getEventStats(Long eventId) {
         Event event = eventRepository.findById(eventId)
@@ -39,6 +41,7 @@ public class ManagerDashboardService {
                 .build();
     }
 
+    @Cacheable(value = "managerDashboard", key = "'byStatus:' + #eventId")
     @Transactional(readOnly = true)
     public List<ParticipantsByStatusDTO> getParticipantsByStatus(Long eventId) {
         // Verify event exists
@@ -55,6 +58,7 @@ public class ManagerDashboardService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "managerDashboard", key = "'byRole:' + #eventId")
     @Transactional(readOnly = true)
     public List<ParticipantsByRoleDTO> getParticipantsByRole(Long eventId) {
         // Verify event exists

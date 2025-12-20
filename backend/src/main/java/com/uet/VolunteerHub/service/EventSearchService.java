@@ -9,11 +9,13 @@ import com.uet.VolunteerHub.enums.EventStatus;
 import com.uet.VolunteerHub.repository.EventLikeRepository;
 import com.uet.VolunteerHub.repository.EventMediaRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
+import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.specification.EventSpecification;
 import com.uet.VolunteerHub.repository.specification.PublicEventSpecification;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -29,12 +31,15 @@ public class EventSearchService {
     private final EventRepository eventRepository;
     private final EventLikeRepository eventLikeRepository;
     private final EventMediaRepository eventMediaRepository;
+    private final EventUserRepository eventUserRepository;
 
     @Autowired
-    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository, EventMediaRepository eventMediaRepository) {
+    public EventSearchService(EventRepository eventRepository, EventLikeRepository eventLikeRepository, 
+                              EventMediaRepository eventMediaRepository, EventUserRepository eventUserRepository) {
         this.eventRepository = eventRepository;
         this.eventLikeRepository = eventLikeRepository;
         this.eventMediaRepository = eventMediaRepository;
+        this.eventUserRepository = eventUserRepository;
     }
 
     private EventSearchDTO mapToEventSearchDTO(Event event, Account account, UserInfo userInfo) {
@@ -132,6 +137,7 @@ public class EventSearchService {
                 });
     }
 
+    @Cacheable(value = "events", key = "'top5ByLike'")
     @Transactional
     public List<EventSearchDTO> findTop5EventsByLikeCount() {
         List<Event> events = eventRepository.findTop5ByOrderByLikeCountDesc();
@@ -152,6 +158,7 @@ public class EventSearchService {
         }).toList();
     }
 
+    @Cacheable(value = "events", key = "'hot:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
         Page<Event> eventPage = eventRepository.findHotEvents(pageable);
@@ -160,6 +167,17 @@ public class EventSearchService {
             UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
             return mapToEventSearchDTO(event, account, userInfo);
         });
+    }
+
+    @Transactional
+    public Page<EventSearchDTO> findManagedEvents(UUID accountId, Pageable pageable) {
+        return eventUserRepository.findManagedEventsByAccountId(accountId, pageable)
+                .map(eventUser -> {
+                    Event event = eventUser.getEvent();
+                    Account account = event.getCreatedBy();
+                    UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+                    return mapToEventSearchDTO(event, account, userInfo);
+                });
     }
 
 }

@@ -60,7 +60,7 @@ const MediaGallery = ({ items = [] }) => {
     const displayItems = items.slice(0, maxDisplay);
     const remaining = count - maxDisplay;
 
-    // Single image
+    // Single image - show full image like Facebook
     if (count === 1) {
       return (
         <Box
@@ -70,6 +70,10 @@ const MediaGallery = ({ items = [] }) => {
             position: "relative",
             overflow: "hidden",
             borderRadius: "8px",
+            backgroundColor: "#f0f0f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <Box
@@ -78,8 +82,8 @@ const MediaGallery = ({ items = [] }) => {
             alt="Media"
             sx={{
               width: "100%",
-              maxHeight: 400,
-              objectFit: "cover",
+              maxHeight: 500,
+              objectFit: "contain",
               display: "block",
             }}
           />
