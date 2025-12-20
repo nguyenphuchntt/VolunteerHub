@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { EmojiEvents, Comment, Favorite } from '@mui/icons-material';
 
-const RankingCard = ({ title, icon, data, type }) => {
+const RankingCard = ({ title, icon, data, type, note }) => {
   return (
     <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", height: '100%' }}>
       <CardContent>
@@ -47,17 +47,17 @@ const RankingCard = ({ title, icon, data, type }) => {
                             <Avatar 
                                 sx={{ width: 24, height: 24, fontSize: '0.8rem', bgcolor: 'primary.main' }}
                             >
-                                {(item.fullName || item.username || '?').charAt(0).toUpperCase()}
+                                {(item.title || '?').charAt(0).toUpperCase()}
                             </Avatar>
                         )}
                         <Typography variant="body2" noWrap sx={{ maxWidth: 150 }}>
-                            {type === 'event' ? item.title : (item.fullName || item.username)}
+                            {item.title}
                         </Typography>
                     </Box>
                   </TableCell>
                   <TableCell align="right">
                     <Chip 
-                        label={item.count || item.totalInteractions || item.likeCount} 
+                        label={item.value || 0} 
                         size="small" 
                         color="primary" 
                         variant="outlined"
@@ -76,6 +76,11 @@ const RankingCard = ({ title, icon, data, type }) => {
             </TableBody>
           </Table>
         </TableContainer>
+        {note && (
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1.5, display: 'block', fontStyle: 'italic' }}>
+           {note}
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );
@@ -89,22 +94,25 @@ const DashboardRankings = ({ topActiveUsers, topInteractiveUsers, topEvents }) =
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 3 }}>
         <RankingCard 
-            title="Top Active Users" 
+            title="Người dùng tích cực nhất" 
             icon={<EmojiEvents sx={{ color: "orange" }} />}
             data={topActiveUsers} 
             type="user"
+            note="Xếp hạng theo số sự kiện đã tham gia"
         />
         <RankingCard 
-            title="Top Interactive Users" 
+            title="Người dùng tương tác nhiều nhất" 
             icon={<Comment sx={{ color: "blue" }} />}
             data={topInteractiveUsers} 
             type="user"
+            note="Xếp hạng theo số bài viết, bình luận và lượt thích"
         />
         <RankingCard 
-            title="Top Events (Likes)" 
+            title="Sự kiện được yêu thích nhất" 
             icon={<Favorite sx={{ color: "red" }} />}
             data={topEvents} 
             type="event"
+            note="Xếp hạng theo số lượt thích"
         />
       </Box>
     </Box>

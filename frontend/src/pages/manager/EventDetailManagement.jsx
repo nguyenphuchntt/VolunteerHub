@@ -13,6 +13,15 @@ import { ThreeColumnLayout, DataTable, ConfirmDialog, EmptyState } from "../../c
 import { eventUserService, eventService, managerService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { extractEventIdFromSlug } from "../../utils/urlUtils";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 const EventDetailManagement = () => {
   const navigate = useNavigate();
@@ -291,9 +300,9 @@ const EventDetailManagement = () => {
     }
 
     const StatCard = ({ title, value, icon, color = "primary.main", subtitle }) => (
-      <Card sx={{ borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-        <CardContent>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Card sx={{ borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", height: '100%', width: '100%' }}>
+        <CardContent sx={{ height: '100%', display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: '100%' }}>
             <Box>
               <Typography variant="caption" color="text.secondary">{title}</Typography>
               <Typography variant="h4" fontWeight={700} sx={{ color }}>{value}</Typography>
@@ -347,7 +356,7 @@ const EventDetailManagement = () => {
       <Box sx={{ p: 2 }}>
         {/* Overview Stats */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={6} md={3}>
+          <Grid size={6} sx={{ display: 'flex' }}>
             <StatCard 
               title="Tổng đăng ký" 
               value={overview?.totalRegistrations || participants.length} 
@@ -355,7 +364,7 @@ const EventDetailManagement = () => {
               color="primary.main"
             />
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid size={6} sx={{ display: 'flex' }}>
             <StatCard 
               title="Chờ duyệt" 
               value={overview?.pendingCount || pendingCount} 
@@ -363,7 +372,7 @@ const EventDetailManagement = () => {
               color="#f57c00"
             />
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid size={6} sx={{ display: 'flex' }}>
             <StatCard 
               title="Đã duyệt" 
               value={overview?.approvedCount || approvedCount} 
@@ -371,7 +380,7 @@ const EventDetailManagement = () => {
               color="#388e3c"
             />
           </Grid>
-          <Grid item xs={6} md={3}>
+          <Grid size={6} sx={{ display: 'flex' }}>
             <StatCard 
               title="Tỉ lệ hoàn thành" 
               value={`${attendanceRate?.completionRate || 0}%`}
@@ -384,14 +393,14 @@ const EventDetailManagement = () => {
 
         {/* Distribution Charts */}
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <ProgressCard 
               title="Phân bố theo trạng thái" 
               data={byStatus}
               getColor={(key) => getStatusColor(key).color}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <ProgressCard 
               title="Phân bố theo vai trò" 
               data={byRole}
@@ -400,28 +409,38 @@ const EventDetailManagement = () => {
           </Grid>
         </Grid>
 
-        {/* Timeline */}
+        {/* Timeline Chart - using Recharts like admin dashboard */}
         {timeline && Array.isArray(timeline) && timeline.length > 0 && (
-          <Card sx={{ borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)", mt: 2 }}>
+          <Card elevation={0} sx={{ borderRadius: "16px", border: "1px solid", borderColor: "grey.200", mt: 2 }}>
             <CardContent>
               <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 2 }}>Đăng ký theo thời gian</Typography>
-              <Box sx={{ display: "flex", alignItems: "end", gap: 1, height: 120, overflow: "auto" }}>
-                {timeline.map((item, idx) => (
-                  <Box key={idx} sx={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 40 }}>
-                    <Box 
-                      sx={{ 
-                        width: 24, 
-                        height: Math.max(20, (item.count / Math.max(...timeline.map(t => t.count || 1))) * 80),
-                        bgcolor: "primary.main",
-                        borderRadius: "4px 4px 0 0"
-                      }} 
+              <div style={{ width: '100%', height: 200, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={timeline.map(item => ({
+                    date: item.date,
+                    count: item.count || 0
+                  }))}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(value) => value ? new Date(value).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit' }) : ''}
+                      fontSize={11}
                     />
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, fontSize: 9 }}>
-                      {item.date ? new Date(item.date).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) : idx}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+                    <YAxis allowDecimals={false} fontSize={11} />
+                    <Tooltip 
+                      cursor={{ fill: 'rgba(136, 178, 139, 0.1)' }}
+                      formatter={(value) => [value, "Đăng ký"]}
+                      labelFormatter={(label) => label ? new Date(label).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}
+                    />
+                    <Bar 
+                      dataKey="count" 
+                      fill="#88b28b" 
+                      radius={[4, 4, 0, 0]}
+                      barSize={30}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
         )}

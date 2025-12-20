@@ -33,10 +33,14 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
       setLoading(true);
       try {
         const [hotResponse, upcomingResponse] = await Promise.all([
-          eventService.getHotEvents(0, 4),
+          eventService.getHotEvents(0, 8), // Fetch more to account for filtering
           eventService.getUpcomingEvents(0, 3)
         ]);
-        setTrendingEvents(hotResponse.content || []);
+        // Filter out FINISHED and CANCELLED events from hot events
+        const activeHotEvents = (hotResponse.content || [])
+          .filter(event => event.status !== 'FINISHED' && event.status !== 'CANCELLED')
+          .slice(0, 4);
+        setTrendingEvents(activeHotEvents);
         setUpcomingEvents(upcomingResponse.content || []);
       } catch (err) {
         console.error("Failed to fetch sidebar events:", err);

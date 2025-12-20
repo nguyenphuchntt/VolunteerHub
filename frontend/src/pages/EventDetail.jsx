@@ -562,7 +562,7 @@ const EventDetail = () => {
       {/* Feed Tab */}
       {activeTab === 0 && (
         <Box sx={{ p: 2 }}>
-          {isAuthenticated && participationStatus === 'APPROVED' && (
+          {isAuthenticated && participationStatus === 'APPROVED' && event?.status?.toUpperCase() !== 'FINISHED' && (
             <WritePost 
               currentUser={user} 
               eventId={parseInt(eventId)} 
@@ -575,6 +575,7 @@ const EventDetail = () => {
                 key={post.postId || post.id} 
                 post={post} 
                 onPostUpdated={fetchPosts}
+                disableInteraction={event?.status?.toUpperCase() === 'FINISHED'}
               />
             ))
           ) : (
@@ -619,7 +620,7 @@ const EventDetail = () => {
           {participants.length > 0 ? (
             <Grid container spacing={1}>
               {participants.map((participant) => (
-                <Grid item xs={6} key={participant.accountId || participant.id}>
+              <Grid size={6} key={participant.accountId || participant.id}>
                   <Box
                     onClick={() => participant.username && navigate(`/profiles/${participant.username}`)}
                     sx={{

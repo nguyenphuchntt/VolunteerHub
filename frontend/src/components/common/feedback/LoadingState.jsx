@@ -8,7 +8,7 @@ const LoadingState = ({ variant = "cards", count = 3 }) => {
     return (
       <Grid container spacing={3}>
         {Array.from({ length: count }).map((_, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
             <Box
               sx={{
                 backgroundColor: "#fff",
@@ -102,7 +102,7 @@ const LoadingState = ({ variant = "cards", count = 3 }) => {
     return (
       <Grid container spacing={3}>
         {Array.from({ length: count }).map((_, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
+          <Grid size={6} key={index}>
             <Box
               sx={{
                 backgroundColor: "#fff",

@@ -104,13 +104,19 @@ const SignIn = () => {
         console.error("Sign in error:", err);
         // Better error messages for common cases
         const status = err.response?.status;
-        const serverMessage = err.response?.data?.message;
+        const serverMessage = err.response?.data?.message || err.response?.data;
         
-        if (status === 401 || status === 403) {
-          setError("Mật khẩu không chính xác. Vui lòng thử lại.");
+        // Check for banned account
+        if (serverMessage === "Your account has been banned" || 
+            (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
+          setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
+        } else if (serverMessage === "Invalid username or password" || status === 401) {
+          setError("Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.");
+        } else if (status === 403) {
+          setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
         } else if (status === 404) {
           setError("Tài khoản không tồn tại. Vui lòng kiểm tra lại tên đăng nhập.");
-        } else if (serverMessage) {
+        } else if (typeof serverMessage === "string" && serverMessage) {
           setError(serverMessage);
         } else if (err.message) {
           setError(err.message);

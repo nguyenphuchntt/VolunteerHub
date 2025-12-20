@@ -49,5 +49,33 @@ export const adminService = {
   async getStatsRanking(type) {
     const response = await api.get('/admin/stats/rankings', { params: { type } });
     return response.data;
+  },
+
+  // ==========================================
+  // Data Export APIs
+  // ==========================================
+
+  // GET /api/events/find-all - Get all events for export
+  async getAllEvents() {
+    const response = await api.get('/events/find-all');
+    return response.data;
+  },
+
+  // GET /api/event-users/get-all - Get all event users for export
+  async getAllEventUsers() {
+    const response = await api.get('/event-users/get-all');
+    return response.data;
+  },
+
+  // GET /api/event-users/get-all-by-event/{eventId}
+  async getAllEventUsersByEvent(eventId) {
+    const response = await api.get(`/event-users/get-all-by-event/${eventId}`);
+    return response.data;
+  },
+
+  // GET /api/event-users/get-all-by-account/{accountId}
+  async getAllEventUsersByAccount(accountId) {
+    const response = await api.get(`/event-users/get-all-by-account/${accountId}`);
+    return response.data;
   }
 };

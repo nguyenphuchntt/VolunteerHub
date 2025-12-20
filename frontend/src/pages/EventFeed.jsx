@@ -83,7 +83,9 @@ const EventFeed = () => {
         response = await eventService.searchEvents(params);
       }
       
-      const newEvents = response.content || [];
+      // Frontend filter to exclude FINISHED and CANCELLED events
+      const newEvents = (response.content || [])
+        .filter(event => event.status !== 'FINISHED' && event.status !== 'CANCELLED');
       
       if (pageIndex === 0) {
         setEvents(newEvents);

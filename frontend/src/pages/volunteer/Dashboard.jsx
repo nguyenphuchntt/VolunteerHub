@@ -209,11 +209,11 @@ const VolunteerDashboard = () => {
           Xin chào, {displayName}! Đây là tổng quan hoạt động của bạn.
         </Typography>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - 2 cards in a row */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {stats.map((stat, index) => (
-            <Grid item xs={6} key={index} sx={{ display: "flex" }}>
-              <StatsCard {...stat} sx={{ flex: 1 }} />
+            <Grid size={6} key={index} sx={{ display: "flex" }}>
+              <StatsCard {...stat} sx={{ flex: 1, height: '100%' }} />
             </Grid>
           ))}
         </Grid>
