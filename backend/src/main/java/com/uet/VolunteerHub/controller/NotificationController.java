@@ -1,7 +1,7 @@
 package com.uet.VolunteerHub.controller;
 
 import java.security.Principal;
-import java.util.List;
+
 import java.util.Map;
 import java.util.UUID;
 
@@ -43,14 +43,14 @@ public class NotificationController {
     @GetMapping("/search")
     public ResponseEntity<org.springframework.data.domain.Page<NotificationReadDTO>> searchNotification(
             @RequestParam(required = false) Long notificationId,
+            @RequestParam(required = false) UUID senderAccountId,
             @RequestParam(required = false) com.uet.VolunteerHub.enums.NotificationType type,
             @RequestParam(required = false) Boolean isRead,
             org.springframework.data.domain.Pageable pageable,
             Principal principal) {
         UUID receiverAccountId = getCurrentUserId(principal);
-        // senderAccountId is null - users cannot filter by sender for security
         org.springframework.data.domain.Page<NotificationReadDTO> notifications = notificationService.searchNotification(
-                notificationId, null, receiverAccountId, type, isRead, pageable);
+                notificationId, senderAccountId, receiverAccountId, type, isRead, pageable);
         return ResponseEntity.ok(notifications);
     }
 
@@ -79,9 +79,13 @@ public class NotificationController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<NotificationReadDTO>> getMyNotifications(Principal principal) {
+    public ResponseEntity<org.springframework.data.domain.Page<NotificationReadDTO>> getMyNotifications(
+            Principal principal,
+            @org.springframework.data.web.PageableDefault(size = 20, sort = "createAt", direction = org.springframework.data.domain.Sort.Direction.DESC)
+            org.springframework.data.domain.Pageable pageable) {
         UUID receiverId = getCurrentUserId(principal);
-        List<NotificationReadDTO> notifications = notificationService.findAllForUserOrSystemAnnouncement(receiverId);
+        org.springframework.data.domain.Page<NotificationReadDTO> notifications =
+                notificationService.findAllForUserOrSystemAnnouncementPaged(receiverId, pageable);
         return ResponseEntity.ok(notifications);
     }
 }
