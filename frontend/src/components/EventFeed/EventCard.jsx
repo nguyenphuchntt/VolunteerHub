@@ -25,7 +25,7 @@ import { getCategoryLabel } from "../../constants/categories";
 const EventCard = ({ event }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  
+
   // Local state for like count (optimistic update)
   const [likeCount, setLikeCount] = useState(event.likeCount || 0);
   const [isLiking, setIsLiking] = useState(false);
@@ -37,7 +37,7 @@ const EventCard = ({ event }) => {
   // Fetch initial like status when component mounts
   useEffect(() => {
     if (!isAuthenticated || !eventId) return;
-    
+
     const checkLikeStatus = async () => {
       try {
         const isLiked = await eventService.isEventLiked(eventId);
@@ -46,7 +46,7 @@ const EventCard = ({ event }) => {
         // Ignore error - user may not have liked this event
       }
     };
-    
+
     checkLikeStatus();
   }, [eventId, isAuthenticated]);
 
@@ -61,7 +61,7 @@ const EventCard = ({ event }) => {
       return;
     }
     if (isLiking) return;
-    
+
     setIsLiking(true);
     try {
       const result = await eventService.likeEvent(eventId);
@@ -109,14 +109,14 @@ const EventCard = ({ event }) => {
   // Handle both API format (startAt) and mock format (date)
   const eventDate = event.startAt || event.date;
   const eventTime = event.startAt ? formatTime(event.startAt) : event.time;
-  
+
   // Handle attendee count - API returns attendeeCount, mock returns participants array
   const attendeeCount = event.attendeeCount || event.participants?.length || 0;
-  
+
   // Check if image exists 
-  const coverImage = event.coverImageUrl ;
+  const coverImage = event.coverImageUrl;
   const hasImage = !!coverImage;
-  
+
   // Generate gradient based on category for variety
   const getGradient = (category) => {
     const gradients = [
@@ -130,7 +130,7 @@ const EventCard = ({ event }) => {
     const hash = (category || "default").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
     return gradients[hash % gradients.length];
   };
-  
+
   // Status display - use backend status
   const statusConfig = getStatusConfig(event.status);
 
@@ -142,6 +142,7 @@ const EventCard = ({ event }) => {
       PENDING: { label: "Chờ duyệt", bg: "#fff3e0", color: "#ef6c00" },
       REJECTED: { label: "Bị từ chối", bg: "#ffebee", color: "#c62828" },
       FINISHED: { label: "Đã hoàn thành", bg: "#f3e5f5", color: "#6a1b9a" },
+      UNFINISHED: { label: "Chưa hoàn thành", bg: "#fff3e0", color: "#e65100" },
     };
     return configs[status?.toUpperCase()] || null;
   };
@@ -165,7 +166,7 @@ const EventCard = ({ event }) => {
     >
       <Box sx={{ position: "relative" }}>
         {hasImage ? (
-          <Box sx={{ 
+          <Box sx={{
             position: "relative",
             paddingTop: "56.25%", /* 16:9 aspect ratio */
             backgroundColor: "#f0f0f0",

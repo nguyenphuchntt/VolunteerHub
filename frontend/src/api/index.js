@@ -15,5 +15,6 @@ export { requestService } from './services/request.service';
 export { managerService } from './services/manager.service';
 export { emailService } from './services/email.service';
 export { passwordService } from './services/password.service';
+export { pushNotificationService } from './services/pushNotification.service';
 
 export { default as api } from './api';

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { mockUsers } from "../../../data/mockData";
+import { useNotificationContext } from "../../../contexts/NotificationContext";
 import {
   AppBar,
   Toolbar,
@@ -46,6 +47,9 @@ const AppHeader = ({
   const location = useLocation();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  // Get notification count from context (hook now returns defaults if not in provider)
+  const { unreadCount } = useNotificationContext();
 
   const isAuthenticated = !!user;
 
@@ -187,7 +191,7 @@ const AppHeader = ({
                   color: location.pathname === "/notifications" ? "primary.main" : "grey.600",
                 }}
               >
-                <Badge badgeContent={3} color="error" sx={{ "& .MuiBadge-badge": { fontSize: 10, height: 18, minWidth: 18 } }}>
+                <Badge badgeContent={unreadCount} color="error" sx={{ "& .MuiBadge-badge": { fontSize: 10, height: 18, minWidth: 18 } }}>
                   <Notifications />
                 </Badge>
               </IconButton>

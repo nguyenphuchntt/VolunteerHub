@@ -315,11 +315,11 @@ public class EventUserWriteService {
         eventUserRepository.save(eventUser);
         if (role.getEventUserRole() == EventUserRole.MANAGER && (eventUser.getRole() != currRole)) {
             pushNotificationService.pushNotificationToUser(accountId,
-                    "You have been assigned as a manager for the event: " + eventUser.getEvent().getTitle());
+                    "Bạn được duyệt làm quản lý của sự kiện: " + eventUser.getEvent().getTitle());
         }
         if (role.getEventUserRole() == EventUserRole.ATTENDEE && (eventUser.getRole() != currRole)) {
             pushNotificationService.pushNotificationToUser(accountId,
-                    "You have been changed to an attendee for the event: " + eventUser.getEvent().getTitle());
+                    "Bạn bị thay đổi là người tham gia sự kiện: " + eventUser.getEvent().getTitle());
         }
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(),
                 eventUser.getEvent());
@@ -343,7 +343,7 @@ public class EventUserWriteService {
                 event.setAttendeeCount(event.getAttendeeCount() + 1);
                 eventRepository.save(event);
                 pushNotificationService.pushNotificationToUser(accountId,
-                        "Your registration for the event: " + event.getTitle() + " has been approved.");
+                        "Bạn đã được duyệt để tham gia sự kiện: " + event.getTitle());
             } else if (oldStatus == EventUserStatus.APPROVED &&
                     newStatus != EventUserStatus.APPROVED &&
                     newStatus != EventUserStatus.FINISHED &&
@@ -352,7 +352,7 @@ public class EventUserWriteService {
                 event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
                 eventRepository.save(event);
                 pushNotificationService.pushNotificationToUser(accountId,
-                        "Your registration for the event: " + event.getTitle() + " has been rejected.");
+                        "Bạn không được duyệt tham gia sự kiện: " + event.getTitle());
             } else if (oldStatus == EventUserStatus.APPROVED &&
                     (newStatus == EventUserStatus.FINISHED || newStatus == EventUserStatus.UNFINISHED)) {
                 // User finished/unfinished - decrement count but don't send rejected message
@@ -363,13 +363,11 @@ public class EventUserWriteService {
         eventUserRepository.save(eventUser);
         if (newStatus == EventUserStatus.FINISHED) {
             pushNotificationService.pushNotificationToUser(accountId,
-                    "Your participation in the event: " + eventUser.getEvent().getTitle()
-                            + " has been marked as finished.");
+                    "Bạn đã được đánh dấu hoàn thành sự kiện: " + eventUser.getEvent().getTitle());
         }
         if (newStatus == EventUserStatus.UNFINISHED) {
             pushNotificationService.pushNotificationToUser(accountId,
-                    "Your participation in the event: " + eventUser.getEvent().getTitle()
-                            + " has been marked as unfinished.");
+                    "Bạn không được đánh dấu hoàn thành sự kiện " + eventUser.getEvent().getTitle());
         }
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(),
                 eventUser.getEvent());

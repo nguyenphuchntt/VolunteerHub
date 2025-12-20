@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
+import {
   Box, Typography, Button, Chip, Avatar, Tabs, Tab, CircularProgress, Alert, Snackbar,
   Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel,
   Card, CardContent, Grid, LinearProgress
 } from "@mui/material";
-import { 
+import {
   CheckCircle, Cancel, Refresh, TaskAlt, PersonRemove, AdminPanelSettings,
   Dashboard, People, TrendingUp, PieChart, Timeline
 } from "@mui/icons-material";
@@ -49,7 +49,7 @@ const EventDetailManagement = () => {
   // Tabs: 0 = Dashboard, 1 = Chờ duyệt, 2 = Thành viên, 3 = Quản lý role
   const [activeTab, setActiveTab] = useState(0);
   const [confirmDialog, setConfirmDialog] = useState({ open: false, action: null, participant: null });
-  
+
   // Batch selection states
   const [selectedIds, setSelectedIds] = useState([]);
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false);
@@ -126,19 +126,19 @@ const EventDetailManagement = () => {
   const filteredParticipants = useMemo(() => {
     if (!eventId) return participants;
     const currentUserId = user?.accountID;
-    
+
     switch (activeTab) {
       case 1: // Chờ duyệt
         return participants.filter(p => p.status?.toUpperCase() === "PENDING");
-      case 2: // Thành viên (APPROVED + FINISHED), exclude current user
+      case 2: // Thành viên (APPROVED + FINISHED + UNFINISHED), exclude current user
         return participants.filter(
-          p => (p.status?.toUpperCase() === "APPROVED" || p.status?.toUpperCase() === "FINISHED") &&
-               p.accountId !== currentUserId
+          p => (p.status?.toUpperCase() === "APPROVED" || p.status?.toUpperCase() === "FINISHED" || p.status?.toUpperCase() === "UNFINISHED") &&
+            p.accountId !== currentUserId
         );
       case 3: // Quản lý vai trò - show all members
         return participants.filter(
-          p => p.status?.toUpperCase() !== "REJECTED" && 
-               p.status?.toUpperCase() !== "PENDING"
+          p => p.status?.toUpperCase() !== "REJECTED" &&
+            p.status?.toUpperCase() !== "PENDING"
         );
       default:
         return participants;
@@ -152,13 +152,14 @@ const EventDetailManagement = () => {
       PENDING: { bg: "#fff3e0", color: "#f57c00" },
       APPROVED: { bg: "#e8f5e9", color: "#388e3c" },
       FINISHED: { bg: "#e3f2fd", color: "#1976d2" },
+      UNFINISHED: { bg: "#fff3e0", color: "#e65100" },
       REJECTED: { bg: "#ffebee", color: "#d32f2f" },
     };
     return colors[statusUpper] || colors.PENDING;
   };
 
   const getStatusLabel = (status) => {
-    const labels = { PENDING: "Chờ duyệt", APPROVED: "Đã duyệt", FINISHED: "Hoàn thành", REJECTED: "Từ chối" };
+    const labels = { PENDING: "Chờ duyệt", APPROVED: "Đã duyệt", FINISHED: "Hoàn thành", UNFINISHED: "Chưa hoàn thành", REJECTED: "Từ chối" };
     return labels[(status || "PENDING").toUpperCase()] || status;
   };
 
@@ -171,14 +172,14 @@ const EventDetailManagement = () => {
   const handleConfirmAction = async () => {
     const { action, participant } = confirmDialog;
     if (!participant) return;
-    
+
     try {
       if (action === "delete") {
         await eventUserService.deleteEventUser(participant.eventId, participant.accountId);
         setSnackbar({ open: true, message: "Đã xóa người dùng khỏi sự kiện!", severity: "success" });
       } else {
-        const statusMap = { approve: "APPROVED", reject: "REJECTED", finish: "FINISHED" };
-        const actionLabelMap = { approve: "duyệt", reject: "từ chối", finish: "đánh dấu hoàn thành" };
+        const statusMap = { approve: "APPROVED", reject: "REJECTED", finish: "FINISHED", unfinish: "UNFINISHED" };
+        const actionLabelMap = { approve: "duyệt", reject: "từ chối", finish: "đánh dấu hoàn thành", unfinish: "đánh dấu không hoàn thành" };
         await eventUserService.updateEventUserStatus(participant.eventId, participant.accountId, statusMap[action]);
         setSnackbar({ open: true, message: `Đã ${actionLabelMap[action]} thành công!`, severity: "success" });
       }
@@ -195,7 +196,7 @@ const EventDetailManagement = () => {
     if (selectedIds.length === 0) return;
     setBatchLoading(true);
     let successCount = 0, failCount = 0;
-    
+
     for (const accountId of selectedIds) {
       const participant = filteredParticipants.find(p => p.accountId === accountId);
       if (!participant || participant.status?.toUpperCase() === "FINISHED") continue;
@@ -204,7 +205,7 @@ const EventDetailManagement = () => {
         successCount++;
       } catch { failCount++; }
     }
-    
+
     setBatchLoading(false);
     setBatchConfirmOpen(false);
     setSelectedIds([]);
@@ -250,8 +251,8 @@ const EventDetailManagement = () => {
         </Box>
       ),
     },
-    { 
-      id: "role", 
+    {
+      id: "role",
       label: "Vai trò",
       render: (value) => (
         <Chip label={getRoleLabel(value)} size="small" color={value?.toUpperCase() === "MANAGER" ? "primary" : "default"} sx={{ fontSize: "11px" }} />
@@ -276,7 +277,8 @@ const EventDetailManagement = () => {
       ];
     } else if (activeTab === 2) {
       return [
-        { label: "Hoàn thành", icon: <TaskAlt sx={{ fontSize: 16, color: "info.main" }} />, onClick: (row) => row.status?.toUpperCase() === "APPROVED" && setConfirmDialog({ open: true, action: "finish", participant: row }), disabled: (row) => row.status?.toUpperCase() === "FINISHED" },
+        { label: "Hoàn thành", icon: <TaskAlt sx={{ fontSize: 16, color: "info.main" }} />, onClick: (row) => (row.status?.toUpperCase() === "APPROVED" || row.status?.toUpperCase() === "UNFINISHED") && setConfirmDialog({ open: true, action: "finish", participant: row }), disabled: (row) => row.status?.toUpperCase() === "FINISHED" },
+        { label: "Chưa hoàn thành", icon: <Cancel sx={{ fontSize: 16, color: "warning.main" }} />, onClick: (row) => (row.status?.toUpperCase() === "APPROVED" || row.status?.toUpperCase() === "FINISHED") && setConfirmDialog({ open: true, action: "unfinish", participant: row }), disabled: (row) => row.status?.toUpperCase() === "UNFINISHED" },
         { label: "Xóa", icon: <PersonRemove sx={{ fontSize: 16 }} />, color: "error.main", onClick: (row) => setConfirmDialog({ open: true, action: "delete", participant: row }) },
       ];
     } else if (activeTab === 3) {
@@ -294,7 +296,7 @@ const EventDetailManagement = () => {
   // Dashboard Tab Component
   const DashboardTab = () => {
     const { overview, byStatus, byRole, attendanceRate, timeline } = dashboardData;
-    
+
     if (dashboardLoading) {
       return <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>;
     }
@@ -318,12 +320,12 @@ const EventDetailManagement = () => {
 
     const ProgressCard = ({ title, data, getColor, labelKey = "status" }) => {
       // Handle both array format [{status: 'X', count: N}] and object format {X: N}
-      const items = Array.isArray(data) 
-        ? data 
+      const items = Array.isArray(data)
+        ? data
         : data ? Object.entries(data).map(([key, value]) => ({ [labelKey]: key, count: value })) : [];
-      
+
       const total = items.reduce((sum, item) => sum + (item.count || 0), 0) || 1;
-      
+
       return (
         <Card sx={{ borderRadius: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
           <CardContent>
@@ -337,9 +339,9 @@ const EventDetailManagement = () => {
                     <Typography variant="caption">{getStatusLabel(key) || getRoleLabel(key) || key}</Typography>
                     <Typography variant="caption" fontWeight={600}>{count}</Typography>
                   </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={Math.min((count / total) * 100, 100)} 
+                  <LinearProgress
+                    variant="determinate"
+                    value={Math.min((count / total) * 100, 100)}
                     sx={{ height: 8, borderRadius: 4, bgcolor: "grey.100", "& .MuiLinearProgress-bar": { bgcolor: getColor?.(key) || "primary.main" } }}
                   />
                 </Box>
@@ -357,32 +359,32 @@ const EventDetailManagement = () => {
         {/* Overview Stats */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={6} sx={{ display: 'flex' }}>
-            <StatCard 
-              title="Tổng đăng ký" 
-              value={overview?.totalRegistrations || participants.length} 
+            <StatCard
+              title="Tổng đăng ký"
+              value={overview?.totalRegistrations || participants.length}
               icon={<People sx={{ color: "primary.main" }} />}
               color="primary.main"
             />
           </Grid>
           <Grid size={6} sx={{ display: 'flex' }}>
-            <StatCard 
-              title="Chờ duyệt" 
-              value={overview?.pendingCount || pendingCount} 
+            <StatCard
+              title="Chờ duyệt"
+              value={overview?.pendingCount || pendingCount}
               icon={<Timeline sx={{ color: "#f57c00" }} />}
               color="#f57c00"
             />
           </Grid>
           <Grid size={6} sx={{ display: 'flex' }}>
-            <StatCard 
-              title="Đã duyệt" 
-              value={overview?.approvedCount || approvedCount} 
+            <StatCard
+              title="Đã duyệt"
+              value={overview?.approvedCount || approvedCount}
               icon={<CheckCircle sx={{ color: "#388e3c" }} />}
               color="#388e3c"
             />
           </Grid>
           <Grid size={6} sx={{ display: 'flex' }}>
-            <StatCard 
-              title="Tỉ lệ hoàn thành" 
+            <StatCard
+              title="Tỉ lệ hoàn thành"
               value={`${attendanceRate?.completionRate || 0}%`}
               subtitle={`${attendanceRate?.completedCount || 0}/${attendanceRate?.totalApproved || 0} TNV`}
               icon={<TrendingUp sx={{ color: "#1976d2" }} />}
@@ -394,15 +396,15 @@ const EventDetailManagement = () => {
         {/* Distribution Charts */}
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <ProgressCard 
-              title="Phân bố theo trạng thái" 
+            <ProgressCard
+              title="Phân bố theo trạng thái"
               data={byStatus}
               getColor={(key) => getStatusColor(key).color}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <ProgressCard 
-              title="Phân bố theo vai trò" 
+            <ProgressCard
+              title="Phân bố theo vai trò"
               data={byRole}
               getColor={(key) => key === "MANAGER" ? "#1976d2" : "#757575"}
             />
@@ -421,20 +423,20 @@ const EventDetailManagement = () => {
                     count: item.count || 0
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
+                    <XAxis
+                      dataKey="date"
                       tickFormatter={(value) => value ? new Date(value).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit' }) : ''}
                       fontSize={11}
                     />
                     <YAxis allowDecimals={false} fontSize={11} />
-                    <Tooltip 
+                    <Tooltip
                       cursor={{ fill: 'rgba(136, 178, 139, 0.1)' }}
                       formatter={(value) => [value, "Đăng ký"]}
                       labelFormatter={(label) => label ? new Date(label).toLocaleDateString("vi-VN", { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}
                     />
-                    <Bar 
-                      dataKey="count" 
-                      fill="#88b28b" 
+                    <Bar
+                      dataKey="count"
+                      fill="#88b28b"
                       radius={[4, 4, 0, 0]}
                       barSize={30}
                     />
@@ -483,7 +485,7 @@ const EventDetailManagement = () => {
       {activeTab === 0 ? (
         <DashboardTab />
       ) : (
-        <Box sx={{ p: 2 }}>          
+        <Box sx={{ p: 2 }}>
           {loading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>
           ) : error ? (
@@ -498,10 +500,10 @@ const EventDetailManagement = () => {
 
       {/* Dialogs */}
       <ConfirmDialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, action: null, participant: null })} onConfirm={handleConfirmAction}
-        title={confirmDialog.action === "approve" ? "Duyệt?" : confirmDialog.action === "finish" ? "Hoàn thành?" : confirmDialog.action === "delete" ? "Xóa?" : "Từ chối?"}
+        title={confirmDialog.action === "approve" ? "Duyệt?" : confirmDialog.action === "finish" ? "Hoàn thành?" : confirmDialog.action === "unfinish" ? "Chưa hoàn thành?" : confirmDialog.action === "delete" ? "Xóa?" : "Từ chối?"}
         message={`Xác nhận thao tác với "${confirmDialog.participant?.firstName || confirmDialog.participant?.username}"?`}
-        confirmLabel={confirmDialog.action === "approve" ? "Duyệt" : confirmDialog.action === "finish" ? "Hoàn thành" : confirmDialog.action === "delete" ? "Xóa" : "Từ chối"}
-        variant={confirmDialog.action === "approve" ? "success" : confirmDialog.action === "finish" ? "info" : "danger"}
+        confirmLabel={confirmDialog.action === "approve" ? "Duyệt" : confirmDialog.action === "finish" ? "Hoàn thành" : confirmDialog.action === "unfinish" ? "Xác nhận" : confirmDialog.action === "delete" ? "Xóa" : "Từ chối"}
+        variant={confirmDialog.action === "approve" ? "success" : confirmDialog.action === "finish" ? "info" : confirmDialog.action === "unfinish" ? "warning" : "danger"}
       />
 
       <ConfirmDialog open={batchConfirmOpen} onClose={() => setBatchConfirmOpen(false)} onConfirm={handleBatchFinish}
