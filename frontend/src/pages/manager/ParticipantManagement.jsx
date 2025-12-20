@@ -230,6 +230,16 @@ const ParticipantManagement = () => {
         </Box>
       ),
     },
+    // Chỉ hiển thị cột "Tên sự kiện" khi không có eventId cụ thể
+    ...(!eventId ? [{
+      id: "title",
+      label: "Tên sự kiện",
+      render: (value) => (
+        <Typography variant="body2" sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {value || "—"}
+        </Typography>
+      ),
+    }] : []),
     { 
       id: "role", 
       label: "Vai trò",
