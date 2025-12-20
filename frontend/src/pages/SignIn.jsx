@@ -66,7 +66,8 @@ const SignIn = () => {
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
 
   // Redirect if already authenticated
-  const from = location.state?.from?.pathname || "/dashboard";
+  // Default to /explore for regular users after login
+  const from = location.state?.from?.pathname || "/explore";
 
 
   // Handle Sign In
@@ -102,7 +103,7 @@ const SignIn = () => {
           navigate("/manage", { replace: true });
         } else {
           // Regular users go to saved location or /explore
-          navigate(from !== "/dashboard" ? from : "/explore", { replace: true });
+          navigate(from, { replace: true });
         }
 
 
@@ -487,23 +488,6 @@ const SignIn = () => {
         >
           Tham gia ngay hôm nay.
         </Typography>
-
-        {/* Auth buttons */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 2 }}>
-          <Button
-            variant="contained"
-            startIcon={<Google />}
-            onClick={handleGoogleAuth}
-            sx={filledButtonSx}
-          >
-            Đăng ký với Google
-          </Button>
-        </Box>
-
-        <Divider sx={{ maxWidth: 300, my: 2 }}>
-          <Typography sx={{ color: colors.textSecondary, fontSize: 14, fontWeight: 500 }}>hoặc</Typography>
-        </Divider>
-
         <Button
           variant="contained"
           onClick={handleSignUpOpen}
@@ -532,7 +516,9 @@ const SignIn = () => {
           .
         </Typography>
 
-        <Box sx={{ mt: 6 }}>
+        <Divider sx={{ maxWidth: 300, my: 4 }} />
+
+        <Box>
           <Typography sx={{ fontWeight: 600, fontSize: 18, color: colors.text, mb: 2.5 }}>
             Đã có tài khoản?
           </Typography>
