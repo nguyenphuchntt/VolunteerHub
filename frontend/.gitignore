@@ -78,3 +78,6 @@ pnpm-debug.log*
 
 # Vite
 vite.config.*.timestamp-*
+
+./src/config/firebase.config.js
+./public/firebase-messaging-sw.js
