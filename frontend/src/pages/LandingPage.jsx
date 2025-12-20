@@ -5,10 +5,8 @@ import {
   HeroSection,
   FeaturesSection,
   Marquee,
-  AboutSection,
   ProjectsSection,
   Banner,
-  TestimonialsSection,
   CTASection,
   Footer,
 } from "../components/LandingPage";
@@ -20,10 +18,8 @@ const LandingPage = () => {
       <HeroSection />
       <FeaturesSection />
       <Marquee />
-      <AboutSection />
       <ProjectsSection />
       <Banner />
-      <TestimonialsSection />
       <CTASection />
       <Footer />
     </div>

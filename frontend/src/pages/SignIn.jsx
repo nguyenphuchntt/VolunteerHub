@@ -12,11 +12,12 @@ import {
   InputAdornment,
   CircularProgress,
   Alert,
+  Snackbar,
 } from "@mui/material";
 import { Close, Google, Visibility, VisibilityOff, ArrowBack } from "@mui/icons-material";
 import { keyframes } from "@mui/system";
 import { useAuth } from "../context/AuthContext";
-import { userService, passwordService } from "../api";
+import { userService, passwordService, emailService } from "../api";
 
 // Animations
 const fadeIn = keyframes`
@@ -65,6 +66,14 @@ const SignIn = () => {
   const [forgotPasswordStatus, setForgotPasswordStatus] = useState("idle"); // idle, loading, success, error
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
 
+  // Account Activation State
+  const [needsActivation, setNeedsActivation] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+
+  // Success message state
+  const [successMessage, setSuccessMessage] = useState("");
+
   // Redirect if already authenticated
   // Default to /explore for regular users after login
   const from = location.state?.from?.pathname || "/explore";
@@ -82,6 +91,8 @@ const SignIn = () => {
     setSignInOpen(false);
     setSignInStep(1);
     setError("");
+    setNeedsActivation(false);
+    setResendMessage("");
   };
 
   const handleSignInNext = async () => {
@@ -117,6 +128,10 @@ const SignIn = () => {
         if (serverMessage === "Your account has been banned" || 
             (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
           setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
+        } else if (serverMessage === "Your account should be activated before login" ||
+            (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("activated"))) {
+          setError("Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh tài khoản.");
+          setNeedsActivation(true);
         } else if (serverMessage === "Invalid username or password" || status === 401) {
           setError("Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.");
         } else if (status === 403) {
@@ -181,6 +196,24 @@ const SignIn = () => {
     }
   };
 
+  // Handle Resend Activation Email
+  const handleResendActivationEmail = async () => {
+    if (!signInData.username) return;
+
+    setResendLoading(true);
+    setResendMessage("");
+
+    try {
+      await emailService.resendVerificationEmail(signInData.username);
+      setResendMessage("Email xác minh đã được gửi lại! Vui lòng kiểm tra hộp thư của bạn.");
+      setNeedsActivation(false);
+    } catch (err) {
+      setResendMessage(err.response?.data?.message || "Không thể gửi email. Vui lòng thử lại sau.");
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSignUpSubmit = async () => {
     // Frontend validation
     if (signUpData.username.length < 3) {
@@ -206,23 +239,8 @@ const SignIn = () => {
         confirmPassword: signUpData.confirmPassword,
       });
       
-      // Don't auto-login. Show success message asking to verify email.
       handleSignUpClose();
-      // Use a small delay to ensure modal close animation finishes if needed, or just navigate/show alert
-      // Ideally show a success dialog or alert. For now, let's reuse setError to show success on the main screen 
-      // OR navigate to a specific "Check Email" page? 
-      // The implementation plan suggested: "Hiện thông báo kiểm tra email xác nhận"
-      // We can use a simple alert() for now or navigate to a specialized page if we had one.
-      // Let's navigate to /verify-email without a token but with a state
-      // actually, since we don't have a "CheckEmail" page, let's redirect to a verify-email page 
-      // that is slightly modified to show "Check your email" instruction if no token is present?
-      // Or just navigate to / with a state message.
-      
-      // Better: Show a success dialog here. But to keep it simple as per plan:
-      // "Sau đăng ký thành công, hiện thông báo kiểm tra email"
-      
-      // Let's create a temporary success state
-      alert("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.");
+      setSuccessMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.");
       handleSignInOpen();
 
     } catch (err) {
@@ -427,6 +445,24 @@ const SignIn = () => {
             position: "relative",
             zIndex: 1,
             filter: "drop-shadow(0 20px 40px rgba(67, 160, 71, 0.2))",
+          }}
+        />
+      </Box>
+
+      {/* Vertical Divider */}
+      <Box
+        sx={{
+          display: { xs: "none", md: "flex" },
+          alignItems: "center",
+          py: 8,
+        }}
+      >
+        <Box
+          sx={{
+            width: 2,
+            height: "60%",
+            minHeight: 300,
+            background: "linear-gradient(to bottom, transparent 0%, rgba(67, 160, 71, 0.3) 20%, rgba(67, 160, 71, 0.3) 80%, transparent 100%)",
           }}
         />
       </Box>
@@ -754,9 +790,49 @@ const SignIn = () => {
                     borderRadius: "12px",
                     "& .MuiAlert-message": { fontWeight: 500 }
                   }}
-                  onClose={() => setError("")}
+                  onClose={() => { setError(""); setNeedsActivation(false); }}
                 >
                   {error}
+                </Alert>
+              )}
+
+              {/* Resend activation email button */}
+              {needsActivation && (
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  onClick={handleResendActivationEmail}
+                  disabled={resendLoading}
+                  sx={{
+                    mb: 2,
+                    height: 44,
+                    borderRadius: "12px",
+                    border: `2px solid ${colors.primary}`,
+                    color: colors.primary,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    "&:hover": {
+                      backgroundColor: "rgba(67, 160, 71, 0.08)",
+                      border: `2px solid ${colors.primaryDark}`,
+                    },
+                  }}
+                >
+                  {resendLoading ? <CircularProgress size={20} color="inherit" /> : "Gửi lại email xác minh"}
+                </Button>
+              )}
+
+              {/* Resend success/error message */}
+              {resendMessage && (
+                <Alert 
+                  severity={resendMessage.includes("thành công") || resendMessage.includes("đã được gửi") ? "success" : "error"}
+                  sx={{ 
+                    mb: 2, 
+                    borderRadius: "12px",
+                    "& .MuiAlert-message": { fontWeight: 500 }
+                  }}
+                  onClose={() => setResendMessage("")}
+                >
+                  {resendMessage}
                 </Alert>
               )}
 
@@ -1257,6 +1333,27 @@ const SignIn = () => {
           </Button>
         </DialogContent>
       </Dialog>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSuccessMessage("")}
+          severity="success"
+          sx={{
+            width: "100%",
+            borderRadius: "12px",
+            fontWeight: 500,
+            boxShadow: "0 8px 20px rgba(67, 160, 71, 0.3)",
+          }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

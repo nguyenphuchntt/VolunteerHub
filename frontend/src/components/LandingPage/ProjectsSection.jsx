@@ -19,44 +19,24 @@ const ProjectsSection = () => {
               </div>
             </div>
             <div className="project-image">
-              <img src="/images/danube-project.png" alt="Dọn rác" />
+              <img src="/images/donrac.jpg" alt="Dọn rác" />
             </div>
           </div>
-          <div className="project-card project-card-small">
+          <div className="project-card project-card-small" style={{ backgroundImage: 'url(/images/trongcay.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <div className="project-header">
               <div className="project-tag">Trồng Cây Xanh</div>
               <div className="project-link-small">
-                <img
-                  src="/images/forest-decoration.svg"
-                  alt=""
-                  className="forest-decoration"
-                />
                 <span>Xem thêm</span>
               </div>
             </div>
-            <img
-              src="/images/project-decoration.svg"
-              alt=""
-              className="project-decoration-bottom"
-            />
           </div>
-          <div className="project-card project-card-small">
+          <div className="project-card project-card-small" style={{ backgroundImage: 'url(/images/bdhv.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
             <div className="project-header">
               <div className="project-tag">Bình Dân Học Vụ Số</div>
               <div className="project-link-small">
-                <img
-                  src="/images/forest-decoration.svg"
-                  alt=""
-                  className="forest-decoration"
-                />
                 <span>Xem thêm</span>
               </div>
             </div>
-            <img
-              src="/images/project-decoration.svg"
-              alt=""
-              className="project-decoration-bottom"
-            />
           </div>
         </div>
       </div>

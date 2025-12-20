@@ -8,6 +8,7 @@ import EventFeed from "./pages/EventFeed";
 import EventDetail from "./pages/EventDetail";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 
 // Volunteer Pages
 import { VolunteerDashboard, Notifications } from "./pages/volunteer";
@@ -146,6 +147,9 @@ function App() {
               <RequestManagement />
             </ProtectedRoute>
           } />
+
+          {/* 404 Not Found Route */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
