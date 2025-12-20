@@ -6,6 +6,8 @@ import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import EventFeed from "./pages/EventFeed";
 import EventDetail from "./pages/EventDetail";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
 
 // Volunteer Pages
 import { VolunteerDashboard, Notifications } from "./pages/volunteer";
@@ -42,6 +44,8 @@ function App() {
           <Route path="/signin" element={<Auth />} />
           <Route path="/explore" element={<EventFeed />} />
           <Route path="/events/:slug" element={<EventDetail />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
 
           {/* Protected Volunteer Routes */}
