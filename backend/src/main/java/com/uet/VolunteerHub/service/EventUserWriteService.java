@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,18 +30,20 @@ public class EventUserWriteService {
     private final EventUserRepository eventUserRepository;
     private final EventRepository eventRepository;
     private final AccountRepository accountRepository;
+    private final PushNotificationService pushNotificationService;
 
     @Autowired
     public EventUserWriteService(EventUserRepository eventUserRepository,
-                                 EventRepository eventRepository,
-                                 AccountRepository accountRepository) {
+            EventRepository eventRepository,
+            AccountRepository accountRepository, PushNotificationService pushNotificationService) {
+        this.pushNotificationService = pushNotificationService;
         this.eventUserRepository = eventUserRepository;
         this.eventRepository = eventRepository;
         this.accountRepository = accountRepository;
     }
 
     private EventUserSearchDTO mapToEventUserSearchDTO(EventUser eventUser, Account account,
-                                                       UserInfo userInfo, Event event) {
+            UserInfo userInfo, Event event) {
         var builder = EventUserSearchDTO.builder()
                 .accountId(eventUser.getAccountId())
                 .eventId(eventUser.getEventId())
@@ -71,11 +74,12 @@ public class EventUserWriteService {
         eventUserId.setAccountId(accountId);
         eventUserId.setEventId(eventId);
         return eventUserRepository.findById(eventUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("EventUser with accountId: " + accountId + " and eventId: " + eventId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "EventUser with accountId: " + accountId + " and eventId: " + eventId + " not found"));
     }
 
     private void validateTime(Event event, OffsetDateTime start, OffsetDateTime end) {
-        if (start != null && end!= null) {
+        if (start != null && end != null) {
             if (start.isAfter(end)) {
                 throw new IllegalArgumentException("Start must be before end time");
             }
@@ -89,9 +93,10 @@ public class EventUserWriteService {
     }
 
     @Transactional
-    public EventUserSearchDTO registerEventUser(Account account, Long eventId, EventUserRegisterDTO eventUserRegisterDTO) {
-        Event event = eventRepository.findById(eventId).orElseThrow(() ->
-                new ResourceNotFoundException("Event with id: " + eventId + " not found"));
+    public EventUserSearchDTO registerEventUser(Account account, Long eventId,
+            EventUserRegisterDTO eventUserRegisterDTO) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
         if (eventUserRegisterDTO.getStartAt() == null) {
             eventUserRegisterDTO.setStartAt(event.getStartAt());
         }
@@ -109,7 +114,7 @@ public class EventUserWriteService {
         if (account.getAccountId().equals(event.getCreatedBy().getAccountId())) {
             builder.role(EventUserRole.MANAGER)
                     .status(EventUserStatus.APPROVED);
-            
+
             // Increment attendeeCount for manager (creator)
             event.setAttendeeCount(event.getAttendeeCount() + 1);
             eventRepository.save(event);
@@ -118,6 +123,7 @@ public class EventUserWriteService {
                     .status(EventUserStatus.PENDING);
         }
         EventUser eventUser = eventUserRepository.save(builder.build());
+
         return mapToEventUserSearchDTO(eventUser, account, account.getUserInfo(), event);
     }
 
@@ -129,31 +135,28 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
-        
+
         EventUser eventUser = findEventUser(account.getAccountId(), eventId);
-        
-        // Check last manager logic
+
         if (eventUser.getRole() == EventUserRole.MANAGER) {
             List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
             long managerCount = allEventUsers.stream()
                     .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
                     .count();
-            
+
             if (managerCount <= 1) {
                 throw new IllegalStateException(
-                    "Cannot unregister. You are the last manager of this event. " +
-                    "Please assign another manager before leaving."
-                );
+                        "Cannot unregister. You are the last manager of this event. " +
+                                "Please assign another manager before leaving.");
             }
         }
 
-        // Decrement attendeeCount if deleted user was APPROVED
         if (eventUser.getStatus() == EventUserStatus.APPROVED) {
             Event event = eventUser.getEvent();
             event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
             eventRepository.save(event);
         }
-        
+
         eventUserRepository.delete(eventUser);
     }
 
@@ -174,7 +177,8 @@ public class EventUserWriteService {
             eventUser.setEndAt(updateDTO.getEndAt());
         }
         validateTime(event, updateDTO.getStartAt(), updateDTO.getEndAt());
-        if (account.getAccountId().equals(event.getCreatedBy().getAccountId()) || eventUser.getRole().equals(EventUserRole.MANAGER)) {
+        if (account.getAccountId().equals(event.getCreatedBy().getAccountId())
+                || eventUser.getRole().equals(EventUserRole.MANAGER)) {
             eventUser.setStatus(EventUserStatus.APPROVED);
         } else {
             eventUser.setStatus(EventUserStatus.PENDING);
@@ -187,10 +191,9 @@ public class EventUserWriteService {
     @Transactional
     public EventUserSearchDTO createEventUser(UUID accountId, Long eventId, EventUserCreateDTO eventUserCreateDTO) {
         Account account = accountRepository.findById(accountId).orElseThrow(
-                () -> new ResourceNotFoundException("Account with id: " + accountId + " not found")
-        );
-        Event event = eventRepository.findById(eventId).orElseThrow(() ->
-                new ResourceNotFoundException("Event with id: " + eventId + " not found"));
+                () -> new ResourceNotFoundException("Account with id: " + accountId + " not found"));
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
         if (eventUserCreateDTO.getStartAt() == null) {
             eventUserCreateDTO.setStartAt(event.getStartAt());
         }
@@ -227,24 +230,23 @@ public class EventUserWriteService {
         if (!eventRepository.existsById(eventId)) {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
-        
+
         EventUser eventUser = findEventUser(accountId, eventId);
-        
+
         if (eventUser.getRole() == EventUserRole.MANAGER) {
             // Count total managers in this event
             List<EventUser> allEventUsers = eventUserRepository.findByEventId(eventId);
             long managerCount = allEventUsers.stream()
                     .filter(eu -> eu.getRole() == EventUserRole.MANAGER)
                     .count();
-            
+
             if (managerCount <= 1) {
                 throw new IllegalStateException(
-                    "Cannot remove this user. They are the last manager of this event. " +
-                    "Please assign another manager before removing them."
-                );
+                        "Cannot remove this user. They are the last manager of this event. " +
+                                "Please assign another manager before removing them.");
             }
         }
-        
+
         // Decrement attendeeCount if deleted user was APPROVED
         if (eventUser.getStatus() == EventUserStatus.APPROVED) {
             Event event = eventUser.getEvent();
@@ -267,7 +269,8 @@ public class EventUserWriteService {
             eventUser.setEndAt(updateDTO.getEndAt());
         }
         validateTime(event, updateDTO.getStartAt(), updateDTO.getEndAt());
-        if (accountId.equals(event.getCreatedBy().getAccountId()) || eventUser.getRole().equals(EventUserRole.MANAGER)) {
+        if (accountId.equals(event.getCreatedBy().getAccountId())
+                || eventUser.getRole().equals(EventUserRole.MANAGER)) {
             eventUser.setStatus(EventUserStatus.APPROVED);
         } else {
             eventUser.setStatus(EventUserStatus.PENDING);
@@ -280,11 +283,21 @@ public class EventUserWriteService {
     @Transactional
     public EventUserSearchDTO updateRole(UUID accountId, Long eventId, EventUserRoleUpdateDTO role) {
         EventUser eventUser = findEventUser(accountId, eventId);
+        EventUserRole currRole = eventUser.getRole();
         if (role.getEventUserRole() != null) {
             eventUser.setRole(role.getEventUserRole());
         }
         eventUserRepository.save(eventUser);
-        return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
+        if (role.getEventUserRole() == EventUserRole.MANAGER && (eventUser.getRole() != currRole)) {
+            pushNotificationService.pushNotificationToUser(accountId,
+                    "You have been assigned as a manager for the event: " + eventUser.getEvent().getTitle());
+        }
+        if (role.getEventUserRole() == EventUserRole.ATTENDEE && (eventUser.getRole() != currRole)) {
+            pushNotificationService.pushNotificationToUser(accountId,
+                    "You have been changed to an attendee for the event: " + eventUser.getEvent().getTitle());
+        }
+        return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(),
+                eventUser.getEvent());
     }
 
     @Transactional
@@ -292,25 +305,48 @@ public class EventUserWriteService {
         EventUser eventUser = findEventUser(accountId, eventId);
         EventUserStatus oldStatus = eventUser.getStatus();
         EventUserStatus newStatus = status.getStatus();
-        
+
         if (newStatus != null && newStatus != oldStatus) {
             eventUser.setStatus(newStatus);
-            
+
             // Update attendeeCount when status changes to/from APPROVED
             Event event = eventUser.getEvent();
-            
+
             if (newStatus == EventUserStatus.APPROVED && oldStatus != EventUserStatus.APPROVED) {
                 // User newly approved - increment count
                 event.setAttendeeCount(event.getAttendeeCount() + 1);
                 eventRepository.save(event);
-            } else if (oldStatus == EventUserStatus.APPROVED && newStatus != EventUserStatus.APPROVED) {
-                // User was approved but now is not - decrement count
+                pushNotificationService.pushNotificationToUser(accountId,
+                        "Your registration for the event: " + event.getTitle() + " has been approved.");
+            } else if (oldStatus == EventUserStatus.APPROVED &&
+                    newStatus != EventUserStatus.APPROVED &&
+                    newStatus != EventUserStatus.FINISHED &&
+                    newStatus != EventUserStatus.UNFINISHED) {
+                // User was approved but now is rejected/pending - decrement count and notify
+                event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
+                eventRepository.save(event);
+                pushNotificationService.pushNotificationToUser(accountId,
+                        "Your registration for the event: " + event.getTitle() + " has been rejected.");
+            } else if (oldStatus == EventUserStatus.APPROVED &&
+                    (newStatus == EventUserStatus.FINISHED || newStatus == EventUserStatus.UNFINISHED)) {
+                // User finished/unfinished - decrement count but don't send rejected message
                 event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
                 eventRepository.save(event);
             }
         }
         eventUserRepository.save(eventUser);
-        return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(), eventUser.getEvent());
+        if (newStatus == EventUserStatus.FINISHED) {
+            pushNotificationService.pushNotificationToUser(accountId,
+                    "Your participation in the event: " + eventUser.getEvent().getTitle()
+                            + " has been marked as finished.");
+        }
+        if (newStatus == EventUserStatus.UNFINISHED) {
+            pushNotificationService.pushNotificationToUser(accountId,
+                    "Your participation in the event: " + eventUser.getEvent().getTitle()
+                            + " has been marked as unfinished.");
+        }
+        return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(),
+                eventUser.getEvent());
     }
 
     @Transactional
@@ -319,29 +355,33 @@ public class EventUserWriteService {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
         Event event = eventRepository.findById(eventId).orElseThrow();
-        int successCount = 0;
-        
+        List<UUID> approvedAccountIds = new ArrayList<>();
+
         for (UUID accountId : accountIds) {
             EventUserId eventUserId = new EventUserId();
             eventUserId.setAccountId(accountId);
             eventUserId.setEventId(eventId);
-            
+
             EventUser eventUser = eventUserRepository.findById(eventUserId).orElse(null);
-            
+
             if (eventUser != null && eventUser.getStatus() != EventUserStatus.APPROVED) {
                 eventUser.setStatus(EventUserStatus.APPROVED);
                 eventUserRepository.save(eventUser);
-                
-                // Increment attendee count
+
                 event.setAttendeeCount(event.getAttendeeCount() + 1);
-                successCount++;
+                approvedAccountIds.add(accountId);
             }
         }
         eventRepository.save(event);
-        
+
+        if (!approvedAccountIds.isEmpty()) {
+            pushNotificationService.pushNotificationToMultipleUsers(approvedAccountIds,
+                    "Your registration for the event: " + event.getTitle() + " has been approved.");
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("count", successCount);
+        response.put("count", approvedAccountIds.size());
         return response;
     }
 
@@ -351,31 +391,36 @@ public class EventUserWriteService {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
         Event event = eventRepository.findById(eventId).orElseThrow();
-        int successCount = 0;
-        
+        List<UUID> rejectedAccountIds = new ArrayList<>();
+
         for (UUID accountId : accountIds) {
             EventUserId eventUserId = new EventUserId();
             eventUserId.setAccountId(accountId);
             eventUserId.setEventId(eventId);
-            
+
             EventUser eventUser = eventUserRepository.findById(eventUserId).orElse(null);
-            
+
             if (eventUser != null && eventUser.getStatus() != EventUserStatus.REJECTED) {
-                // If previously approved, decrement count
+
                 if (eventUser.getStatus() == EventUserStatus.APPROVED) {
                     event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
                 }
-                
+
                 eventUser.setStatus(EventUserStatus.REJECTED);
                 eventUserRepository.save(eventUser);
-                successCount++;
+                rejectedAccountIds.add(accountId);
             }
         }
         eventRepository.save(event);
-        
+
+        if (!rejectedAccountIds.isEmpty()) {
+            pushNotificationService.pushNotificationToMultipleUsers(rejectedAccountIds,
+                    "Your registration for the event: " + event.getTitle() + " has been rejected.");
+        }
+
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
-        response.put("count", successCount);
+        response.put("count", rejectedAccountIds.size());
         return response;
     }
 }
