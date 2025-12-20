@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import { eventCategories } from "../../data/mockEvents";
+import { CATEGORY_LIST } from "../../constants/categories";
 import {
   Box,
   Paper,
@@ -85,28 +85,28 @@ const EventFilter = ({
           </Typography>
         </Box>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {eventCategories.map((category) => (
+          {CATEGORY_LIST.map((category) => (
             <Chip
-              key={category.id}
+              key={category.key}
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <span>{category.icon}</span>
-                  <span>{category.name}</span>
+                  <span>{category.label}</span>
                 </Box>
               }
-              onClick={() => onCategoryChange(category.id)}
+              onClick={() => onCategoryChange(category.key)}
               sx={{
                 borderRadius: "20px",
                 fontWeight: 500,
                 fontSize: "13px",
                 py: 0.5,
                 backgroundColor:
-                  selectedCategory === category.id ? "primary.main" : "grey.100",
+                  selectedCategory === category.key ? "primary.main" : "grey.100",
                 color:
-                  selectedCategory === category.id ? "#fff" : "text.primary",
+                  selectedCategory === category.key ? "#fff" : "text.primary",
                 "&:hover": {
                   backgroundColor:
-                    selectedCategory === category.id
+                    selectedCategory === category.key
                       ? "primary.dark"
                       : "grey.200",
                 },

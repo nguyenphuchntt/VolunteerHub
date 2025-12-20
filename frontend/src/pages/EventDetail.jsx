@@ -7,6 +7,7 @@ import { ThreeColumnLayout, ConfirmDialog } from "../components/common";
 import { eventService, myEventsService, postService, eventUserService, mediaService } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { extractEventIdFromSlug, buildEventUrl } from "../utils/urlUtils";
+import { getCategoryLabel } from "../constants/categories";
 
 import {
   Box,
@@ -421,7 +422,7 @@ const EventDetail = () => {
         </Box>
         
         <Box sx={{ display: "flex", gap: 1, mt: 1.5, flexWrap: "wrap" }}>
-          {event.category && <Chip label={event.category} size="small" color="primary" />}
+          {event.category && <Chip label={getCategoryLabel(event.category)} size="small" color="primary" />}
           {statusDisplay && <Chip label={statusDisplay} size="small" variant="outlined" />}
         </Box>
         

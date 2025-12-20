@@ -19,6 +19,7 @@ import {
 import { eventService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { buildEventUrl } from "../../utils/urlUtils";
+import { getCategoryLabel } from "../../constants/categories";
 
 
 const EventCard = ({ event }) => {
@@ -247,7 +248,7 @@ const EventCard = ({ event }) => {
 
           {event.category && (
             <Chip
-              label={event.category}
+              label={getCategoryLabel(event.category)}
               size="small"
               sx={{
                 backgroundColor: "rgba(0,0,0,0.6)",

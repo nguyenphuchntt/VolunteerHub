@@ -14,6 +14,7 @@ import {
 import { Search, TrendingUp, CalendarMonth, LocationOn } from "@mui/icons-material";
 import { eventService } from "../../../api";
 import { buildEventUrl } from "../../../utils/urlUtils";
+import { getCategoryLabel } from "../../../constants/categories";
 
 const RIGHT_WIDTH = 350;
 
@@ -143,7 +144,7 @@ const RightSidebar = ({ showSearch = true, searchQuery = "", onSearchChange }) =
                   <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography variant="caption" color="text.secondary">
-                        {event.category || "Sự kiện"} · #{index + 1} Trending
+                        {getCategoryLabel(event.category) || "Sự kiện"} · #{index + 1} Trending
                       </Typography>
                       <Typography variant="body2" fontWeight={700} noWrap>
                         {event.title}

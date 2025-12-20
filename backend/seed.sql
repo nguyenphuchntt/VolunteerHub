@@ -64,27 +64,27 @@ INSERT INTO user_info (account_id, first_name, last_name, date_of_birth, country
 -- ============================================
 INSERT INTO event (event_id, title, description, category, location, status, create_at, start_at, end_at, attendee_count, like_count, created_by_account_id) VALUES
 -- PENDING (3)
-(1, 'Dọn rác bãi biển Mỹ Khê', 'Hoạt động dọn vệ sinh và bảo vệ môi trường biển', 'Environment', 'Bãi biển Mỹ Khê, Đà Nẵng', 'PENDING', NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 30 DAY, NOW() + INTERVAL 30 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
-(2, 'Trồng cây xanh Sóc Sơn', 'Trồng 500 cây xanh tại khu vực đồi trọc', 'Environment', 'Sóc Sơn, Hà Nội', 'PENDING', NOW() - INTERVAL 3 DAY, NOW() + INTERVAL 45 DAY, NOW() + INTERVAL 45 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
-(3, 'Quyên góp sách cho trẻ em vùng cao', 'Thu gom và tặng sách vở cho học sinh vùng cao', 'Education', 'Sapa, Lào Cai', 'PENDING', NOW() - INTERVAL 2 DAY, NOW() + INTERVAL 60 DAY, NOW() + INTERVAL 62 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
+(1, 'Dọn rác bãi biển Mỹ Khê', 'Hoạt động dọn vệ sinh và bảo vệ môi trường biển', 'ENVIRONMENT', 'Bãi biển Mỹ Khê, Đà Nẵng', 'PENDING', NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 30 DAY, NOW() + INTERVAL 30 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
+(2, 'Trồng cây xanh Sóc Sơn', 'Trồng 500 cây xanh tại khu vực đồi trọc', 'ENVIRONMENT', 'Sóc Sơn, Hà Nội', 'PENDING', NOW() - INTERVAL 3 DAY, NOW() + INTERVAL 45 DAY, NOW() + INTERVAL 45 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
+(3, 'Quyên góp sách cho trẻ em vùng cao', 'Thu gom và tặng sách vở cho học sinh vùng cao', 'EDUCATION', 'Sapa, Lào Cai', 'PENDING', NOW() - INTERVAL 2 DAY, NOW() + INTERVAL 60 DAY, NOW() + INTERVAL 62 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
 -- SCHEDULED (4)
-(4, 'Hiến máu nhân đạo', 'Chương trình hiến máu tình nguyện tại BV Bạch Mai', 'Healthcare', 'Bệnh viện Bạch Mai, Hà Nội', 'SCHEDULED', NOW() - INTERVAL 10 DAY, NOW() + INTERVAL 7 DAY, NOW() + INTERVAL 7 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
-(5, 'Chạy bộ từ thiện 5K', 'Chạy bộ gây quỹ cho trẻ em mồ côi', 'Charity', 'Hồ Hoàn Kiếm, Hà Nội', 'SCHEDULED', NOW() - INTERVAL 15 DAY, NOW() + INTERVAL 14 DAY, NOW() + INTERVAL 14 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
-(6, 'Dạy tiếng Anh miễn phí', 'Lớp học tiếng Anh cho trẻ em có hoàn cảnh khó khăn', 'Education', 'Nhà văn hóa Quận 7, HCM', 'SCHEDULED', NOW() - INTERVAL 20 DAY, NOW() + INTERVAL 21 DAY, NOW() + INTERVAL 90 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
-(7, 'Phát cơm từ thiện', 'Phát cơm miễn phí cho người vô gia cư', 'Charity', 'Quận 1, HCM', 'SCHEDULED', NOW() - INTERVAL 8 DAY, NOW() + INTERVAL 3 DAY, NOW() + INTERVAL 3 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
-(16, 'Phát khô gà', 'Phát khô gà miễn phí cho fan anh', 'Charity', 'Quận 3, HCM', 'SCHEDULED', NOW() - INTERVAL 8 DAY, NOW() + INTERVAL 3 DAY, NOW() + INTERVAL 3 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
+(4, 'Hiến máu nhân đạo', 'Chương trình hiến máu tình nguyện tại BV Bạch Mai', 'HEALTHCARE', 'Bệnh viện Bạch Mai, Hà Nội', 'SCHEDULED', NOW() - INTERVAL 10 DAY, NOW() + INTERVAL 7 DAY, NOW() + INTERVAL 7 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
+(5, 'Chạy bộ từ thiện 5K', 'Chạy bộ gây quỹ cho trẻ em mồ côi', 'CHARITY', 'Hồ Hoàn Kiếm, Hà Nội', 'SCHEDULED', NOW() - INTERVAL 15 DAY, NOW() + INTERVAL 14 DAY, NOW() + INTERVAL 14 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
+(6, 'Dạy tiếng Anh miễn phí', 'Lớp học tiếng Anh cho trẻ em có hoàn cảnh khó khăn', 'EDUCATION', 'Nhà văn hóa Quận 7, HCM', 'SCHEDULED', NOW() - INTERVAL 20 DAY, NOW() + INTERVAL 21 DAY, NOW() + INTERVAL 90 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
+(7, 'Phát cơm từ thiện', 'Phát cơm miễn phí cho người vô gia cư', 'CHARITY', 'Quận 1, HCM', 'SCHEDULED', NOW() - INTERVAL 8 DAY, NOW() + INTERVAL 3 DAY, NOW() + INTERVAL 3 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
+(16, 'Phát khô gà', 'Phát khô gà miễn phí cho fan anh', 'CHARITY', 'Quận 3, HCM', 'SCHEDULED', NOW() - INTERVAL 8 DAY, NOW() + INTERVAL 3 DAY, NOW() + INTERVAL 3 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
 -- STARTED (3)
-(8, 'Thăm và tặng quà người già neo đơn', 'Thăm hỏi và tặng quà tại viện dưỡng lão', 'Healthcare', 'Viện dưỡng lão Thiên Ân, Hà Nội', 'STARTED', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 2 DAY, NOW() + INTERVAL 5 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
-(9, 'Dọn vệ sinh sông Tô Lịch', 'Hoạt động làm sạch dòng sông ô nhiễm', 'Environment', 'Sông Tô Lịch, Hà Nội', 'STARTED', NOW() - INTERVAL 25 DAY, NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 7 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000005'),
-(10, 'Xây nhà tình thương', 'Xây dựng nhà cho hộ nghèo tại Quảng Bình', 'Charity', 'Quảng Bình', 'STARTED', NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
-(17, 'Xây trường', 'Xây dựng trường học cho học sinh miền núi', 'Charity', 'Cao Bằng', 'STARTED', NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
+(8, 'Thăm và tặng quà người già neo đơn', 'Thăm hỏi và tặng quà tại viện dưỡng lão', 'HEALTHCARE', 'Viện dưỡng lão Thiên Ân, Hà Nội', 'STARTED', NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 2 DAY, NOW() + INTERVAL 5 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
+(9, 'Dọn vệ sinh sông Tô Lịch', 'Hoạt động làm sạch dòng sông ô nhiễm', 'ENVIRONMENT', 'Sông Tô Lịch, Hà Nội', 'STARTED', NOW() - INTERVAL 25 DAY, NOW() - INTERVAL 1 DAY, NOW() + INTERVAL 7 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000005'),
+(10, 'Xây nhà tình thương', 'Xây dựng nhà cho hộ nghèo tại Quảng Bình', 'CHARITY', 'Quảng Bình', 'STARTED', NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
+(17, 'Xây trường', 'Xây dựng trường học cho học sinh miền núi', 'CHARITY', 'Cao Bằng', 'STARTED', NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 5 DAY, NOW() + INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002'),
 -- FINISHED (3)
-(11, 'Cứu trợ lũ lụt miền Trung', 'Phát quà cứu trợ cho bà con vùng lũ', 'Charity', 'Quảng Trị', 'FINISHED', NOW() - INTERVAL 60 DAY, NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 45 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
-(12, 'Khám bệnh miễn phí', 'Chương trình khám bệnh từ thiện cho người nghèo', 'Healthcare', 'Bình Phước', 'FINISHED', NOW() - INTERVAL 45 DAY, NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 33 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
-(13, 'Trao học bổng cho sinh viên nghèo', 'Trao 50 suất học bổng cho SV có hoàn cảnh khó khăn', 'Education', 'ĐH Quốc Gia, HCM', 'FINISHED', NOW() - INTERVAL 40 DAY, NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 30 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000005'),
+(11, 'Cứu trợ lũ lụt miền Trung', 'Phát quà cứu trợ cho bà con vùng lũ', 'CHARITY', 'Quảng Trị', 'FINISHED', NOW() - INTERVAL 60 DAY, NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 45 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000003'),
+(12, 'Khám bệnh miễn phí', 'Chương trình khám bệnh từ thiện cho người nghèo', 'HEALTHCARE', 'Bình Phước', 'FINISHED', NOW() - INTERVAL 45 DAY, NOW() - INTERVAL 35 DAY, NOW() - INTERVAL 33 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000004'),
+(13, 'Trao học bổng cho sinh viên nghèo', 'Trao 50 suất học bổng cho SV có hoàn cảnh khó khăn', 'EDUCATION', 'ĐH Quốc Gia, HCM', 'FINISHED', NOW() - INTERVAL 40 DAY, NOW() - INTERVAL 30 DAY, NOW() - INTERVAL 30 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000005'),
 -- CANCELLED (2)
-(14, 'Tình nguyện mùa hè xanh', 'Chương trình tình nguyện mùa hè (đã hủy do dịch)', 'Community', 'Nghệ An', 'CANCELLED', NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 20 DAY, NOW() - INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
-(15, 'Hội chợ từ thiện', 'Hội chợ gây quỹ (đã hủy do thời tiết)', 'Charity', 'Công viên Thống Nhất, Hà Nội', 'CANCELLED', NOW() - INTERVAL 55 DAY, NOW() - INTERVAL 25 DAY, NOW() - INTERVAL 24 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002');
+(14, 'Tình nguyện mùa hè xanh', 'Chương trình tình nguyện mùa hè (đã hủy do dịch)', 'COMMUNITY', 'Nghệ An', 'CANCELLED', NOW() - INTERVAL 50 DAY, NOW() - INTERVAL 20 DAY, NOW() - INTERVAL 10 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000001'),
+(15, 'Hội chợ từ thiện', 'Hội chợ gây quỹ (đã hủy do thời tiết)', 'CHARITY', 'Công viên Thống Nhất, Hà Nội', 'CANCELLED', NOW() - INTERVAL 55 DAY, NOW() - INTERVAL 25 DAY, NOW() - INTERVAL 24 DAY, 0, 0, 'b0000001-0000-0000-0000-000000000002');
 
 -- ============================================
 -- 4. EVENT_USER (managers + attendees)

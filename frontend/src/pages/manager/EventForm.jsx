@@ -28,15 +28,7 @@ import { ThreeColumnLayout } from "../../components/common";
 import { eventService, mediaService } from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import { buildEventUrl } from "../../utils/urlUtils";
-
-const categories = [
-  "Environment",
-  "Community Service", 
-  "Education",
-  "Health & Wellness",
-  "Animal Welfare",
-  "Other",
-];
+import { CATEGORY_OPTIONS } from "../../constants/categories";
 
 const EventForm = () => {
   const navigate = useNavigate();
@@ -229,8 +221,8 @@ const EventForm = () => {
               onChange={handleChange}
               label="Danh mục"
             >
-              {categories.map(cat => (
-                <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+              {CATEGORY_OPTIONS.map(cat => (
+                <MenuItem key={cat.key} value={cat.key}>{cat.label}</MenuItem>
               ))}
             </Select>
           </FormControl>

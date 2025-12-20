@@ -60,22 +60,26 @@ const EventFeed = () => {
     try {
       let response;
       
+      // Build params with category filter
+      const params = { 
+        page: pageIndex, 
+        size: 10 
+      };
+      
+      if (selectedCategory !== "all") {
+        params.category = selectedCategory;
+      }
+      if (debouncedSearchQuery.trim()) {
+        params.title = debouncedSearchQuery;
+      }
+      
       if (viewMode === "hot") {
-        // Fetch hot events
-        response = await eventService.getHotEvents(pageIndex, 10);
+        // Fetch hot events sorted by likeCount
+        params.sort = "likeCount,desc";
+        response = await eventService.searchEvents(params);
       } else {
         // Fetch newest events sorted by startAt desc
-        const params = { 
-          page: pageIndex, 
-          size: 10, 
-          sort: "startAt,desc" 
-        };
-        if (selectedCategory !== "all") {
-          params.category = selectedCategory;
-        }
-        if (debouncedSearchQuery.trim()) {
-          params.title = debouncedSearchQuery;
-        }
+        params.sort = "startAt,desc";
         response = await eventService.searchEvents(params);
       }
       
