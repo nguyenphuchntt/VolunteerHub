@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS notification (
         'EVENT_START_REMINDER', 'EVENT_END_REMINDER',
         'EVENT_JOIN_APPROVED', 'EVENT_JOIN_REJECTED',
         'EVENT_APPROVED', 'EVENT_REJECTED', 'EVENT_JOIN_REQUEST',
+        'EVENT_CANCELLED',
         'MANAGER_ROLE_REQUEST',
         'ROLE_REQUEST_APPROVED', 'ROLE_REQUEST_REJECTED',
         'NEW_FOLLOWER',
@@ -221,8 +222,6 @@ CREATE INDEX idx_follow_user_followed_by ON follow_user(followed_by_account_id);
 
 CREATE INDEX idx_request_account_id ON request(account_id);
 
-CREATE INDEX idx_request_status ON request(status);
-
 CREATE INDEX idx_fcm_token_account_id ON fcm_token(account_id);
 
 CREATE FULLTEXT INDEX idx_event_title_fulltext ON event(title) WITH PARSER ngram;
@@ -230,8 +229,6 @@ CREATE FULLTEXT INDEX idx_event_title_fulltext ON event(title) WITH PARSER ngram
 CREATE INDEX idx_event_user_event_role ON event_user(event_id, event_user_role);
 
 CREATE INDEX idx_event_status_like ON event(status, like_count DESC);
-
-CREATE INDEX idx_notification_receiver_type_deleted ON notification(receiver_account_id, type, is_deleted);
 
 CREATE INDEX idx_event_category ON event(category);
 
