@@ -476,15 +476,18 @@ const EventDetailManagement = () => {
                 Hoàn thành ({selectedIds.length})
               </Button>
             )}
-            <Button 
-              size="small" 
-              variant="outlined"
-              startIcon={<Edit />} 
-              onClick={() => navigate(`/manage/events/${slug}/edit`)} 
-              sx={{ textTransform: "none" }}
-            >
-              Chỉnh sửa
-            </Button>
+            {/* Chỉ hiển thị nút Chỉnh sửa cho người tạo sự kiện */}
+            {event && user?.accountID === event.accountId && (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<Edit />}
+                onClick={() => navigate(`/manage/events/${slug}/edit`)}
+                sx={{ textTransform: "none" }}
+              >
+                Chỉnh sửa
+              </Button>
+            )}
             <Button size="small" startIcon={<Refresh />} onClick={() => { fetchParticipants(); fetchDashboard(); }} sx={{ textTransform: "none" }}>
               Làm mới
             </Button>
