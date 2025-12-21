@@ -12,6 +12,8 @@ import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.events.event.EventJoinApprovedEvent;
 import com.uet.VolunteerHub.events.event.EventJoinRejectedEvent;
 import com.uet.VolunteerHub.events.event.EventJoinRequestEvent;
+import com.uet.VolunteerHub.events.event.EventManagerPromotedEvent;
+import com.uet.VolunteerHub.events.event.EventManagerDemotedEvent;
 import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.repository.EventUserRepository;
@@ -321,10 +323,12 @@ public class EventUserWriteService {
         if (role.getEventUserRole() == EventUserRole.MANAGER && (eventUser.getRole() != currRole)) {
             pushNotificationService.pushNotificationToUser(accountId,
                     "Bạn được duyệt làm quản lý của sự kiện: " + eventUser.getEvent().getTitle());
+            eventPublisher.publishEvent(new EventManagerPromotedEvent(this, caller, event, eventUser.getAccount()));
         }
         if (role.getEventUserRole() == EventUserRole.ATTENDEE && (eventUser.getRole() != currRole)) {
             pushNotificationService.pushNotificationToUser(accountId,
                     "Bạn bị thay đổi là người tham gia sự kiện: " + eventUser.getEvent().getTitle());
+            eventPublisher.publishEvent(new EventManagerDemotedEvent(this, caller, event, eventUser.getAccount()));
         }
         return mapToEventUserSearchDTO(eventUser, eventUser.getAccount(), eventUser.getAccount().getUserInfo(),
                 eventUser.getEvent());
@@ -349,6 +353,8 @@ public class EventUserWriteService {
                 eventRepository.save(event);
                 pushNotificationService.pushNotificationToUser(accountId,
                         "Bạn đã được duyệt để tham gia sự kiện: " + event.getTitle());
+                Account manager = event.getCreatedBy();
+                eventPublisher.publishEvent(new EventJoinApprovedEvent(this, manager, event, List.of(eventUser.getAccount())));
             } else if (oldStatus == EventUserStatus.APPROVED &&
                     newStatus != EventUserStatus.APPROVED &&
                     newStatus != EventUserStatus.FINISHED &&
@@ -358,6 +364,8 @@ public class EventUserWriteService {
                 eventRepository.save(event);
                 pushNotificationService.pushNotificationToUser(accountId,
                         "Bạn không được duyệt tham gia sự kiện: " + event.getTitle());
+                Account manager = event.getCreatedBy();
+                eventPublisher.publishEvent(new EventJoinRejectedEvent(this, manager, event, List.of(eventUser.getAccount())));
             } else if (oldStatus == EventUserStatus.APPROVED &&
                     (newStatus == EventUserStatus.FINISHED || newStatus == EventUserStatus.UNFINISHED)) {
                 // User finished/unfinished - decrement count but don't send rejected message

@@ -123,7 +123,7 @@ const ChangePassword = () => {
                 value={formData.newPassword}
                 onChange={handleChange("newPassword")}
                 sx={{ mb: 2 }}
-                helperText="Tối thiểu 6 ký tự"
+                helperText="Tối thiểu 8 ký tự"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">

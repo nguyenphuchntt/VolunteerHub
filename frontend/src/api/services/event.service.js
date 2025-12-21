@@ -74,8 +74,12 @@ export const eventService = {
   },
 
   // GET /api/events/hot - Lấy sự kiện nổi bật
-  async getHotEvents(page = 0, size = 10) {
-    const response = await api.get('/events/hot', { params: { page, size } });
+  async getHotEvents(page = 0, size = 10, category = null) {
+    const params = { page, size };
+    if (category && category !== 'all') {
+      params.category = category;
+    }
+    const response = await api.get('/events/hot', { params });
     return response.data; // Page<EventSearchDTO>
   },
 

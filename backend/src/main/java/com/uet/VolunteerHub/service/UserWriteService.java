@@ -181,6 +181,17 @@ public class UserWriteService {
         if (!accountUserRegisterDTO.getConfirmPassword().equals(accountUserRegisterDTO.getPassword())) {
             throw new IllegalArgumentException("Password does not match");
         }
+        
+        // Explicit validation BEFORE save to prevent email being sent for duplicate accounts
+        // This is important because @Transactional delays constraint violations until commit,
+        // which happens AFTER sendVerificationEmail() is called
+        if (accountRepository.existsByUsername(accountUserRegisterDTO.getUsername())) {
+            throw new ResourceAlreadyExistsException("Username " + accountUserRegisterDTO.getUsername() + " is already in use");
+        }
+        if (accountRepository.existsByEmail(accountUserRegisterDTO.getEmail())) {
+            throw new ResourceAlreadyExistsException("Email " + accountUserRegisterDTO.getEmail() + " is already in use");
+        }
+        
         Account.AccountBuilder accountBuilder = Account.builder();
         accountBuilder.email(accountUserRegisterDTO.getEmail());
         accountBuilder.username(accountUserRegisterDTO.getUsername());
@@ -194,6 +205,8 @@ public class UserWriteService {
             account.setUserInfo(userInfo);
             accountRepository.save(account);
         } catch (DataIntegrityViolationException e) {
+            // Fallback for race conditions - in case another request creates the same account
+            // between our check and save
             String error = e.getMessage();
             if (error.contains("uk_account_email")) {
                 throw new ResourceAlreadyExistsException("Email " + accountUserRegisterDTO.getEmail() + " is already in use");
@@ -206,8 +219,17 @@ public class UserWriteService {
         return mapToUserSearchDTO(account, userInfo);
     }
 
+
     @Transactional
     public UserSearchDTO createAccount(AccountAdminCreateDTO accountAdminCreateDTO) {
+        // Explicit validation BEFORE save to prevent issues with delayed constraint violations
+        if (accountRepository.existsByUsername(accountAdminCreateDTO.getUsername())) {
+            throw new ResourceAlreadyExistsException("Username " + accountAdminCreateDTO.getUsername() + " is already in use");
+        }
+        if (accountRepository.existsByEmail(accountAdminCreateDTO.getEmail())) {
+            throw new ResourceAlreadyExistsException("Email " + accountAdminCreateDTO.getEmail() + " is already in use");
+        }
+        
         Account.AccountBuilder accountBuilder = Account.builder();
         accountBuilder.email(accountAdminCreateDTO.getEmail());
         accountBuilder.username(accountAdminCreateDTO.getUsername());
@@ -225,6 +247,7 @@ public class UserWriteService {
             account.setUserInfo(userInfo);
             accountRepository.save(account);
         } catch (DataIntegrityViolationException e) {
+            // Fallback for race conditions
             String error = e.getMessage();
             if (error.contains("uk_account_email")) {
                 throw new ResourceAlreadyExistsException("Email " + accountAdminCreateDTO.getEmail() + " is already in use");
@@ -236,6 +259,7 @@ public class UserWriteService {
         return mapToUserSearchDTO(account, userInfo);
 
     }
+
 
     @Transactional
     public void changePasswordUser(Account account, AccountPasswordChangeDTO accountPasswordChangeDTO) {

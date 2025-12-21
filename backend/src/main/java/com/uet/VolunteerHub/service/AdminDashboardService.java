@@ -35,6 +35,7 @@ public class AdminDashboardService {
     private final PostLikeRepository postLikeRepository;
     private final EventLikeRepository eventLikeRepository;
     private final PostRepository postRepository;
+    private final PushNotificationService pushNotificationService;
 
     @Cacheable(value = "adminDashboard", key = "'overview'")
     public DashboardOverviewDTO getDashboardOverview() {
@@ -219,8 +220,8 @@ public class AdminDashboardService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "adminDashboard", allEntries = true),
-        @CacheEvict(value = "events", allEntries = true)
+            @CacheEvict(value = "adminDashboard", allEntries = true),
+            @CacheEvict(value = "events", allEntries = true)
     })
     @Transactional
     public void updateEventStatus(Long eventId, String status) {
@@ -228,9 +229,23 @@ public class AdminDashboardService {
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
         try {
+            EventStatus oldStatus = event.getStatus();
             EventStatus newStatus = EventStatus.valueOf(status.toUpperCase());
             event.setStatus(newStatus);
             eventRepository.save(event);
+
+            // Send push notification to event creator (manager)
+            if (event.getCreatedBy() != null && oldStatus != newStatus) {
+                if (newStatus == EventStatus.SCHEDULED && oldStatus == EventStatus.PENDING) {
+                    pushNotificationService.pushNotificationToUser(
+                            event.getCreatedBy().getAccountId(),
+                            "Sự kiện '" + event.getTitle() + "' của bạn đã được phê duyệt!");
+                } else if (newStatus == EventStatus.CANCELLED) {
+                    pushNotificationService.pushNotificationToUser(
+                            event.getCreatedBy().getAccountId(),
+                            "Sự kiện '" + event.getTitle() + "' của bạn đã bị hủy.");
+                }
+            }
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid status: " + status);
         }

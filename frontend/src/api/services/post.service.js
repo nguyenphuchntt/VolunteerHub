@@ -15,9 +15,11 @@ export const postService = {
 
   // GET /api/posts/by-event/{eventId}
   async getPostsByEvent(eventId, params = {}) {
-    const response = await api.get(`/posts/by-event/${eventId}`, { params });
+    const defaultParams = { sort: 'createAt,desc', ...params };
+    const response = await api.get(`/posts/by-event/${eventId}`, { params: defaultParams });
     return response.data;
   },
+
 
   // GET /api/posts/by-account/{username}
   async getPostsByOwner(username, params = {}) {

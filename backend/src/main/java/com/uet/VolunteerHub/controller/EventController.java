@@ -71,8 +71,7 @@ public class EventController {
     @GetMapping("/{eventId}")
     public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId,
             @AuthenticationPrincipal Account account) {
-        UUID accountId = (account != null) ? account.getAccountId() : null;
-        Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, accountId);
+        Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, account);
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
@@ -103,8 +102,10 @@ public class EventController {
     }
 
     @GetMapping("/hot")
-    public ResponseEntity<Page<EventSearchDTO>> getHotEvents(@PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findHotEvents(pageable);
+    public ResponseEntity<Page<EventSearchDTO>> getHotEvents(
+            @RequestParam(required = false) String category,
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findHotEvents(category, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
@@ -133,8 +134,9 @@ public class EventController {
     @PatchMapping("/{eventId}/event-status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventSearchDTO> updateEventStatus(@PathVariable Long eventId,
-            @RequestBody @Valid EventStatusUpdateDTO eventStatusUpdateDTO) {
-        EventSearchDTO eventSearchDTO = eventWriteService.updateEventStatus(eventId, eventStatusUpdateDTO);
+            @RequestBody @Valid EventStatusUpdateDTO eventStatusUpdateDTO,
+            @AuthenticationPrincipal Account admin) {
+        EventSearchDTO eventSearchDTO = eventWriteService.updateEventStatus(eventId, eventStatusUpdateDTO, admin);
         return ResponseEntity.ok(eventSearchDTO);
     }
 
