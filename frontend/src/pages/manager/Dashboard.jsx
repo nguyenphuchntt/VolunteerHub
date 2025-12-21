@@ -137,15 +137,6 @@ const ManagerDashboard = () => {
             <Typography variant="h6" fontWeight={700}>
               Dashboard Quản lý
             </Typography>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<Add />}
-              onClick={() => navigate("/manage/events/new")}
-              sx={{ borderRadius: "9999px", textTransform: "none", fontWeight: 600 }}
-            >
-              Tạo sự kiện
-            </Button>
           </Box>
         </Box>
 

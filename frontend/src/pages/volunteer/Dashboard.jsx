@@ -66,7 +66,6 @@ const VolunteerDashboard = () => {
     { title: "Sự kiện đã đăng ký", value: myEvents.length.toString(), icon: <Event />, color: "primary" },
     { title: "Đang chờ/Sắp tới", value: upcomingCount.toString(), icon: <CalendarMonth />, color: "info" },
     { title: "Đã hoàn thành", value: completedCount.toString(), icon: <TrendingUp />, color: "success" },
-    { title: "Thông báo mới", value: "0", icon: <Notifications />, color: "warning" },
   ];
 
   const displayName = user?.firstName && user?.lastName

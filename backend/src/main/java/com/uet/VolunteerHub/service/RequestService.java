@@ -17,6 +17,8 @@ import com.uet.VolunteerHub.repository.AccountRepository;
 import com.uet.VolunteerHub.repository.RequestRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +33,7 @@ public class RequestService {
     private final RequestRepository requestRepository;
     private final AccountRepository accountRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final org.springframework.cache.CacheManager cacheManager;
 
     private RequestReadDTO mapToRequestReadDTO(Request request) {
         return RequestReadDTO.builder()
@@ -46,6 +49,7 @@ public class RequestService {
                 .build();
     }
 
+    @CacheEvict(value = "adminPendingRequestCount", allEntries = true)
     @Transactional
     public RequestReadDTO createRequest(Account account, RequestCreateDTO requestCreateDTO) {
         if (account.getRole() == UserRole.MANAGER || account.getRole() == UserRole.ADMIN) {
@@ -66,6 +70,7 @@ public class RequestService {
         return mapToRequestReadDTO(request);
     }
 
+    @CacheEvict(value = "adminPendingRequestCount", allEntries = true)
     @Transactional
     public RequestReadDTO reviewRequest(Long requestId, Account admin, RequestReviewDTO requestReviewDTO) {
         Request request = requestRepository.findById(requestId)
@@ -82,6 +87,10 @@ public class RequestService {
             Account userAccount = request.getAccount();
             userAccount.setRole(UserRole.MANAGER);
             accountRepository.save(userAccount);
+            Cache usersCache = cacheManager.getCache("users");
+            if (usersCache != null) {
+                usersCache.evict(userAccount.getAccountId());
+            }
             eventPublisher.publishEvent(new RoleRequestApprovedEvent(this, admin, request));
         } else if (requestReviewDTO.getStatus() == RequestStatus.REJECTED) {
             eventPublisher.publishEvent(new RoleRequestRejectedEvent(this, admin, request));
@@ -90,6 +99,7 @@ public class RequestService {
         return mapToRequestReadDTO(request);
     }
 
+    @CacheEvict(value = "adminPendingRequestCount", allEntries = true)
     @Transactional
     public void cancelRequest(Long requestId, Account account) {
         Request request = requestRepository.findById(requestId)

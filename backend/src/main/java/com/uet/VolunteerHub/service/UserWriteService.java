@@ -83,6 +83,7 @@ public class UserWriteService {
         return Pair.of(account, userInfo);
     }
 
+    @CacheEvict(value = "users", key = "#account.accountId")
     @Transactional
     public UserSearchDTO updateUserProfile(UserProfileUpdateDTO userProfileUpdateDTO, Account account) {
         UserInfo userInfo = account.getUserInfo();
@@ -121,6 +122,7 @@ public class UserWriteService {
         return mapToUserSearchDTO(account, userInfo);
     }
 
+    @CacheEvict(value = "users", key = "#account.accountId")
     @Transactional
     public void deleteUser(Account account, AccountPasswordDTO accountPasswordDTO) {
         if (!passwordEncoder.matches(accountPasswordDTO.getPassword(), account.getPassword())) {
@@ -129,6 +131,7 @@ public class UserWriteService {
         accountRepository.delete(account);
     }
 
+    @CacheEvict(value = "users", key = "#accountId")
     @Transactional
     public void deleteAccountById(UUID accountId) {
         Account account = accountRepository.findById(accountId)
