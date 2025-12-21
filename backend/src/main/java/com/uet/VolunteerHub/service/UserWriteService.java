@@ -31,6 +31,9 @@ import com.uet.VolunteerHub.repository.EventUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 
+/**
+ * Service for user write operations (create, update, delete)
+ */
 @Log
 @Service
 public class UserWriteService {

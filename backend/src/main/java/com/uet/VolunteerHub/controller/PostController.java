@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * REST controller for post-related operations
+ */
 @Log
 @RestController
 @RequestMapping("api/posts")
@@ -38,12 +41,25 @@ public class PostController {
         this.commentService = commentService;
     }
 
+    /**
+     * Get post by ID
+     * @param postId post ID
+     * @return post details
+     */
     @GetMapping("/{id}")
     public ResponseEntity<PostReadDTO> searchPostById(@PathVariable("id") Long postId) {
         PostReadDTO result = postReadService.findPostById(postId);
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Search posts with filters
+     * @param content filter by content
+     * @param ownerUsername filter by owner
+     * @param eventId filter by event
+     * @param pageable pagination
+     * @return page of posts
+     */
     @GetMapping("/search")
     public ResponseEntity<Page<PostReadDTO>> searchPosts(
             @RequestParam(required = false) String content,
@@ -54,6 +70,12 @@ public class PostController {
         return ResponseEntity.ok(postsPage);
     }
 
+    /**
+     * Get posts by event
+     * @param eventId event ID
+     * @param pageable pagination
+     * @return page of posts
+     */
     @GetMapping("/by-event/{eventId}")
     public ResponseEntity<Page<PostReadDTO>> getPostByEvent(
             @PathVariable Long eventId,
@@ -62,6 +84,12 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
+    /**
+     * Get posts by owner username
+     * @param username owner username
+     * @param pageable pagination
+     * @return page of posts
+     */
     @GetMapping("/by-account/{username}")
     public ResponseEntity<Page<PostReadDTO>> getPostsByOwner(
             @PathVariable String username,
@@ -70,6 +98,12 @@ public class PostController {
         return ResponseEntity.ok(postsPage);
     }
 
+    /**
+     * Get posts liked by an account (Admin only)
+     * @param accountId account ID
+     * @param pageable pagination
+     * @return page of liked posts
+     */
     @GetMapping("/liked-by/{accountId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<PostReadDTO>> getPostsLikedByAccount(
@@ -79,6 +113,11 @@ public class PostController {
         return ResponseEntity.ok(postsPage);
     }
 
+    /**
+     * Get like count for a post
+     * @param postId post ID
+     * @return like count
+     */
     @GetMapping("{id}/like-count")
     public ResponseEntity<LikeCountResponse> getPostLikeCount(
             @PathVariable("id") Long postId) {
@@ -87,6 +126,11 @@ public class PostController {
                 .build());
     }
 
+    /**
+     * Toggle like on a post
+     * @param dto like data
+     * @return current like status
+     */
     @PreAuthorize("isAuthenticated()")
     @PostMapping("{id}/toggle-like")
     public ResponseEntity<Map<String, Boolean>> toggleLike(@RequestBody @Valid PostLikeDTO dto) {
@@ -94,6 +138,12 @@ public class PostController {
         return ResponseEntity.ok(Map.of("isLiked", isNowLiked));
     }
 
+    /**
+     * Check if post is liked by user
+     * @param account authenticated account
+     * @param postId post ID
+     * @return true if liked
+     */
     @PostMapping("{id}/is-liked")
     public ResponseEntity<Map<String, Boolean>> isPostLiked(@AuthenticationPrincipal Account account,
                                                              @PathVariable("id") Long postId) {
@@ -101,6 +151,12 @@ public class PostController {
         return ResponseEntity.ok(Map.of("isLiked", isLiked));
     }
 
+    /**
+     * Get comments for a post
+     * @param postId post ID
+     * @param pageable pagination
+     * @return page of comments
+     */
     @GetMapping("{id}/comments")
     public ResponseEntity<Page<CommentReadDTO>> getCommentsByPost(
             @PathVariable("id") Long postId,
@@ -109,6 +165,11 @@ public class PostController {
         return ResponseEntity.ok(comments);
     }
 
+    /**
+     * Get comment count for a post
+     * @param postId post ID
+     * @return comment count
+     */
     @GetMapping("{id}/comments/count")
     public ResponseEntity<CommentCountResponse> getCommentCount(
             @PathVariable("id") Long postId) {
@@ -117,6 +178,11 @@ public class PostController {
                 .build());
     }
 
+    /**
+     * Create a new post
+     * @param postCreateDTO post data
+     * @return created post
+     */
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canCreatePost(#postCreateDTO.eventId)")
     @PostMapping
     public ResponseEntity<PostReadDTO> createPost(@RequestBody @Valid PostCreateDTO postCreateDTO) {
@@ -124,6 +190,12 @@ public class PostController {
         return new ResponseEntity<>(newPost, HttpStatus.CREATED);
     }
 
+    /**
+     * Update post content
+     * @param id post ID
+     * @param dto updated content
+     * @return updated post
+     */
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/content")
     public ResponseEntity<PostReadDTO> updatePostContent(
@@ -133,6 +205,12 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    /**
+     * Update post type
+     * @param id post ID
+     * @param dto new type
+     * @return updated post
+     */
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/type")
     public ResponseEntity<PostReadDTO> updatePostType(
@@ -142,6 +220,12 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    /**
+     * Update post's associated event
+     * @param id post ID
+     * @param dto new event
+     * @return updated post
+     */
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/event")
     public ResponseEntity<PostReadDTO> updatePostEvent(
@@ -151,6 +235,12 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    /**
+     * Update post status
+     * @param id post ID
+     * @param dto new status
+     * @return updated post
+     */
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#id)")
     @PatchMapping("/{id}/status")
     public ResponseEntity<PostReadDTO> updatePostStatus(
@@ -160,6 +250,11 @@ public class PostController {
         return ResponseEntity.ok(updatedPost);
     }
 
+    /**
+     * Delete a post
+     * @param postId post ID
+     * @return void
+     */
     @PreAuthorize("hasRole('ADMIN') or @postSecurityService.canModifyPost(#postId)")
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(@PathVariable Long postId) {

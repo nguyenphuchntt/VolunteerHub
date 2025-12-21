@@ -33,6 +33,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service for searching and retrieving events
+ */
 @Log
 @Service
 @Transactional(readOnly = true)
@@ -110,6 +113,11 @@ public class EventSearchService {
         return mapToEventSearchDTO(event, account, userInfo, coverImageUrl);
     }
 
+    /**
+     * Find event by ID
+     * @param eventID event ID
+     * @return event details if found
+     */
     @Transactional
     public Optional<EventSearchDTO> findByEventID(Long eventID) {
         Optional<Event> event = eventRepository.findById(eventID);
@@ -120,6 +128,12 @@ public class EventSearchService {
         });
     }
 
+    /**
+     * Find event by ID with access control
+     * @param eventID event ID
+     * @param requestingAccount account requesting access
+     * @return event details if found and accessible
+     */
     @Transactional
     public Optional<EventSearchDTO> findByEventID(Long eventID, Account requestingAccount) {
         Optional<Event> event = eventRepository.findById(eventID);
@@ -157,6 +171,12 @@ public class EventSearchService {
         });
     }
 
+    /**
+     * Find events matching criteria
+     * @param criteria search criteria
+     * @param pageable pagination
+     * @return page of events
+     */
     @Transactional
     public Page<EventSearchDTO> findEventBySpecification(EventSearchCriteriaDTO criteria, Pageable pageable) {
         Specification<Event> spec = EventSpecification.fromCriteria(criteria);
@@ -194,6 +214,12 @@ public class EventSearchService {
         });
     }
 
+    /**
+     * Find public events matching criteria
+     * @param criteria search criteria
+     * @param pageable pagination
+     * @return page of public events
+     */
     @Transactional
     public Page<EventSearchDTO> findPublicEventBySpecification(EventSearchCriteriaDTO criteria, Pageable pageable) {
         Specification<Event> spec = PublicEventSpecification.fromCriteria(criteria);
@@ -269,6 +295,11 @@ public class EventSearchService {
         }).toList();
     }
 
+    /**
+     * Find hot/trending events (cached)
+     * @param pageable pagination
+     * @return page of hot events
+     */
     @Cacheable(value = "events", key = "'hot:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional
     public Page<EventSearchDTO> findHotEvents(Pageable pageable) {
@@ -288,6 +319,12 @@ public class EventSearchService {
         });
     }
 
+    /**
+     * Find hot events by category (cached)
+     * @param category filter category
+     * @param pageable pagination
+     * @return page of hot events
+     */
     @Cacheable(value = "events", key = "'hot:' + #category + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     @Transactional
     public Page<EventSearchDTO> findHotEvents(String category, Pageable pageable) {

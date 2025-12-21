@@ -14,6 +14,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * REST controller for authentication operations
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthenticationController {
@@ -27,6 +30,11 @@ public class AuthenticationController {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /**
+     * Authenticates user and returns JWT token
+     * @param loginDTO login credentials
+     * @return JWT token response
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO) {
         Authentication authenticationRequest =
@@ -46,6 +54,9 @@ public class AuthenticationController {
         return ResponseEntity.ok(new JwtResponse(jwtToken));
     }
 
+    /**
+     * JWT authentication response wrapper
+     */
     private static class JwtResponse {
         private String token;
         private String type = "Bearer";

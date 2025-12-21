@@ -21,6 +21,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 
+/**
+ * Service for reading post data
+ */
 @Log
 @AllArgsConstructor
 @Service
@@ -30,6 +33,11 @@ public class PostReadService {
     private final PostMapper postMapper;
     private final PostSpecification postSpecification;
 
+    /**
+     * Find post by ID
+     * @param postId post ID
+     * @return post details
+     */
     @Transactional(readOnly = true)
     public PostReadDTO findPostById(Long postId) {
         Optional<Post> postOptional = postRepository.findByPostId(postId);
@@ -40,6 +48,14 @@ public class PostReadService {
         return postMapper.toPostReadDTO(post);
     }
 
+    /**
+     * Search posts with filters
+     * @param content filter by content
+     * @param ownerUsername filter by owner
+     * @param eventId filter by event
+     * @param pageable pagination
+     * @return page of posts
+     */
     @Transactional(readOnly = true)
     public Page<PostReadDTO> searchPost(String content, String ownerUsername, Long eventId, Pageable pageable) {
         Specification<Post> spec = Specification
@@ -51,6 +67,12 @@ public class PostReadService {
         return posts.map(postMapper::toPostReadDTO);
     }
 
+    /**
+     * Find posts by owner username
+     * @param ownerUsername owner username
+     * @param pageable pagination
+     * @return page of posts
+     */
     @Transactional(readOnly = true)
     public Page<PostReadDTO> findPostByOwner(String ownerUsername, Pageable pageable) {
         Specification<Post> spec = Specification
@@ -60,6 +82,12 @@ public class PostReadService {
         return posts.map(postMapper::toPostReadDTO);
     }
 
+    /**
+     * Find posts by event ID
+     * @param eventId event ID
+     * @param pageable pagination
+     * @return page of posts
+     */
     @Transactional(readOnly = true)
     public Page<PostReadDTO> findPostByEvent(Long eventId, Pageable pageable) {
         Specification<Post> spec = Specification
@@ -68,6 +96,12 @@ public class PostReadService {
         Page<Post> posts = postRepository.findAll(spec, pageable);
         return posts.map(postMapper::toPostReadDTO);
     }
+    /**
+     * Get posts liked by an account
+     * @param accountId account ID
+     * @param pageable pagination
+     * @return page of liked posts
+     */
     @Transactional(readOnly = true)
     public Page<PostReadDTO> getPostsLikedByAccount(UUID accountId, Pageable pageable) {
         Page<PostLike> postLikes = postLikeRepository.findAllByAccount_AccountId(accountId, pageable);
