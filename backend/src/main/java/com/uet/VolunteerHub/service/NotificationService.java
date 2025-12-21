@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,7 @@ public class NotificationService {
     private final NotificationSpecification notificationSpecification;
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final CacheManager cacheManager;
 
     @Transactional(readOnly = true)
     public Page<NotificationReadDTO> searchNotification(
@@ -65,6 +68,13 @@ public class NotificationService {
         boolean newStatus = !currentStatus;
         notification.setIsRead(newStatus);
         notificationRepository.save(notification);
+        
+        // Evict cache thủ công (không dùng annotation vì internal call không trigger AOP)
+        Cache cache = cacheManager.getCache("notificationCounts");
+        if (cache != null) {
+            cache.evict(notification.getReceiverAccount().getAccountId());
+        }
+        
         return newStatus;
     }
 

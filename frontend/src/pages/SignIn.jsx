@@ -91,7 +91,30 @@ const SignIn = () => {
   }, [location.search, navigate]);
 
   // Redirect if already authenticated
-  // Default to /explore for regular users after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Get user info from localStorage/context to determine role
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.role === 'ADMIN') {
+            navigate('/admin', { replace: true });
+          } else if (user.role === 'MANAGER') {
+            navigate('/manage', { replace: true });
+          } else {
+            navigate('/explore', { replace: true });
+          }
+        } catch {
+          navigate('/explore', { replace: true });
+        }
+      } else {
+        navigate('/explore', { replace: true });
+      }
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Default redirect path for regular users after login
   const from = location.state?.from?.pathname || "/explore";
 
 
