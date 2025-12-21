@@ -10,6 +10,7 @@ import com.uet.VolunteerHub.events.event.EventApprovedEvent;
 import com.uet.VolunteerHub.events.event.EventCancelledEvent;
 import com.uet.VolunteerHub.events.event.EventRejectedEvent;
 import com.uet.VolunteerHub.repository.AccountRepository;
+import com.uet.VolunteerHub.repository.EventUserRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.util.SlugUtils;
@@ -30,6 +31,7 @@ public class EventWriteService {
     private final AccountRepository accountRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final PushNotificationService pushNotificationService;
+    private final EventUserRepository eventUserRepository;
 
     private EventSearchDTO mapToEventSearchDTO(Event event, Account account) {
         var builder = EventSearchDTO.builder()
@@ -263,6 +265,10 @@ public class EventWriteService {
             throw new IllegalArgumentException("Attendee count must be greater than or equal to 0.");
         }
         Event event = findEvent(eventId);
+        if (event.getStatus() == EventStatus.CANCELLED || event.getStatus() == EventStatus.FINISHED) {
+            throw new IllegalArgumentException("Cannot update details of a CANCELLED or FINISHED event.");
+        }
+
         if (eventUpdateDTO.getDescription() != null) {
             event.setDescription(eventUpdateDTO.getDescription());
         }
@@ -279,6 +285,13 @@ public class EventWriteService {
             event.setLocation(eventUpdateDTO.getLocation());
         }
         if (eventUpdateDTO.getAttendeeCount() != null && eventUpdateDTO.getAttendeeCount() != 0) {
+            long approvedCount = eventUserRepository.countByEventIdAndStatus(eventId,
+                    com.uet.VolunteerHub.enums.EventUserStatus.APPROVED);
+            if (eventUpdateDTO.getAttendeeCount() < approvedCount) {
+                throw new IllegalArgumentException(
+                        "Cannot reduce attendee count below the number of currently approved participants ("
+                                + approvedCount + ")");
+            }
             event.setAttendeeCount(eventUpdateDTO.getAttendeeCount());
         }
         if (eventUpdateDTO.getTitle() != null) {

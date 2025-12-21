@@ -98,6 +98,11 @@ public class EventUserWriteService {
             EventUserRegisterDTO eventUserRegisterDTO) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
+
+        if (event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.CANCELLED ||
+                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+            throw new IllegalArgumentException("Cannot register for a CANCELLED or FINISHED event.");
+        }
         if (eventUserRegisterDTO.getStartAt() == null) {
             eventUserRegisterDTO.setStartAt(event.getStartAt());
         }
@@ -370,6 +375,16 @@ public class EventUserWriteService {
                 eventRepository.save(event);
             }
         }
+
+        if (newStatus == EventUserStatus.FINISHED) {
+            Event event = eventUser.getEvent();
+            if (event.getStatus() != com.uet.VolunteerHub.enums.EventStatus.STARTED &&
+                    event.getStatus() != com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+                throw new IllegalArgumentException(
+                        "Cannot mark user as FINISHED because the event has not started or finished yet.");
+            }
+        }
+
         eventUserRepository.save(eventUser);
         if (newStatus == EventUserStatus.FINISHED) {
             pushNotificationService.pushNotificationToUser(accountId,
@@ -393,6 +408,12 @@ public class EventUserWriteService {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
         Event event = eventRepository.findById(eventId).orElseThrow();
+
+        if (event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.CANCELLED ||
+                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+            throw new IllegalArgumentException("Cannot approve volunteers for a CANCELLED or FINISHED event.");
+        }
+
         List<UUID> approvedAccountIds = new ArrayList<>();
 
         for (UUID accountId : accountIds) {
@@ -441,6 +462,12 @@ public class EventUserWriteService {
             throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
         }
         Event event = eventRepository.findById(eventId).orElseThrow();
+
+        if (event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.CANCELLED ||
+                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+            throw new IllegalArgumentException("Cannot reject volunteers for a CANCELLED or FINISHED event.");
+        }
+
         List<UUID> rejectedAccountIds = new ArrayList<>();
 
         for (UUID accountId : accountIds) {

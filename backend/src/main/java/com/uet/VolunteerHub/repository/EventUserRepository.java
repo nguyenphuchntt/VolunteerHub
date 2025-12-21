@@ -97,5 +97,10 @@ public interface EventUserRepository
          */
         boolean existsByAccount_AccountIdAndEvent_EventIdAndRole(UUID accountId, Long eventId, EventUserRole role);
 
-}
+        /**
+         * Efficiently count users by event and status without loading entities.
+         */
+        @Query("SELECT COUNT(eu) FROM EventUser eu WHERE eu.eventId = :eventId AND eu.status = :status")
+        long countByEventIdAndStatus(@Param("eventId") Long eventId, @Param("status") EventUserStatus status);
 
+}

@@ -101,8 +101,11 @@ public class PostSecurityService {
         boolean isApproved = eventUser.getStatus() == com.uet.VolunteerHub.enums.EventUserStatus.APPROVED ||
                 eventUser.getStatus() == com.uet.VolunteerHub.enums.EventUserStatus.FINISHED;
 
+        boolean isEventPublished = eventUser.getEvent().getStatus() != com.uet.VolunteerHub.enums.EventStatus.PENDING;
+
         log.info("isEventAttendee: found EventUser with role=" + eventUser.getRole() + ", status="
-                + eventUser.getStatus() + ", hasRole=" + hasRole + ", isApproved=" + isApproved);
-        return hasRole && isApproved;
+                + eventUser.getStatus() + ", hasRole=" + hasRole + ", isApproved=" + isApproved + ", isEventPublished="
+                + isEventPublished);
+        return hasRole && isApproved && isEventPublished;
     }
 }
