@@ -23,6 +23,9 @@ import com.uet.VolunteerHub.service.NotificationService;
 
 import lombok.AllArgsConstructor;
 
+/**
+ * REST controller for notification operations
+ */
 @RestController
 @RequestMapping("/api/notifications")
 @AllArgsConstructor
@@ -32,6 +35,11 @@ public class NotificationController {
     private final AccountRepository accountRepository;
     private final NotificationSecurityService notificationSecurityService;
 
+    /**
+     * Toggle notification read status
+     * @param notificationId notification ID
+     * @return new read status
+     */
     @PreAuthorize("@notificationSecurityService.isReceiver(#notificationId)")
     @PatchMapping("/{notificationId}/toggle-read")
     public ResponseEntity<Map<String, Boolean>> toggleReadStatus(
@@ -40,6 +48,16 @@ public class NotificationController {
         return ResponseEntity.ok(Map.of("isRead", newReadStatus));
     }
 
+    /**
+     * Search notifications with filters
+     * @param notificationId filter by notification ID
+     * @param senderAccountId filter by sender
+     * @param type filter by notification type
+     * @param isRead filter by read status
+     * @param pageable pagination
+     * @param principal authenticated user
+     * @return page of notifications
+     */
     @GetMapping("/search")
     public ResponseEntity<org.springframework.data.domain.Page<NotificationReadDTO>> searchNotification(
             @RequestParam(required = false) Long notificationId,
@@ -54,6 +72,11 @@ public class NotificationController {
         return ResponseEntity.ok(notifications);
     }
 
+    /**
+     * Get unread notification count
+     * @param principal authenticated user
+     * @return unread count
+     */
     @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(Principal principal) {
         UUID receiverId = getCurrentUserId(principal);
@@ -71,6 +94,11 @@ public class NotificationController {
         return account.getAccountId();
     }
 
+    /**
+     * Mark all notifications as read
+     * @param principal authenticated user
+     * @return void
+     */
     @PatchMapping("/mark-all-as-read")
     public ResponseEntity<Void> markAllAsRead(Principal principal) {
         UUID receiverId = getCurrentUserId(principal);
@@ -78,6 +106,12 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Get current user's notifications
+     * @param principal authenticated user
+     * @param pageable pagination
+     * @return page of notifications
+     */
     @GetMapping("/me")
     public ResponseEntity<org.springframework.data.domain.Page<NotificationReadDTO>> getMyNotifications(
             Principal principal,

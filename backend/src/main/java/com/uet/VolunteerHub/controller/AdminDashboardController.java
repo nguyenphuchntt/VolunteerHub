@@ -22,6 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST controller for admin dashboard operations
+ */
 @RestController
 @RequestMapping("/api/admin")
 @PreAuthorize("hasRole('ADMIN')")
@@ -31,29 +34,50 @@ public class AdminDashboardController {
     private final AccountRepository accountRepository;
     private final NotificationService notificationService;
 
-    // Dashboard Overview
+    /**
+     * Get dashboard overview statistics
+     * @return overview stats
+     */
     @GetMapping("/stats/overview")
     public ResponseEntity<?> getDashboardOverview() {
         return ResponseEntity.ok(adminDashboardService.getDashboardOverview());
     }
 
-    // Dashboard Charts
+    /**
+     * Get dashboard chart data
+     * @param type chart type (default: new_events_last_7_days)
+     * @return chart data
+     */
     @GetMapping("/stats/charts")
     public ResponseEntity<?> getDashboardCharts(@RequestParam(value = "type", defaultValue = "new_events_last_7_days") String type) {
         return ResponseEntity.ok(adminDashboardService.getDashboardChart(type));
     }
 
-    // Dashboard Rankings
+    /**
+     * Get dashboard rankings
+     * @param type ranking type (default: top_events)
+     * @return ranking data
+     */
     @GetMapping("/stats/rankings")
     public ResponseEntity<?> getDashboardRankings(@RequestParam(value = "type", defaultValue = "top_events") String type) {
         return ResponseEntity.ok(adminDashboardService.getDashboardRankings(type));
     }
 
+    /**
+     * Get pending events awaiting approval
+     * @return list of pending events
+     */
     @GetMapping("/events/pending")
     public ResponseEntity<?> getPendingEvents() {
         return ResponseEntity.ok(adminDashboardService.getPendingEvents());
     }
 
+    /**
+     * Update event status
+     * @param id event ID
+     * @param statusUpdate status update data
+     * @return success message
+     */
     @PatchMapping("/events/{id}/status")
     public ResponseEntity<?> updateEventStatus(@PathVariable Long id, @RequestBody Map<String, String> statusUpdate) {
         String status = statusUpdate.get("status");
@@ -69,6 +93,12 @@ public class AdminDashboardController {
             return ResponseEntity.notFound().build();
         }
     }
+    /**
+     * Create system announcement notification
+     * @param dto notification data
+     * @param userDetails authenticated admin
+     * @return void
+     */
     @PostMapping("/notifications")
     public ResponseEntity<Void> createAnnouncementNotification(
             @RequestBody @Valid NotificationCreateDTO dto,

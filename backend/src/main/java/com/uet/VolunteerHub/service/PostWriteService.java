@@ -32,6 +32,14 @@ public class PostWriteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
     }
 
+    /**
+     * Creates a new post associated with an event and creator account.
+     * Sets initial status to CREATED.
+     * 
+     * @param dto post creation data with event and account IDs
+     * @return PostReadDTO with created post details
+     * @throws ResourceNotFoundException if event or account not found
+     */
     @Transactional
     public PostReadDTO createPost(PostCreateDTO dto) {
         Post post = postMapper.toPostEntity(dto);
@@ -73,6 +81,14 @@ public class PostWriteService {
         return postMapper.toPostReadDTO(postRepository.save(post));
     }
 
+    /**
+     * Updates post status (CREATED, PUBLISHED, DELETED).
+     * 
+     * @param postId the post ID to update
+     * @param dto status update data
+     * @return PostReadDTO with updated post
+     * @throws ResourceNotFoundException if post not found
+     */
     @Transactional
     public PostReadDTO updatePostStatus(Long postId, PostStatusUpdateDTO dto) {
         Post post = postRepository.findById(postId)
@@ -82,6 +98,12 @@ public class PostWriteService {
         return postMapper.toPostReadDTO(savedPost);
     }
 
+    /**
+     * Soft deletes a post by setting status to DELETED.
+     * 
+     * @param postId the post ID to delete
+     * @return true if post was found and deleted, false otherwise
+     */
     @Transactional
     public boolean deletePost(Long postId) {
         Optional<Post> optionalPost = postRepository.findById(postId);

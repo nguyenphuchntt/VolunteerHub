@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import com.uet.VolunteerHub.dto.CommentCreateDTO;
 
+/**
+ * REST controller for comment operations
+ */
 @Log
 @RestController
 @RequestMapping("api/comments")
@@ -27,6 +30,13 @@ public class CommentController {
         this.commentSecurityService = commentSecurityService;
     }
 
+    /**
+     * Search comments by post
+     * @param postId post ID
+     * @param rootOnly only root comments (default: true)
+     * @param pageable pagination
+     * @return page of comments
+     */
     @GetMapping("/search")
     public ResponseEntity<Page<CommentReadDTO>> searchComment(
             @RequestParam(required = true) Long postId,
@@ -36,6 +46,12 @@ public class CommentController {
         return ResponseEntity.ok(comments);
     }
 
+    /**
+     * Get replies for a comment
+     * @param parentCommentId parent comment ID
+     * @param pageable pagination
+     * @return page of replies
+     */
     @GetMapping("/{parentCommentId}/replies")
     public ResponseEntity<Page<CommentReadDTO>> getCommentsByParent(
             @PathVariable Long parentCommentId,
@@ -44,6 +60,12 @@ public class CommentController {
         return ResponseEntity.ok(comments);
     }
 
+    /**
+     * Create a new comment
+     * @param request comment data
+     * @param account authenticated account
+     * @return created comment
+     */
     @PreAuthorize("hasRole('ADMIN') or @commentSecurityService.canCreateComment(#request.postId)")
     @PostMapping
     public ResponseEntity<CreateCommentResponse> createComment(
@@ -64,6 +86,12 @@ public class CommentController {
                 .build());
     }
 
+    /**
+     * Update comment content
+     * @param commentId comment ID
+     * @param dto updated content
+     * @return updated comment
+     */
     @PreAuthorize("hasRole('ADMIN') or @commentSecurityService.canModifyComment(#commentId)")
     @PatchMapping("/{commentId}/content")
     public ResponseEntity<CommentReadDTO> updateCommentContent(
@@ -73,6 +101,11 @@ public class CommentController {
         return ResponseEntity.ok(updatedComment);
     }
 
+    /**
+     * Delete a comment
+     * @param commentId comment ID
+     * @return void
+     */
     @PreAuthorize("hasRole('ADMIN') or @commentSecurityService.canDeleteComment(#commentId)")
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId) {

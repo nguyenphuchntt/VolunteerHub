@@ -31,6 +31,9 @@ import com.uet.VolunteerHub.repository.EventUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
 
+/**
+ * Service for user write operations (create, update, delete)
+ */
 @Log
 @Service
 public class UserWriteService {
@@ -83,6 +86,15 @@ public class UserWriteService {
         return Pair.of(account, userInfo);
     }
 
+    /**
+     * Updates authenticated user's profile information.
+     * Validates email uniqueness if email is being changed.
+     * 
+     * @param userProfileUpdateDTO profile update data
+     * @param account the authenticated account to update
+     * @return UserSearchDTO with updated profile
+     * @throws ResourceAlreadyExistsException if new email already in use
+     */
     @CacheEvict(value = "users", key = "#account.accountId")
     @Transactional
     public UserSearchDTO updateUserProfile(UserProfileUpdateDTO userProfileUpdateDTO, Account account) {
@@ -139,6 +151,16 @@ public class UserWriteService {
         accountRepository.delete(account);
     }
 
+    /**
+     * Changes account role by admin (USER, MANAGER, or ADMIN).
+     * Prevents self-role changes to maintain security.
+     * 
+     * @param accountId the account ID to update
+     * @param accountRoleUpdateDTO new role data
+     * @param caller the admin performing the change
+     * @return UserSearchDTO with updated account
+     * @throws com.uet.VolunteerHub.exception.SelfRoleChangeException if admin tries to change own role
+     */
     @CacheEvict(value = "users", key = "#accountId")
     @Transactional
     public UserSearchDTO changeAccountRole(UUID accountId, AccountRoleUpdateDTO accountRoleUpdateDTO, Account caller) {
@@ -159,6 +181,16 @@ public class UserWriteService {
         return mapToUserSearchDTO(account, accountAndUserInfo.getSecond());
     }
 
+    /**
+     * Changes account status by admin (ACTIVE, INACTIVE, or BANNED).
+     * Prevents self-ban to maintain admin access.
+     * 
+     * @param accountId the account ID to update
+     * @param accountStatusUpdateDTO new status data
+     * @param caller the admin performing the change
+     * @return UserSearchDTO with updated account
+     * @throws com.uet.VolunteerHub.exception.SelfRoleChangeException if admin tries to ban themselves
+     */
     @CacheEvict(value = "users", key = "#accountId")
     @Transactional
     public UserSearchDTO changeAccountStatus(UUID accountId, AccountStatusUpdateDTO accountStatusUpdateDTO, Account caller) {
@@ -179,6 +211,15 @@ public class UserWriteService {
         return mapToUserSearchDTO(account, accountAndUserInfo.getSecond());
     }
 
+    /**
+     * Registers a new user account with USER role and INACTIVE status.
+     * Sends verification email and validates username/email uniqueness.
+     * 
+     * @param accountUserRegisterDTO registration data including credentials
+     * @return UserSearchDTO with created account details
+     * @throws IllegalArgumentException if passwords don't match
+     * @throws ResourceAlreadyExistsException if username/email already exists
+     */
     @Transactional
     public UserSearchDTO registerAccount(AccountUserRegisterDTO accountUserRegisterDTO) {
         if (!accountUserRegisterDTO.getConfirmPassword().equals(accountUserRegisterDTO.getPassword())) {
@@ -223,6 +264,14 @@ public class UserWriteService {
     }
 
 
+    /**
+     * Creates a new account by admin with custom role and status.
+     * Admin can create accounts with any role without email verification.
+     * 
+     * @param accountAdminCreateDTO account creation data with role and status
+     * @return UserSearchDTO with created account details
+     * @throws ResourceAlreadyExistsException if username/email already exists
+     */
     @Transactional
     public UserSearchDTO createAccount(AccountAdminCreateDTO accountAdminCreateDTO) {
         // Explicit validation BEFORE save to prevent issues with delayed constraint violations
@@ -264,6 +313,14 @@ public class UserWriteService {
     }
 
 
+    /**
+     * Changes authenticated user's password after verifying old password.
+     * Validates old password and confirms new password match.
+     * 
+     * @param account the authenticated account
+     * @param accountPasswordChangeDTO password change data
+     * @throws IllegalArgumentException if old password incorrect or passwords don't match
+     */
     @Transactional
     public void changePasswordUser(Account account, AccountPasswordChangeDTO accountPasswordChangeDTO) {
         if (!passwordEncoder.matches(accountPasswordChangeDTO.getOldPassword(), account.getPassword())) {

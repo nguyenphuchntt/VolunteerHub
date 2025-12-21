@@ -13,9 +13,18 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+/**
+ * Global exception handler for REST API
+ */
 @RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
+    /**
+     * Handles resource not found exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 404 response
+     */
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(ResourceNotFoundException.class)
     ResponseEntity<Object> handleResourceNotFoundException(RuntimeException ex, WebRequest request) {
@@ -23,6 +32,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.NOT_FOUND, request);
     }
 
+    /**
+     * Handles resource already exists exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 409 response
+     */
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     ResponseEntity<Object> handleResourceAlreadyExistsException(RuntimeException ex, WebRequest request) {
@@ -30,6 +45,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.CONFLICT, request);
     }
 
+    /**
+     * Handles illegal argument exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 400 response
+     */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<Object> handleIllegalArgumentException(RuntimeException ex, WebRequest request) {
@@ -37,6 +58,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
+    /**
+     * Handles expired JWT token exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 401 response
+     */
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(ExpiredJwtException.class)
     ResponseEntity<Object> handleExpiredJwtException(ExpiredJwtException ex, WebRequest request) {
@@ -44,6 +71,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.UNAUTHORIZED, request);
     }
 
+    /**
+     * Handles bad credentials exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 401 response
+     */
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(BadCredentialsException.class)
     ResponseEntity<Object> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
@@ -51,6 +84,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 request);
     }
 
+    /**
+     * Handles file storage exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 500 response
+     */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ExceptionHandler(FileStorageException.class)
     ResponseEntity<Object> handleFileStorageException(FileStorageException ex, WebRequest request) {
@@ -59,6 +98,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 request);
     }
 
+    /**
+     * Handles invalid file exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 400 response
+     */
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(InvalidFileException.class)
     ResponseEntity<Object> handleInvalidFileException(InvalidFileException ex, WebRequest request) {
@@ -66,6 +111,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
     }
 
+    /**
+     * Handles forbidden access exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 403 response
+     */
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(ForbiddenException.class)
     ResponseEntity<Object> handleForbiddenException(ForbiddenException ex, WebRequest request) {
@@ -73,6 +124,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
 
+    /**
+     * Handles disabled account exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 403 response
+     */
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(SelfRoleChangeException.class)
     ResponseEntity<Object> handleSelfRoleChangeException(SelfRoleChangeException ex, WebRequest request) {
@@ -97,6 +154,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
 
+    /**
+     * Handles locked account exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 403 response
+     */
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(LockedException.class)
     ResponseEntity<Object> handleLockedException(LockedException ex, WebRequest request) {

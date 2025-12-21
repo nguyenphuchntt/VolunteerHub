@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * REST controller for event-related operations
+ */
 @RestController
 @Log
 @RequestMapping("/api/events")
@@ -45,6 +48,12 @@ public class EventController {
         this.eventUserSearchService = eventUserSearchService;
     }
 
+    /**
+     * Search events with criteria (Admin only)
+     * @param criteria search criteria
+     * @param pageable pagination
+     * @return page of events
+     */
     @GetMapping("search")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventSearchDTO>> searchEvents(EventSearchCriteriaDTO criteria,
@@ -53,6 +62,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    /**
+     * Search public events
+     * @param criteria search criteria
+     * @param pageable pagination
+     * @return page of public events
+     */
     @GetMapping("search-public")
     public ResponseEntity<Page<EventSearchDTO>> searchPublicEvents(EventSearchCriteriaDTO criteria,
             @PageableDefault(page = 0, size = 10) Pageable pageable) {
@@ -60,6 +75,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    /**
+     * Get event suggestions for autocomplete
+     * @param query search query
+     * @param limit max results (capped at 10)
+     * @return list of suggestions
+     */
     @GetMapping("suggestions")
     public ResponseEntity<List<EventSuggestionDTO>> getSuggestions(
             @RequestParam("q") String query,
@@ -68,6 +89,12 @@ public class EventController {
         return ResponseEntity.ok(suggestions);
     }
 
+    /**
+     * Get event details by ID
+     * @param eventId event ID
+     * @param account authenticated account (optional)
+     * @return event details
+     */
     @GetMapping("/{eventId}")
     public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId,
             @AuthenticationPrincipal Account account) {
@@ -75,6 +102,12 @@ public class EventController {
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * Get approved participants of an event
+     * @param eventId event ID
+     * @param pageable pagination
+     * @return page of participants
+     */
     @GetMapping("/{eventId}/participants")
     public ResponseEntity<Page<EventUserSearchDTO>> getEventParticipants(
             @PathVariable Long eventId,
@@ -84,6 +117,13 @@ public class EventController {
         return ResponseEntity.ok(participants);
     }
 
+    /**
+     * Get events created by an account
+     * @param accountId account ID
+     * @param account authenticated account
+     * @param pageable pagination
+     * @return page of events
+     */
     @GetMapping("/accounts/{accountId}")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and #accountId == #account.accountId)")
     public ResponseEntity<Page<EventSearchDTO>> getEventsByAccountId(@PathVariable UUID accountId,
@@ -93,6 +133,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    /**
+     * Get events liked by an account
+     * @param accountId account ID
+     * @param pageable pagination
+     * @return page of liked events
+     */
     @GetMapping("/liked-by/{accountId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventSearchDTO>> getEventsLikedByAccount(@PathVariable UUID accountId,
@@ -101,6 +147,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    /**
+     * Get hot/trending events
+     * @param category filter by category (optional)
+     * @param pageable pagination
+     * @return page of hot events
+     */
     @GetMapping("/hot")
     public ResponseEntity<Page<EventSearchDTO>> getHotEvents(
             @RequestParam(required = false) String category,
@@ -109,6 +161,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
+    /**
+     * Register a new event (Manager/Admin)
+     * @param account authenticated account
+     * @param eventManagerCreateDTO event data
+     * @return created event
+     */
     @PostMapping("/register-event")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<EventSearchDTO> registerEvent(@AuthenticationPrincipal Account account,
@@ -120,6 +178,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTO);
     }
 
+    /**
+     * Create a new event (Admin only)
+     * @param account authenticated account
+     * @param eventAdminCreateDTO event data
+     * @return created event
+     */
     @PostMapping("/create-event")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventSearchDTO> createEvent(@AuthenticationPrincipal Account account,
@@ -131,6 +195,13 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTO);
     }
 
+    /**
+     * Update event status (Admin only)
+     * @param eventId event ID
+     * @param eventStatusUpdateDTO new status
+     * @param admin authenticated admin
+     * @return updated event
+     */
     @PatchMapping("/{eventId}/event-status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<EventSearchDTO> updateEventStatus(@PathVariable Long eventId,
@@ -140,6 +211,11 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTO);
     }
 
+    /**
+     * Delete an event
+     * @param eventId event ID
+     * @return void
+     */
     @DeleteMapping("/{eventId}/delete")
     @PreAuthorize("hasRole('ADMIN') or (hasRole('MANAGER') and @eventSecurityService.isCreatorOfEvent(#eventId))")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
@@ -147,6 +223,12 @@ public class EventController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Update event details
+     * @param eventId event ID
+     * @param eventUpdateDTO updated data
+     * @return updated event
+     */
     @PatchMapping("/{eventId}/update")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER') and @eventSecurityService.isCreatorOfEvent(#eventId)")
     public ResponseEntity<EventSearchDTO> updateEventDetails(@PathVariable Long eventId,
@@ -155,6 +237,12 @@ public class EventController {
         return ResponseEntity.ok(eventSearchDTO);
     }
 
+    /**
+     * Toggle like on an event
+     * @param account authenticated account
+     * @param eventId event ID
+     * @return like status
+     */
     @PostMapping("/{eventId}/like")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EventLikeDTO> likeEvent(@AuthenticationPrincipal Account account,
@@ -163,6 +251,12 @@ public class EventController {
         return eventLikeDTO.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * Check if user liked an event
+     * @param account authenticated account
+     * @param eventId event ID
+     * @return true if liked
+     */
     @PostMapping("/{eventId}/liked")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Boolean> isEventLikedByUser(@AuthenticationPrincipal Account account,
@@ -171,6 +265,10 @@ public class EventController {
         return ResponseEntity.ok(isLiked);
     }
 
+    /**
+     * Get all events (Admin only)
+     * @return list of all events
+     */
     @GetMapping("/find-all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EventSearchDTO>> findAllEvents() {

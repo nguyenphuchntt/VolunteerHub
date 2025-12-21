@@ -67,6 +67,15 @@ public class EventWriteService {
         eventRepository.delete(event);
     }
 
+    /**
+     * Registers a new event by manager with PENDING status awaiting admin approval.
+     * Validates time constraints and generates URL slug from title.
+     * 
+     * @param account the manager creating the event
+     * @param eventManagerCreateDTO event creation data
+     * @return EventSearchDTO with created event details
+     * @throws IllegalArgumentException if validation fails
+     */
     @Caching(evict = {
             @CacheEvict(value = "events", allEntries = true),
             @CacheEvict(value = "adminDashboard", allEntries = true)
@@ -115,6 +124,15 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, account);
     }
 
+    /**
+     * Creates a new event by admin with specified status (can bypass PENDING).
+     * Admin has full control over event status and properties.
+     * 
+     * @param account the admin creating the event
+     * @param eventAdminCreateDTO event creation data with status
+     * @return EventSearchDTO with created event details
+     * @throws IllegalArgumentException if validation fails
+     */
     @Caching(evict = {
             @CacheEvict(value = "events", allEntries = true),
             @CacheEvict(value = "adminDashboard", allEntries = true)
@@ -167,6 +185,15 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, account);
     }
 
+    /**
+     * Updates event status and publishes notifications to relevant users.
+     * Sends push notifications for approval, rejection, or cancellation events.
+     * 
+     * @param eventId the event ID to update
+     * @param eventStatusUpdateDTO status update data with optional reason
+     * @param admin the admin performing the update
+     * @return EventSearchDTO with updated event
+     */
     @Caching(evict = {
             @CacheEvict(value = "events", allEntries = true),
             @CacheEvict(value = "adminDashboard", allEntries = true)
@@ -223,6 +250,16 @@ public class EventWriteService {
         }
     }
 
+    /**
+     * Rejects a pending event and notifies the creator with reason.
+     * Only PENDING events can be rejected, status changes to CANCELLED.
+     * 
+     * @param eventId the event ID to reject
+     * @param admin the admin rejecting the event
+     * @param reason the rejection reason message
+     * @return EventSearchDTO with updated event
+     * @throws IllegalArgumentException if event is not PENDING
+     */
     @Caching(evict = {
             @CacheEvict(value = "events", allEntries = true),
             @CacheEvict(value = "adminDashboard", allEntries = true)
@@ -250,6 +287,15 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 
+    /**
+     * Updates event details such as title, description, time, location, and capacity.
+     * Prevents reducing capacity below current approved participants count.
+     * 
+     * @param eventId the event ID to update
+     * @param eventUpdateDTO event update data
+     * @return EventSearchDTO with updated event
+     * @throws IllegalArgumentException if validation fails or event is CANCELLED/FINISHED
+     */
     @Caching(evict = {
             @CacheEvict(value = "events", allEntries = true),
             @CacheEvict(value = "adminDashboard", allEntries = true)

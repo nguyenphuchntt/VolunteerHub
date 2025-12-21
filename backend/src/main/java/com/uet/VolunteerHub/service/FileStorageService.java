@@ -40,6 +40,12 @@ public class FileStorageService {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Initializes the file storage directory on application startup.
+     * Creates the upload directory if it doesn't exist.
+     * 
+     * @throws FileStorageException if directory creation fails
+     */
     @PostConstruct
     public void init() {
         try {
@@ -49,6 +55,13 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Validates uploaded file against security and size constraints.
+     * Checks file emptiness, size limit, extension whitelist, and path traversal.
+     * 
+     * @param file the multipart file to validate
+     * @throws InvalidFileException if validation fails
+     */
     public void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new InvalidFileException("File is empty");
@@ -73,6 +86,14 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Stores uploaded file to the configured directory with unique filename.
+     * Validates file first, then generates UUID-prefixed filename to prevent conflicts.
+     * 
+     * @param file the multipart file to store
+     * @return the stored filename
+     * @throws FileStorageException if file cannot be stored
+     */
     public String storeFile(MultipartFile file) {
         validateFile(file);
 
@@ -89,6 +110,14 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Loads a stored file as a Spring Resource for download or streaming.
+     * Resolves filename to full path and validates file exists and is readable.
+     * 
+     * @param filename the name of the file to load
+     * @return the file as a Resource
+     * @throws FileStorageException if file not found or path is malformed
+     */
     public Resource loadFileAsResource(String filename) {
         try {
             Path filePath = this.fileStorageLocation.resolve(filename).normalize();
@@ -104,6 +133,13 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Deletes a file from the storage directory.
+     * Silently succeeds if file doesn't exist.
+     * 
+     * @param filename the name of the file to delete
+     * @throws FileStorageException on IO errors
+     */
     public void deleteFile(String filename) {
         try {
             Path filePath = this.fileStorageLocation.resolve(filename).normalize();
@@ -113,6 +149,13 @@ public class FileStorageService {
         }
     }
 
+    /**
+     * Determines MIME content type based on file extension.
+     * Supports common image, document, video, and audio formats.
+     * 
+     * @param filename the filename to determine content type for
+     * @return the MIME type, or octet-stream for unknown extensions
+     */
     public String getContentType(String filename) {
         String extension = getFileExtension(filename).toLowerCase();
         return switch (extension) {

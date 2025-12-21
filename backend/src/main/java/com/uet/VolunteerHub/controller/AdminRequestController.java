@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * REST controller for admin request management
+ */
 @RestController
 @RequestMapping("/api/admin/requests")
 @PreAuthorize("hasRole('ADMIN')")
@@ -30,6 +33,11 @@ public class AdminRequestController {
         this.requestService = requestService;
     }
 
+    /**
+     * Get all manager role requests
+     * @param pageable pagination
+     * @return page of requests
+     */
     @GetMapping
     public ResponseEntity<Page<RequestReadDTO>> getAllRequests(
             @PageableDefault(page = 0, size = 10) Pageable pageable) {
@@ -37,6 +45,12 @@ public class AdminRequestController {
         return ResponseEntity.ok(requests);
     }
 
+    /**
+     * Get requests filtered by status
+     * @param status request status
+     * @param pageable pagination
+     * @return page of requests
+     */
     @GetMapping("/status/{status}")
     public ResponseEntity<Page<RequestReadDTO>> getRequestsByStatus(
             @PathVariable RequestStatus status,
@@ -45,6 +59,10 @@ public class AdminRequestController {
         return ResponseEntity.ok(requests);
     }
 
+    /**
+     * Get pending requests count
+     * @return count of pending requests
+     */
     @GetMapping("/pending-count")
     public ResponseEntity<Map<String, Long>> getPendingRequestsCount() {
         long count = requestService.countPendingRequests();
@@ -53,6 +71,13 @@ public class AdminRequestController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Review and approve/reject a request
+     * @param requestId request ID
+     * @param admin authenticated admin
+     * @param requestReviewDTO review decision
+     * @return updated request
+     */
     @PatchMapping("/{requestId}/review")
     public ResponseEntity<RequestReadDTO> reviewRequest(
             @PathVariable Long requestId,
@@ -62,6 +87,11 @@ public class AdminRequestController {
         return ResponseEntity.ok(requestReadDTO);
     }
 
+    /**
+     * Get request by ID
+     * @param requestId request ID
+     * @return request details
+     */
     @GetMapping("/{requestId}")
     public ResponseEntity<RequestReadDTO> getRequestById(@PathVariable Long requestId) {
         RequestReadDTO requestReadDTO = requestService.getRequestByIdForAdmin(requestId);

@@ -33,6 +33,15 @@ public class EmailService {
         this.templateEngine = templateEngine;
     }
 
+    /**
+     * Sends password reset email with reset link asynchronously.
+     * Uses Thymeleaf template to generate HTML email content.
+     * 
+     * @param toEmail recipient email address
+     * @param resetLink the password reset URL with token
+     * @param username recipient's username for personalization
+     * @param expiryMinutes token expiry time in minutes
+     */
     @Async
     public void sendPasswordResetEmail(String toEmail, String resetLink, String username, int expiryMinutes) {
         try {
@@ -63,6 +72,13 @@ public class EmailService {
         }
     }
 
+    /**
+     * Sends password reset confirmation email after successful password change.
+     * Notifies user that their password has been changed successfully.
+     * 
+     * @param toEmail recipient email address
+     * @param username recipient's username for personalization
+     */
     @Async
     public void sendPasswordResetConfirmationEmail(String toEmail, String username) {
         try {
@@ -92,12 +108,13 @@ public class EmailService {
     }
 
     /**
-     * Sends email verification email after registration.
+     * Sends email verification email after registration asynchronously.
+     * User must click verification link to activate their account.
      *
-     * @param toEmail       Recipient's email address
-     * @param verifyLink    The verification link containing the token
-     * @param username      The user's username for personalization
-     * @param expiryMinutes Token expiry time in minutes
+     * @param toEmail recipient's email address
+     * @param verifyLink the verification URL containing token
+     * @param username user's username for personalization
+     * @param expiryMinutes token expiry time in minutes
      */
     @Async
     public void sendVerificationEmail(String toEmail, String verifyLink, String username, int expiryMinutes) {

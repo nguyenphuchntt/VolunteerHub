@@ -19,6 +19,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
+/**
+ * REST controller for event manager operations
+ */
 @RestController
 @RequestMapping("/api/manager")
 @RequiredArgsConstructor
@@ -28,6 +31,12 @@ public class ManagerController {
     private final EventUserRepository eventUserRepository;
     private final EventSearchService eventSearchService;
 
+    /**
+     * Get all pending user registrations for managed events
+     * @param account authenticated manager
+     * @param pageable pagination
+     * @return page of pending users
+     */
     @GetMapping("/pending-users")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<EventUserSearchDTO>> getAllPendingUsers(
@@ -45,6 +54,11 @@ public class ManagerController {
         );
     }
 
+    /**
+     * Check if user is an event manager
+     * @param account authenticated account
+     * @return true if user manages any events
+     */
     @GetMapping("/is-event-manager")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Boolean>> checkIfEventManager(
@@ -53,6 +67,12 @@ public class ManagerController {
         return ResponseEntity.ok(Map.of("isEventManager", isEventManager));
     }
 
+    /**
+     * Get events managed by current user
+     * @param account authenticated manager
+     * @param pageable pagination
+     * @return page of managed events
+     */
     @GetMapping("/me/managed-events")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<EventSearchDTO>> getManagedEvents(

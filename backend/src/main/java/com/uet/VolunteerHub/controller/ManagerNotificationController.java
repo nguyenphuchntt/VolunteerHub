@@ -21,6 +21,9 @@ import java.security.Principal;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * REST controller for manager-specific notifications
+ */
 @RestController
 @RequestMapping("/api/manager/notifications")
 @RequiredArgsConstructor
@@ -29,6 +32,12 @@ public class ManagerNotificationController {
     private final RoleBasedNotificationService roleBasedNotificationService;
     private final AccountRepository accountRepository;
 
+    /**
+     * Get event-related notifications for manager
+     * @param principal authenticated manager
+     * @param pageable pagination
+     * @return page of event notifications
+     */
     @PreAuthorize("hasRole('MANAGER')")
     @GetMapping("/events")
     public ResponseEntity<Page<ManagerEventNotificationDTO>> getEventNotifications(
@@ -40,6 +49,12 @@ public class ManagerNotificationController {
         return ResponseEntity.ok(notifications);
     }
 
+    /**
+     * Get event join request notifications
+     * @param principal authenticated user
+     * @param pageable pagination
+     * @return page of join request notifications
+     */
     @GetMapping("/join-requests")
     public ResponseEntity<Page<ManagerJoinRequestNotificationDTO>> getJoinRequestNotifications(
             Principal principal,
@@ -50,6 +65,11 @@ public class ManagerNotificationController {
         return ResponseEntity.ok(notifications);
     }
 
+    /**
+     * Get notification counts for manager
+     * @param principal authenticated user
+     * @return counts map
+     */
     @GetMapping("/counts")
     public ResponseEntity<Map<String, Object>> getNotificationCounts(Principal principal) {
         UUID userId = getCurrentUserId(principal);

@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * REST controller for admin-specific notifications
+ */
 @RestController
 @RequestMapping("/api/admin/notifications")
 @RequiredArgsConstructor
@@ -23,6 +26,11 @@ public class AdminNotificationController {
 
     private final RoleBasedNotificationService roleBasedNotificationService;
 
+    /**
+     * Get pending role requests for admin review
+     * @param pageable pagination
+     * @return page of pending requests
+     */
     @GetMapping("/pending-requests")
     public ResponseEntity<Page<AdminRequestNotificationDTO>> getPendingRequests(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
@@ -31,6 +39,10 @@ public class AdminNotificationController {
         return ResponseEntity.ok(requests);
     }
 
+    /**
+     * Get counts of pending items
+     * @return counts map
+     */
     @GetMapping("/counts")
     public ResponseEntity<Map<String, Long>> getPendingCounts() {
         long pendingRequests = roleBasedNotificationService.countAdminPendingRequests();

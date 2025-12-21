@@ -20,6 +20,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
+/**
+ * REST controller for media upload and management
+ */
 @RestController
 @RequestMapping("/api/media")
 @PreAuthorize("isAuthenticated()")
@@ -34,6 +37,12 @@ public class MediaController {
         this.fileStorageService = fileStorageService;
     }
 
+    /**
+     * Upload a file
+     * @param file file to upload
+     * @param account authenticated account
+     * @return upload response with media details
+     */
     @PostMapping("/upload")
     public ResponseEntity<MediaUploadResponse> uploadFile(
             @RequestParam("file") MultipartFile file,
@@ -42,6 +51,12 @@ public class MediaController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Upload account profile media
+     * @param file file to upload
+     * @param account authenticated account
+     * @return upload response
+     */
     @PostMapping("/upload/account")
     public ResponseEntity<MediaUploadResponse> uploadAccountMedia(
             @RequestParam("file") MultipartFile file,
@@ -50,6 +65,13 @@ public class MediaController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Upload event media
+     * @param file file to upload
+     * @param eventId event ID
+     * @param account authenticated account
+     * @return upload response
+     */
     @PostMapping("/upload/event/{eventId}")
     @PreAuthorize("@eventSecurityService.isCreatorOfEvent(#eventId)")
     public ResponseEntity<MediaUploadResponse> uploadEventMedia(
@@ -60,6 +82,13 @@ public class MediaController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Upload post media
+     * @param file file to upload
+     * @param postId post ID
+     * @param account authenticated account
+     * @return upload response
+     */
     @PostMapping("/upload/post/{postId}")
     @PreAuthorize("@postSecurityService.isOwnerOfPost(#postId)")
     public ResponseEntity<MediaUploadResponse> uploadPostMedia(
@@ -70,6 +99,11 @@ public class MediaController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Download a file by filename
+     * @param filename file name
+     * @return file resource
+     */
     @GetMapping("/download/{filename:.+}")
     @PreAuthorize("true")
     public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
@@ -82,12 +116,23 @@ public class MediaController {
                 .body(resource);
     }
 
+    /**
+     * Get media by ID
+     * @param id media ID
+     * @return media details
+     */
     @GetMapping("/{id}")
     public ResponseEntity<MediaReadDTO> getMediaById(@PathVariable UUID id) {
         MediaReadDTO response = mediaService.getMediaById(id);
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Delete media
+     * @param id media ID
+     * @param account authenticated account
+     * @return delete response
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<MediaDeleteResponse> deleteMedia(
             @PathVariable UUID id,
