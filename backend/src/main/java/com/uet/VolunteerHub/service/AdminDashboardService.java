@@ -37,6 +37,12 @@ public class AdminDashboardService {
     private final PostRepository postRepository;
     private final PushNotificationService pushNotificationService;
 
+    /**
+     * Retrieves comprehensive dashboard statistics including users, events, and engagement.
+     * Results are cached to improve performance for frequent dashboard access.
+     * 
+     * @return DashboardOverviewDTO with complete statistics
+     */
     @Cacheable(value = "adminDashboard", key = "'overview'")
     public DashboardOverviewDTO getDashboardOverview() {
         // Users Stats
@@ -119,6 +125,13 @@ public class AdminDashboardService {
                 .build();
     }
 
+    /**
+     * Generates time-series chart data for the last 7 days.
+     * Supports new_events_last_7_days and new_users_last_7_days chart types.
+     * 
+     * @param type the chart type to generate
+     * @return ChartDataDTO with daily data points
+     */
     @Cacheable(value = "adminDashboard", key = "'chart:' + #type")
     public ChartDataDTO getDashboardChart(String type) {
         OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
@@ -150,6 +163,13 @@ public class AdminDashboardService {
                 .build();
     }
 
+    /**
+     * Retrieves top rankings based on type: top_events, top_active_users, or top_interactive_users.
+     * Returns top 5 items ordered by relevant metrics (likes, participation, interaction score).
+     * 
+     * @param type the ranking type to retrieve
+     * @return list of RankingItemDTO with top performers
+     */
     @Cacheable(value = "adminDashboard", key = "'rankings:' + #type")
     public List<RankingItemDTO> getDashboardRankings(String type) {
         List<RankingItemDTO> rankings = new ArrayList<>();
@@ -199,6 +219,11 @@ public class AdminDashboardService {
         return rankings;
     }
 
+    /**
+     * Retrieves all events with PENDING status awaiting admin approval.
+     * 
+     * @return list of EventSearchDTO for pending events
+     */
     @Transactional(readOnly = true)
     public List<com.uet.VolunteerHub.dto.Event.EventSearchDTO> getPendingEvents() {
         List<Event> events = eventRepository.findAllByStatus(EventStatus.PENDING);
@@ -219,6 +244,15 @@ public class AdminDashboardService {
                 .collect(java.util.stream.Collectors.toList());
     }
 
+    /**
+     * Updates event status and sends push notification to event creator.
+     * Clears related caches and notifies manager of approval or cancellation.
+     * 
+     * @param eventId the event ID to update
+     * @param status the new status (SCHEDULED, CANCELLED, etc.)
+     * @throws IllegalArgumentException if status is invalid
+     * @throws RuntimeException if event not found
+     */
     @Caching(evict = {
             @CacheEvict(value = "adminDashboard", allEntries = true),
             @CacheEvict(value = "events", allEntries = true)

@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * REST controller for authenticated user's post operations
+ */
 @RestController
 @RequestMapping("/api/me/posts")
 @PreAuthorize("isAuthenticated()")
@@ -26,6 +29,12 @@ public class AccountPostController {
         this.postReadService = postReadService;
     }
 
+    /**
+     * Get posts liked by user
+     * @param account authenticated account
+     * @param pageable pagination
+     * @return page of liked posts
+     */
     @GetMapping("/liked")
     public ResponseEntity<Page<PostReadDTO>> getLikedPosts(@AuthenticationPrincipal Account account,
                                                            @PageableDefault(size = 10, page = 0) Pageable pageable) {

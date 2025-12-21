@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 import java.util.UUID;
 
+/**
+ * REST controller for user-specific notifications
+ */
 @RestController
 @RequestMapping("/api/user/notifications")
 @RequiredArgsConstructor
@@ -26,6 +29,12 @@ public class UserNotificationController {
     private final RoleBasedNotificationService roleBasedNotificationService;
     private final AccountRepository accountRepository;
 
+    /**
+     * Get role request notifications for user
+     * @param principal authenticated user
+     * @param pageable pagination
+     * @return page of role request notifications
+     */
     @GetMapping("/role-requests")
     public ResponseEntity<Page<UserRoleRequestNotificationDTO>> getRoleRequestNotifications(
             Principal principal,

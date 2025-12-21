@@ -5,6 +5,10 @@ import { managerService } from '../api/services/manager.service';
 
 const AuthContext = createContext(null);
 
+/**
+ * AuthProvider component that manages authentication state and provides auth methods.
+ * Handles user login, logout, profile refresh, and role checking.
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,14 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  /**
+   * Logs in user with credentials and fetches profile.
+   * 
+   * @param {string} usernameOrEmail - Username or email
+   * @param {string} password - User password
+   * @returns {Promise<Object>} User profile
+   * @throws {Error} If login fails or account is banned
+   */
   const login = useCallback(async (usernameOrEmail, password) => {
     setError(null);
     try {
@@ -79,6 +91,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  /**
+   * Logs out user and clears auth state.
+   */
   const logout = useCallback(() => {
     authService.logout();
     setUser(null);
@@ -86,6 +101,11 @@ export const AuthProvider = ({ children }) => {
     setIsEventManager(false);
   }, []);
 
+  /**
+   * Refreshes user profile from server.
+   * 
+   * @returns {Promise<Object|null>} Updated profile or null
+   */
   const refreshUser = useCallback(async () => {
     if (authService.isAuthenticated()) {
       try {
@@ -128,6 +148,12 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+/**
+ * Hook to access auth context with user state and auth methods.
+ * 
+ * @returns {Object} Auth context with user, login, logout, and role helpers
+ * @throws {Error} If used outside AuthProvider
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

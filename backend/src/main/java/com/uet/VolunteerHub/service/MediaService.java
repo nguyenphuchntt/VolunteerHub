@@ -53,6 +53,14 @@ public class MediaService {
         this.fileStorageService = fileStorageService;
     }
 
+    /**
+     * Uploads a file and creates a media record in the database.
+     * Stores physical file using FileStorageService and generates download URL.
+     * 
+     * @param file the multipart file to upload
+     * @param uploader the account uploading the file
+     * @return MediaUploadResponse with media metadata and success message
+     */
     @Transactional
     public MediaUploadResponse uploadFile(MultipartFile file, Account uploader) {
         String storedFilename = fileStorageService.storeFile(file);
@@ -84,6 +92,15 @@ public class MediaService {
                 "File uploaded successfully");
     }
 
+    /**
+     * Uploads media and associates it with the uploader's account profile.
+     * Creates both Media record and AccountMedia relationship for profile pictures.
+     * 
+     * @param file the multipart file to upload
+     * @param uploader the account uploading and owning the media
+     * @return MediaUploadResponse with upload details
+     * @throws ResourceNotFoundException if account not found
+     */
     @Transactional
     public MediaUploadResponse uploadAccountMedia(MultipartFile file, Account uploader) {
         UUID accountId = uploader.getAccountId();
@@ -101,6 +118,16 @@ public class MediaService {
         return response;
     }
 
+    /**
+     * Uploads media and links it to a specific event.
+     * Creates EventMedia relationship for event photos and attachments.
+     * 
+     * @param file the multipart file to upload
+     * @param eventId the event ID to associate media with
+     * @param uploader the account uploading the media
+     * @return MediaUploadResponse with upload details
+     * @throws ResourceNotFoundException if event not found
+     */
     @Transactional
     public MediaUploadResponse uploadEventMedia(MultipartFile file, Long eventId, Account uploader) {
         Event event = eventRepository.findById(eventId)
@@ -117,6 +144,16 @@ public class MediaService {
         return response;
     }
 
+    /**
+     * Uploads media and attaches it to a specific post.
+     * Creates PostMedia relationship for post images and attachments.
+     * 
+     * @param file the multipart file to upload
+     * @param postId the post ID to associate media with
+     * @param uploader the account uploading the media
+     * @return MediaUploadResponse with upload details
+     * @throws ResourceNotFoundException if post not found
+     */
     @Transactional
     public MediaUploadResponse uploadPostMedia(MultipartFile file, Long postId, Account uploader) {
         Post post = postRepository.findById(postId)
@@ -133,6 +170,13 @@ public class MediaService {
         return response;
     }
 
+    /**
+     * Retrieves media details by ID and converts to DTO.
+     * 
+     * @param mediaId the UUID of the media to retrieve
+     * @return MediaReadDTO containing media details
+     * @throws ResourceNotFoundException if media not found
+     */
     public MediaReadDTO getMediaById(UUID mediaId) {
         Media media = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Media not found with id: " + mediaId));
@@ -147,6 +191,16 @@ public class MediaService {
                 media.getUploadedBy().getAccountId());
     }
 
+    /**
+     * Deletes media file and database record with permission checks.
+     * Only admins or the original uploader can delete media.
+     * 
+     * @param mediaId the UUID of the media to delete
+     * @param requester the account requesting deletion
+     * @return MediaDeleteResponse confirming deletion
+     * @throws ResourceNotFoundException if media not found
+     * @throws ForbiddenException if requester lacks permission
+     */
     @Transactional
     public MediaDeleteResponse deleteMedia(UUID mediaId, Account requester) {
         Media media = mediaRepository.findById(mediaId)
@@ -162,6 +216,13 @@ public class MediaService {
         return new MediaDeleteResponse("Media deleted successfully", mediaId);
     }
 
+    /**
+     * Checks if requester has permission to delete media.
+     * 
+     * @param media the media to check permission for
+     * @param requester the account requesting deletion
+     * @return true if admin or original uploader, false otherwise
+     */
     private boolean canDeleteMedia(Media media, Account requester) {
         if (requester.getRole() == UserRole.ADMIN) {
             return true;

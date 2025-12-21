@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * REST controller for event user (participant) management
+ */
 @RestController
 @RequestMapping("/api/event-users")
 public class EventUserController {
@@ -33,6 +36,12 @@ public class EventUserController {
         this.eventUserSearchService = eventUserSearchService;
     }
 
+    /**
+     * Search event users with criteria (Admin only)
+     * @param criteria search criteria
+     * @param pageable pagination
+     * @return page of event users
+     */
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<EventUserSearchDTO>> searchEventUsers(EventUserSearchCriteriaDTO criteria,
@@ -112,6 +121,12 @@ public class EventUserController {
         return ResponseEntity.ok(eventUserWriteService.updateStatus(accountId, eventId, updateDTO));
     }
 
+    /**
+     * Bulk approve event user registrations
+     * @param eventId event ID
+     * @param bulkOperationDTO account IDs to approve
+     * @return operation result
+     */
     @PostMapping("/{eventId}/bulk-approve")
     @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
     public ResponseEntity<Map<String, Object>> bulkApprove(
@@ -120,6 +135,12 @@ public class EventUserController {
         return ResponseEntity.ok(eventUserWriteService.bulkApprove(eventId, bulkOperationDTO.getAccountIds()));
     }
 
+    /**
+     * Bulk reject event user registrations
+     * @param eventId event ID
+     * @param bulkOperationDTO account IDs to reject
+     * @return operation result
+     */
     @PostMapping("/{eventId}/bulk-reject")
     @PreAuthorize("hasRole('ADMIN') or @eventUserSecurityService.isManager(#eventId)")
     public ResponseEntity<Map<String, Object>> bulkReject(

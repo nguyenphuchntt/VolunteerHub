@@ -20,6 +20,9 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
+/**
+ * REST controller for authenticated user's profile operations
+ */
 @RestController
 @RequestMapping("/api/me/profile")
 @PreAuthorize("isAuthenticated()")
@@ -37,18 +40,35 @@ public class AccountProfileController {
         this.followUserService = followUserService;
     }
 
+    /**
+     * Get current user's profile
+     * @param account authenticated account
+     * @return user profile
+     */
     @GetMapping
     public ResponseEntity<UserSearchDTO> getProfile(@AuthenticationPrincipal Account account) {
         return userSearchService.findUserById(account.getAccountId())
                 .map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Update current user's profile
+     * @param account authenticated account
+     * @param userProfileUpdateDTO profile update data
+     * @return updated profile
+     */
     @PatchMapping("/update")
     public ResponseEntity<UserSearchDTO> updateProfile(@AuthenticationPrincipal Account account,
                                                        @RequestBody @Valid UserProfileUpdateDTO userProfileUpdateDTO) {
         return ResponseEntity.ok(userWriteService.updateUserProfile(userProfileUpdateDTO, account));
     }
 
+    /**
+     * Delete current user's profile
+     * @param account authenticated account
+     * @param accountPasswordDTO password confirmation
+     * @return void
+     */
     @DeleteMapping("/delete")
     public ResponseEntity<Void> deleteProfile(@AuthenticationPrincipal Account account,
                                               @RequestBody @Valid AccountPasswordDTO accountPasswordDTO) {
@@ -56,6 +76,12 @@ public class AccountProfileController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Change current user's password
+     * @param account authenticated account
+     * @param accountPasswordChangeDTO password change data
+     * @return void
+     */
     @PatchMapping("/change-password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal Account account,
                                                @RequestBody @Valid AccountPasswordChangeDTO accountPasswordChangeDTO) {

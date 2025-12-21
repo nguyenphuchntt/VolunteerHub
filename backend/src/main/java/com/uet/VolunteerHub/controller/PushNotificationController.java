@@ -10,6 +10,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for push notification management
+ */
 @RestController
 @RequestMapping("/api/push-notifications")
 @PreAuthorize("isAuthenticated()")
@@ -22,6 +25,12 @@ public class PushNotificationController {
         this.pushNotificationService = pushNotificationService;
     }
 
+    /**
+     * Subscribe to push notifications
+     * @param request FCM token
+     * @param account authenticated account
+     * @return success message
+     */
     @PostMapping("/subscribe")
     public ResponseEntity<String> subscribeToPushNotifications(@RequestBody @Valid FcmTokenDTO request,
             @AuthenticationPrincipal Account account) {
@@ -29,6 +38,12 @@ public class PushNotificationController {
         return ResponseEntity.ok("Subscribed to push notifications successfully.");
     }
 
+    /**
+     * Unsubscribe from push notifications
+     * @param request FCM token
+     * @param account authenticated account
+     * @return success message
+     */
     @DeleteMapping("/unsubscribe")
     public ResponseEntity<String> unsubscribeFromPushNotifications(@RequestBody @Valid FcmTokenDTO request,
             @AuthenticationPrincipal Account account) {
@@ -36,12 +51,23 @@ public class PushNotificationController {
         return ResponseEntity.ok("Unsubscribed from push notifications successfully.");
     }
 
+    /**
+     * Unsubscribe from all push notifications
+     * @param account authenticated account
+     * @return success message
+     */
     @DeleteMapping("/unsubscribe-all")
     public ResponseEntity<String> unsubscribeFromAllPushNotifications(@AuthenticationPrincipal Account account) {
         pushNotificationService.unsubscribeAllTokens(account.getAccountId());
         return ResponseEntity.ok("Unsubscribed from all push notifications successfully.");
     }
 
+    /**
+     * Send push notification to user
+     * @param content notification content
+     * @param account authenticated account
+     * @return success message
+     */
     @PostMapping("/send")
     public ResponseEntity<String> sendPushNotification(@RequestParam String content,
             @AuthenticationPrincipal Account account) {

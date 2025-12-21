@@ -37,6 +37,18 @@ public class NotificationService {
     private final NotificationMapper notificationMapper;
     private final CacheManager cacheManager;
 
+    /**
+     * Searches notifications with multiple filter criteria.
+     * Excludes deleted notifications from results.
+     * 
+     * @param notificationId filter by notification ID
+     * @param senderAccountId filter by sender account ID
+     * @param receiverAccountId filter by receiver account ID
+     * @param type filter by notification type
+     * @param isRead filter by read status
+     * @param pageable pagination parameters
+     * @return Page of NotificationReadDTO matching criteria
+     */
     @Transactional(readOnly = true)
     public Page<NotificationReadDTO> searchNotification(
             Long notificationId,
@@ -61,6 +73,13 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with id: " + notificationId));
     }
 
+    /**
+     * Toggles notification read status and evicts cache.
+     * 
+     * @param notificationId the notification ID to toggle
+     * @return new read status (true if now read, false if now unread)
+     * @throws ResourceNotFoundException if notification not found
+     */
     @Transactional
     public boolean toggleIsRead(Long notificationId) {
         Notification notification = findNotificationById(notificationId);
@@ -86,12 +105,23 @@ public class NotificationService {
         return notificationMapper.toDTO(savedNotification);
     }
 
+    /**
+     * Gets count of unread notifications for a user (cached).
+     * 
+     * @param receiverId the receiver account ID
+     * @return count of unread, non-deleted notifications
+     */
     @Cacheable(value = "notificationCounts", key = "#receiverId")
     @Transactional(readOnly = true)
     public long getUnreadNotificationCount(UUID receiverId) {
         return notificationRepository.countByReceiverAccount_AccountIdAndIsReadFalseAndIsDeletedFalse(receiverId);
     }
 
+    /**
+     * Marks all notifications as read for a user and evicts cache.
+     * 
+     * @param receiverId the receiver account ID
+     */
     @CacheEvict(value = "notificationCounts", key = "#receiverId")
     @Transactional
     public void markAllAsRead(UUID receiverId) {

@@ -15,6 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for user manager role requests
+ */
 @RestController
 @RequestMapping("/api/requests")
 @PreAuthorize("hasRole('USER')")
@@ -27,6 +30,12 @@ public class RequestController {
         this.requestService = requestService;
     }
 
+    /**
+     * Create a new manager role request
+     * @param account authenticated account
+     * @param requestCreateDTO request data
+     * @return created request
+     */
     @PostMapping
     public ResponseEntity<RequestReadDTO> createRequest(
             @AuthenticationPrincipal Account account,
@@ -35,6 +44,12 @@ public class RequestController {
         return ResponseEntity.status(HttpStatus.CREATED).body(requestReadDTO);
     }
 
+    /**
+     * Get current user's requests
+     * @param account authenticated account
+     * @param pageable pagination
+     * @return page of user's requests
+     */
     @GetMapping("/me")
     public ResponseEntity<Page<RequestReadDTO>> getMyRequests(
             @AuthenticationPrincipal Account account,
@@ -43,6 +58,12 @@ public class RequestController {
         return ResponseEntity.ok(requests);
     }
 
+    /**
+     * Cancel a request
+     * @param requestId request ID
+     * @param account authenticated account
+     * @return void
+     */
     @DeleteMapping("/{requestId}")
     public ResponseEntity<Void> cancelRequest(
             @PathVariable Long requestId,
@@ -51,6 +72,12 @@ public class RequestController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Get request by ID
+     * @param requestId request ID
+     * @param account authenticated account
+     * @return request details
+     */
     @GetMapping("/{requestId}")
     public ResponseEntity<RequestReadDTO> getRequestById(
             @PathVariable Long requestId,

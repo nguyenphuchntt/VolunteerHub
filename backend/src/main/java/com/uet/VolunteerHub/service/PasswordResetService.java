@@ -47,6 +47,13 @@ public class PasswordResetService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Initiates password reset by generating token and sending email.
+     * Returns generic message to prevent email enumeration attacks.
+     * 
+     * @param request forgot password request with email
+     * @return PasswordResetResponseDTO with generic success message
+     */
     public PasswordResetResponseDTO initiatePasswordReset(ForgotPasswordRequestDTO request) {
         String email = request.getEmail().toLowerCase().trim();
         Optional<Account> accountOptional = accountRepository.findByUsernameOrEmail(email, email);
@@ -83,6 +90,12 @@ public class PasswordResetService {
         return PasswordResetResponseDTO.success(GENERIC_SUCCESS_MESSAGE);
     }
 
+    /**
+     * Validates password reset token from Redis cache.
+     * 
+     * @param token the password reset token to validate
+     * @return PasswordResetResponseDTO indicating if token is valid
+     */
     public PasswordResetResponseDTO validateToken(String token) {
         String redisKey = PASSWORD_RESET_TOKEN_PREFIX + token;
         String accountId = redisTemplate.opsForValue().get(redisKey);
@@ -94,6 +107,13 @@ public class PasswordResetService {
         return PasswordResetResponseDTO.success("Token is valid.");
     }
 
+    /**
+     * Resets user password using valid token (single-use).
+     * Deletes token after use and sends confirmation email.
+     * 
+     * @param request reset password request with token and new password
+     * @return PasswordResetResponseDTO with success or error message
+     */
     @Transactional
     public PasswordResetResponseDTO resetPassword(ResetPasswordRequestDTO request) {
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
