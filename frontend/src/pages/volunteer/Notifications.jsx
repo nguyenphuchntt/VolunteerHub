@@ -14,6 +14,7 @@ import {
   CircularProgress,
   Alert,
   Pagination,
+  Tooltip,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -22,6 +23,7 @@ import {
   Circle,
   Delete,
   Visibility,
+  VisibilityOff,
   Notifications as NotificationsIcon,
   Comment,
   ThumbUp,
@@ -30,13 +32,16 @@ import {
 } from "@mui/icons-material";
 import { ThreeColumnLayout } from "../../components/common";
 import { notificationService } from "../../api";
+import { useNotificationContext } from "../../contexts/NotificationContext";
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Sử dụng context để đồng bộ unreadCount với icon chuông trong Header
+  const { unreadCount, decrementUnreadCount, incrementUnreadCount, resetUnreadCount, fetchUnreadCount } = useNotificationContext();
 
   // Pagination state
   const [page, setPage] = useState(0);
@@ -80,20 +85,11 @@ const Notifications = () => {
     }
   }, [activeTab, page, pageSize]);
 
-  // Fetch unread count
-  const fetchUnreadCount = useCallback(async () => {
-    try {
-      const result = await notificationService.getUnreadCount();
-      setUnreadCount(result.unreadCount || 0);
-    } catch (err) {
-      console.error("Failed to fetch unread count:", err);
-    }
-  }, []);
-
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
+  // Lấy unread count từ context khi component mount (context đã tự động fetch)
   useEffect(() => {
     fetchUnreadCount();
   }, [fetchUnreadCount]);
@@ -111,17 +107,35 @@ const Notifications = () => {
   const handleMarkAsRead = async (id) => {
     try {
       const result = await notificationService.toggleReadStatus(id);
-      // Update local state
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.notificationId === id ? { ...n, isRead: result.isRead } : n
-        )
-      );
-      // Update unread count
-      if (result.isRead) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
+
+      // Xử lý khác nhau tùy theo tab đang active
+      if (activeTab === 0) {
+        // Tab "Tất cả": chỉ update trạng thái isRead
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.notificationId === id ? { ...n, isRead: result.isRead } : n
+          )
+        );
+      } else if (activeTab === 1 && result.isRead) {
+        // Tab "Chưa đọc" và vừa đánh dấu đã đọc → remove khỏi list
+        setNotifications((prev) => prev.filter((n) => n.notificationId !== id));
+      } else if (activeTab === 2 && !result.isRead) {
+        // Tab "Đã đọc" và vừa đánh dấu chưa đọc → remove khỏi list
+        setNotifications((prev) => prev.filter((n) => n.notificationId !== id));
       } else {
-        setUnreadCount((prev) => prev + 1);
+        // Fallback: update state
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.notificationId === id ? { ...n, isRead: result.isRead } : n
+          )
+        );
+      }
+
+      // Cập nhật unread count thông qua context (sẽ tự động sync với Header/LeftNav)
+      if (result.isRead) {
+        decrementUnreadCount();
+      } else {
+        incrementUnreadCount();
       }
     } catch (err) {
       console.error("Failed to toggle read status:", err);
@@ -133,7 +147,8 @@ const Notifications = () => {
       await notificationService.markAllAsRead();
       // Refetch notifications after marking all as read
       fetchNotifications();
-      setUnreadCount(0);
+      // Reset count thông qua context (sẽ tự động sync với Header)
+      resetUnreadCount();
     } catch (err) {
       console.error("Failed to mark all as read:", err);
     }
@@ -342,16 +357,32 @@ const Notifications = () => {
 
                 {/* Actions */}
                 <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMarkAsRead(notification.notificationId);
-                    }}
+                  <Tooltip
                     title={notification.isRead ? "Đánh dấu chưa đọc" : "Đánh dấu đã đọc"}
+                    arrow
                   >
-                    <Visibility sx={{ fontSize: 18 }} />
-                  </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(notification.notificationId);
+                      }}
+                      sx={{
+                        color: notification.isRead ? "grey.400" : "primary.main",
+                        "&:hover": {
+                          backgroundColor: notification.isRead
+                            ? "rgba(0, 0, 0, 0.04)"
+                            : "rgba(136, 178, 139, 0.1)",
+                        },
+                      }}
+                    >
+                      {notification.isRead ? (
+                        <VisibilityOff sx={{ fontSize: 18 }} />
+                      ) : (
+                        <Visibility sx={{ fontSize: 18 }} />
+                      )}
+                    </IconButton>
+                  </Tooltip>
                 </Box>
               </Box>
               <Divider />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
@@ -39,7 +39,7 @@ const SignIn = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
-  
+
   const [signInOpen, setSignInOpen] = useState(false);
   const [signUpOpen, setSignUpOpen] = useState(false);
   const [signInStep, setSignInStep] = useState(1); // 1: username, 2: password
@@ -47,7 +47,7 @@ const SignIn = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   const [signInData, setSignInData] = useState({
     username: "",
     password: "",
@@ -74,8 +74,47 @@ const SignIn = () => {
   // Success message state
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Banned account alert state
+  const [bannedAlert, setBannedAlert] = useState("");
+
+  // Check if user was redirected due to banned account
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('banned') === 'true') {
+      const bannedMessage = sessionStorage.getItem('account_banned_message') ||
+        'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.';
+      setBannedAlert(bannedMessage);
+      sessionStorage.removeItem('account_banned_message');
+      // Clean up URL
+      navigate('/signin', { replace: true });
+    }
+  }, [location.search, navigate]);
+
   // Redirect if already authenticated
-  // Default to /explore for regular users after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Get user info from localStorage/context to determine role
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.role === 'ADMIN') {
+            navigate('/admin', { replace: true });
+          } else if (user.role === 'MANAGER') {
+            navigate('/manage', { replace: true });
+          } else {
+            navigate('/explore', { replace: true });
+          }
+        } catch {
+          navigate('/explore', { replace: true });
+        }
+      } else {
+        navigate('/explore', { replace: true });
+      }
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Default redirect path for regular users after login
   const from = location.state?.from?.pathname || "/explore";
 
 
@@ -107,7 +146,7 @@ const SignIn = () => {
       try {
         const profile = await login(signInData.username, signInData.password);
         handleSignInClose();
-        
+
         // Role-based routing
         if (profile?.role === "ADMIN") {
           navigate("/admin", { replace: true });
@@ -127,13 +166,13 @@ const SignIn = () => {
         // Better error messages for common cases
         const status = err.response?.status;
         const serverMessage = err.response?.data?.message || err.response?.data;
-        
+
         // Check for banned account
-        if (serverMessage === "Your account has been banned" || 
-            (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
+        if (serverMessage === "Your account has been banned" ||
+          (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
           setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
         } else if (serverMessage === "Your account should be activated before login" ||
-            (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("activated"))) {
+          (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("activated"))) {
           setError("Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh tài khoản.");
           setNeedsActivation(true);
         } else if (serverMessage === "Invalid username or password" || status === 401) {
@@ -232,7 +271,7 @@ const SignIn = () => {
       setError("Mật khẩu xác nhận không khớp.");
       return;
     }
-    
+
     setLoading(true);
     setError("");
     try {
@@ -242,7 +281,7 @@ const SignIn = () => {
         password: signUpData.password,
         confirmPassword: signUpData.confirmPassword,
       });
-      
+
       handleSignUpClose();
       setSuccessMessage("Đăng ký thành công! Vui lòng kiểm tra email để xác nhận tài khoản trước khi đăng nhập.");
       handleSignInOpen();
@@ -484,88 +523,88 @@ const SignIn = () => {
             maxWidth: 400,
           }}
         >
-        {/* Logo for mobile */}
-        <Box
-          component="img"
-          src="/images/logo.png"
-          alt="VolunteerHub Logo"
-          sx={{
-            display: { xs: "block", md: "none" },
-            width: 80,
-            height: "auto",
-            mb: 4,
-          }}
-        />
+          {/* Logo for mobile */}
+          <Box
+            component="img"
+            src="/images/logo.png"
+            alt="VolunteerHub Logo"
+            sx={{
+              display: { xs: "block", md: "none" },
+              width: 80,
+              height: "auto",
+              mb: 4,
+            }}
+          />
 
-        <Typography
-          variant="h1"
-          sx={{
-            fontFamily: "'Roboto', 'Inter', sans-serif",
-            fontWeight: 800,
-            fontSize: { xs: 40, md: 52, lg: 60 },
-            color: colors.text,
-            lineHeight: 1.1,
-            mb: 3,
-            letterSpacing: "-2px",
-          }}
-        >
-          Đang diễn ra
-        </Typography>
-
-        <Typography
-          variant="h2"
-          sx={{
-            fontFamily: "'Roboto', 'Inter', sans-serif",
-            fontWeight: 600,
-            fontSize: { xs: 22, md: 28 },
-            color: colors.textSecondary,
-            mb: 4,
-          }}
-        >
-          Tham gia ngay hôm nay.
-        </Typography>
-        <Button
-          variant="contained"
-          onClick={handleSignUpOpen}
-          sx={greenFilledButtonSx}
-        >
-          Tạo tài khoản
-        </Button>
-
-        <Typography
-          sx={{
-            fontSize: 12,
-            color: colors.textSecondary,
-            maxWidth: 300,
-            mt: 1.5,
-            lineHeight: 1.5,
-          }}
-        >
-          Khi đăng ký, bạn đồng ý với{" "}
-          <Typography component="span" sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500 }}>
-            Điều khoản Dịch vụ
-          </Typography>{" "}
-          và{" "}
-          <Typography component="span" sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500 }}>
-            Chính sách Quyền riêng tư
+          <Typography
+            variant="h1"
+            sx={{
+              fontFamily: "'Roboto', 'Inter', sans-serif",
+              fontWeight: 800,
+              fontSize: { xs: 40, md: 52, lg: 60 },
+              color: colors.text,
+              lineHeight: 1.1,
+              mb: 3,
+              letterSpacing: "-2px",
+            }}
+          >
+            Đang diễn ra
           </Typography>
-          .
-        </Typography>
 
-        <Divider sx={{ maxWidth: 300, my: 4 }} />
-
-        <Box>
-          <Typography sx={{ fontWeight: 600, fontSize: 18, color: colors.text, mb: 2.5 }}>
-            Đã có tài khoản?
+          <Typography
+            variant="h2"
+            sx={{
+              fontFamily: "'Roboto', 'Inter', sans-serif",
+              fontWeight: 600,
+              fontSize: { xs: 22, md: 28 },
+              color: colors.textSecondary,
+              mb: 4,
+            }}
+          >
+            Tham gia ngay hôm nay.
           </Typography>
           <Button
-            variant="outlined"
-            onClick={handleSignInOpen}
-            sx={outlinedButtonSx}
+            variant="contained"
+            onClick={handleSignUpOpen}
+            sx={greenFilledButtonSx}
           >
-            Đăng nhập
+            Tạo tài khoản
           </Button>
-        </Box>
+
+          <Typography
+            sx={{
+              fontSize: 12,
+              color: colors.textSecondary,
+              maxWidth: 300,
+              mt: 1.5,
+              lineHeight: 1.5,
+            }}
+          >
+            Khi đăng ký, bạn đồng ý với{" "}
+            <Typography component="span" sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500 }}>
+              Điều khoản Dịch vụ
+            </Typography>{" "}
+            và{" "}
+            <Typography component="span" sx={{ color: colors.primary, cursor: "pointer", fontWeight: 500 }}>
+              Chính sách Quyền riêng tư
+            </Typography>
+            .
+          </Typography>
+
+          <Divider sx={{ maxWidth: 300, my: 4 }} />
+
+          <Box>
+            <Typography sx={{ fontWeight: 600, fontSize: 18, color: colors.text, mb: 2.5 }}>
+              Đã có tài khoản?
+            </Typography>
+            <Button
+              variant="outlined"
+              onClick={handleSignInOpen}
+              sx={outlinedButtonSx}
+            >
+              Đăng nhập
+            </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -631,7 +670,7 @@ const SignIn = () => {
 
           {signInStep === 1 ? (
             <Box sx={{ animation: `${slideUp} 0.3s ease-out` }}>
-              
+
 
               <Divider sx={{ my: 2.5 }}>
                 <Typography sx={{ color: colors.textSecondary, fontSize: 14 }}>hoặc</Typography>
@@ -670,7 +709,7 @@ const SignIn = () => {
                 sx={{
                   height: 48,
                   borderRadius: "50px",
-                  background: signInData.username 
+                  background: signInData.username
                     ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
                     : "#e0e0e0",
                   color: signInData.username ? colors.white : "#9e9e9e",
@@ -680,7 +719,7 @@ const SignIn = () => {
                   mb: 2,
                   boxShadow: signInData.username ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
                   "&:hover": {
-                    background: signInData.username 
+                    background: signInData.username
                       ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
                       : "#e0e0e0",
                   },
@@ -776,10 +815,10 @@ const SignIn = () => {
 
               {/* Error display */}
               {error && (
-                <Alert 
-                  severity="error" 
-                  sx={{ 
-                    mb: 2, 
+                <Alert
+                  severity="error"
+                  sx={{
+                    mb: 2,
                     borderRadius: "12px",
                     "& .MuiAlert-message": { fontWeight: 500 }
                   }}
@@ -816,10 +855,10 @@ const SignIn = () => {
 
               {/* Resend success/error message */}
               {resendMessage && (
-                <Alert 
+                <Alert
                   severity={resendMessage.includes("thành công") || resendMessage.includes("đã được gửi") ? "success" : "error"}
-                  sx={{ 
-                    mb: 2, 
+                  sx={{
+                    mb: 2,
                     borderRadius: "12px",
                     "& .MuiAlert-message": { fontWeight: 500 }
                   }}
@@ -839,7 +878,7 @@ const SignIn = () => {
                 sx={{
                   height: 48,
                   borderRadius: "50px",
-                  background: signInData.password 
+                  background: signInData.password
                     ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
                     : "#e0e0e0",
                   color: signInData.password ? colors.white : "#9e9e9e",
@@ -849,7 +888,7 @@ const SignIn = () => {
                   mb: 2,
                   boxShadow: signInData.password ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
                   "&:hover": {
-                    background: signInData.password 
+                    background: signInData.password
                       ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
                       : "#e0e0e0",
                   },
@@ -969,7 +1008,7 @@ const SignIn = () => {
                 {error}
               </Alert>
             )}
-            
+
             <TextField
               fullWidth
               label="Username"
@@ -1112,7 +1151,7 @@ const SignIn = () => {
               sx={{
                 height: 48,
                 borderRadius: "50px",
-                background: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) 
+                background: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword)
                   ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
                   : "#e0e0e0",
                 color: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) ? colors.white : "#9e9e9e",
@@ -1120,11 +1159,11 @@ const SignIn = () => {
                 fontSize: 15,
                 textTransform: "none",
                 mb: 3,
-                boxShadow: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) 
-                  ? "0 6px 20px rgba(67, 160, 71, 0.35)" 
+                boxShadow: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword)
+                  ? "0 6px 20px rgba(67, 160, 71, 0.35)"
                   : "none",
                 "&:hover": {
-                  background: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword) 
+                  background: (signUpData.username && signUpData.email && signUpData.password && signUpData.confirmPassword)
                     ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
                     : "#e0e0e0",
                 },
@@ -1281,7 +1320,7 @@ const SignIn = () => {
                 sx={{
                   height: 48,
                   borderRadius: "50px",
-                  background: forgotPasswordEmail 
+                  background: forgotPasswordEmail
                     ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
                     : "#e0e0e0",
                   color: forgotPasswordEmail ? colors.white : "#9e9e9e",
@@ -1290,7 +1329,7 @@ const SignIn = () => {
                   textTransform: "none",
                   boxShadow: forgotPasswordEmail ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
                   "&:hover": {
-                    background: forgotPasswordEmail 
+                    background: forgotPasswordEmail
                       ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
                       : "#e0e0e0",
                   },
@@ -1335,6 +1374,27 @@ const SignIn = () => {
           }}
         >
           {successMessage}
+        </Alert>
+      </Snackbar>
+
+      {/* Banned Account Snackbar */}
+      <Snackbar
+        open={!!bannedAlert}
+        autoHideDuration={10000}
+        onClose={() => setBannedAlert("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setBannedAlert("")}
+          severity="error"
+          sx={{
+            width: "100%",
+            borderRadius: "12px",
+            fontWeight: 500,
+            boxShadow: "0 8px 20px rgba(211, 47, 47, 0.3)",
+          }}
+        >
+          {bannedAlert}
         </Alert>
       </Snackbar>
     </Box>

@@ -131,10 +131,26 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
      * @return 403 response
      */
     @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(SelfRoleChangeException.class)
+    ResponseEntity<Object> handleSelfRoleChangeException(SelfRoleChangeException ex, WebRequest request) {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("error", "SELF_ROLE_CHANGE_NOT_ALLOWED");
+        body.put("message", ex.getMessage());
+        return super.handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalStateException.class)
+    ResponseEntity<Object> handleIllegalStateException(IllegalStateException ex, WebRequest request) {
+        String bodyOfResponse = ex.getMessage();
+        return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(DisabledException.class)
     ResponseEntity<Object> handleDisabledException(DisabledException ex, WebRequest request) {
-        return super.handleExceptionInternal(ex, 
-                java.util.Map.of("message", "Your account should be activated before login"), 
+        return super.handleExceptionInternal(ex,
+                java.util.Map.of("message", "Your account should be activated before login"),
                 new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
 
@@ -147,8 +163,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(LockedException.class)
     ResponseEntity<Object> handleLockedException(LockedException ex, WebRequest request) {
-        return super.handleExceptionInternal(ex, 
-                java.util.Map.of("message", "Your account has been banned"), 
+        return super.handleExceptionInternal(ex,
+                java.util.Map.of("message", "Your account has been banned"),
                 new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
 }

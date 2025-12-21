@@ -2,8 +2,6 @@ package com.uet.VolunteerHub.controller;
 
 import java.util.UUID;
 
-import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
-import com.uet.VolunteerHub.dto.Event.EventSearchDTO;
 import com.uet.VolunteerHub.service.UserSearchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +30,8 @@ import com.uet.VolunteerHub.service.UserWriteService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 
+import com.uet.VolunteerHub.entity.Account;
+
 @RestController
 @RequestMapping("/api/admin/users")
 @PreAuthorize("hasRole('ADMIN')")
@@ -55,14 +55,33 @@ public class AdminUserController {
     @PatchMapping("/{id}/role")
     public ResponseEntity<UserSearchDTO> changeUserRole(@PathVariable("id") UUID id,
                                                         @RequestBody @Valid AccountRoleUpdateDTO accountRoleUpdateDTO) {
-        UserSearchDTO userSearchDTO = userWriteService.changeAccountRole(id, accountRoleUpdateDTO);
+        org.springframework.security.core.Authentication auth = 
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        Account caller = (auth != null && auth.getPrincipal() instanceof Account) 
+            ? (Account) auth.getPrincipal() : null;
+        boolean isSelf = caller != null && caller.getAccountId() != null && caller.getAccountId().equals(id);
+        if (isSelf) {
+            System.out.println(">>> BLOCKING: Admin trying to change own role!");
+            throw new com.uet.VolunteerHub.exception.SelfRoleChangeException(
+                "You cannot change your own account role. Please contact another admin.");
+        }
+        UserSearchDTO userSearchDTO = userWriteService.changeAccountRole(id, accountRoleUpdateDTO, caller);
         return ResponseEntity.ok(userSearchDTO);
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<UserSearchDTO> changeAccountStatus(@PathVariable("id") UUID id,
                                                              @RequestBody @Valid AccountStatusUpdateDTO accountStatusUpdateDTO) {
-        UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, accountStatusUpdateDTO);
+        org.springframework.security.core.Authentication auth =
+            org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        Account caller = (auth != null && auth.getPrincipal() instanceof Account) 
+            ? (Account) auth.getPrincipal() : null;
+        if (caller != null && caller.getAccountId() != null && caller.getAccountId().equals(id) 
+                && accountStatusUpdateDTO.getStatus() == com.uet.VolunteerHub.enums.AccountStatus.BANNED) {
+            throw new com.uet.VolunteerHub.exception.SelfRoleChangeException(
+                "You cannot ban your own account. Please contact another admin.");
+        }
+        UserSearchDTO userSearchDTO = userWriteService.changeAccountStatus(id, accountStatusUpdateDTO, caller);
         return ResponseEntity.ok(userSearchDTO);
     }
 
