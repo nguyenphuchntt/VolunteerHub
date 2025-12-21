@@ -287,12 +287,14 @@ const EventDetail = () => {
     } catch (err) {
       console.error("Unregister failed:", err);
 
-      // Check if error is about being the last manager
+      // Check if error is about being the last manager or event already started
       const errorMessage = err.response?.data?.message || "";
       let displayMessage = "Không thể hủy tham gia.";
 
       if (errorMessage.toLowerCase().includes("last manager")) {
         displayMessage = "Bạn là quản lý cuối cùng của sự kiện này. Vui lòng chỉ định quản lý khác trước khi rời đi.";
+      } else if (errorMessage.toLowerCase().includes("event has started")) {
+        displayMessage = "Không thể hủy tham gia sau khi sự kiện đã bắt đầu.";
       } else if (errorMessage) {
         displayMessage = errorMessage;
       }
