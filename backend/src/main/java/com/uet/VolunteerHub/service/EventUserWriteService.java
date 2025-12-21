@@ -141,22 +141,20 @@ public class EventUserWriteService {
         if (!accountRepository.existsById(account.getAccountId())) {
             throw new ResourceNotFoundException("Account with id: " + account.getAccountId() + " not found");
         }
-        if (!eventRepository.existsById(eventId)) {
-            throw new ResourceNotFoundException("Event with id: " + eventId + " not found");
+        Event event1 = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
+        if (event1.getStartAt().isBefore(OffsetDateTime.now())) {
+            throw new IllegalStateException("Cannot unregister after the event has started.");
         }
-
         EventUser eventUser = findEventUser(account.getAccountId(), eventId);
-
         if (eventUser.getRole() == EventUserRole.MANAGER) {
             long managerCount = eventUserRepository.countByEventIdAndRole(eventId, EventUserRole.MANAGER);
-
             if (managerCount <= 1) {
                 throw new IllegalStateException(
                         "Cannot unregister. You are the last manager of this event. " +
                                 "Please assign another manager before leaving.");
             }
         }
-
         if (eventUser.getStatus() == EventUserStatus.APPROVED) {
             Event event = eventUser.getEvent();
             event.setAttendeeCount(Math.max(0, event.getAttendeeCount() - 1));
