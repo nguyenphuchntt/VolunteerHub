@@ -130,9 +130,7 @@ export const useNotifications = (isAuthenticated = false) => {
         }
 
         const init = async () => {
-            if (initializedRef.current) return;
-            initializedRef.current = true;
-
+            // Always re-subscribe token when authenticated to ensure token is valid
             setLoading(true);
             await fetchUnreadCount();
 

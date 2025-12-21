@@ -33,16 +33,18 @@ import { CATEGORY_OPTIONS } from "../../constants/categories";
 const EventForm = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    startAt: "",
-    endAt: "",
+    startDate: "",
+    startTime: "",  // Optional, defaults to 00:00
+    endDate: "",
+    endTime: "",    // Optional, defaults to 00:00
     location: "",
     category: "",
   });
-  
+
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,10 +60,10 @@ const EventForm = () => {
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
-    
+
     // Add new files to selected images
     setSelectedImages(prev => [...prev, ...files]);
-    
+
     // Generate preview URLs
     const newPreviewUrls = files.map(file => URL.createObjectURL(file));
     setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
@@ -70,15 +72,25 @@ const EventForm = () => {
   const handleRemoveImage = (index) => {
     // Revoke the object URL to free memory
     URL.revokeObjectURL(imagePreviewUrls[index]);
-    
+
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
   };
 
-  const formatDateForApi = (dateTimeLocal) => {
-    if (!dateTimeLocal) return null;
-    // Convert from datetime-local format to ISO 8601 with timezone
-    return new Date(dateTimeLocal).toISOString();
+  // Combine date and time into ISO string for API
+  const formatDateTimeForApi = (date, time) => {
+    if (!date) return null;
+    // Use provided time or default to 00:00
+    const timeStr = time || "00:00";
+    const dateTimeStr = `${date}T${timeStr}`;
+    return new Date(dateTimeStr).toISOString();
+  };
+
+  // Combine date and time into Date object for validation
+  const combineDateTime = (date, time) => {
+    if (!date) return null;
+    const timeStr = time || "00:00";
+    return new Date(`${date}T${timeStr}`);
   };
 
   const handleSubmit = async (e) => {
@@ -86,21 +98,23 @@ const EventForm = () => {
     setLoading(true);
     setError(null);
 
+    // Combine date and time (default 00:00 if time not provided)
+    const startDateTime = combineDateTime(formData.startDate, formData.startTime);
+    const endDateTime = combineDateTime(formData.endDate, formData.endTime);
+
     // Validate dates
     const now = new Date();
     now.setHours(0, 0, 0, 0); // Start of today
-    const startDate = new Date(formData.startAt);
-    const endDate = formData.endAt ? new Date(formData.endAt) : null;
 
-    // 1. startAt must be >= today
-    if (startDate < now) {
+    // 1. startDate must be >= today
+    if (!startDateTime || startDateTime < now) {
       setError("Thời gian bắt đầu phải từ hôm nay trở đi.");
       setLoading(false);
       return;
     }
 
-    // 2. endAt must be >= startAt (if endAt is provided)
-    if (endDate && endDate < startDate) {
+    // 2. endDateTime must be >= startDateTime (if endDate is provided)
+    if (endDateTime && endDateTime < startDateTime) {
       setError("Thời gian kết thúc phải sau thời gian bắt đầu.");
       setLoading(false);
       return;
@@ -111,8 +125,8 @@ const EventForm = () => {
       const eventData = {
         title: formData.title,
         description: formData.description,
-        startAt: formatDateForApi(formData.startAt),
-        endAt: formatDateForApi(formData.endAt),
+        startAt: formatDateTimeForApi(formData.startDate, formData.startTime),
+        endAt: formatDateTimeForApi(formData.endDate, formData.endTime),
         location: formData.location,
         category: formData.category,
         attendeeCount: 0, // Auto set to 0
@@ -125,13 +139,13 @@ const EventForm = () => {
       } else {
         createdEvent = await eventService.registerEvent(eventData);
       }
-      
+
       const eventId = createdEvent.eventId;
-      
+
       // Step 2: Upload images if any
       if (selectedImages.length > 0 && eventId) {
         setUploadingImages(true);
-        
+
         for (const imageFile of selectedImages) {
           try {
             await mediaService.uploadEventMedia(imageFile, eventId);
@@ -140,21 +154,21 @@ const EventForm = () => {
             // Continue uploading other images even if one fails
           }
         }
-        
+
         setUploadingImages(false);
       }
 
-      setSnackbar({ 
-        open: true, 
-        message: isAdmin ? "Tạo sự kiện thành công!" : "Đăng ký sự kiện thành công! Đang chờ phê duyệt.", 
-        severity: "success" 
+      setSnackbar({
+        open: true,
+        message: isAdmin ? "Tạo sự kiện thành công!" : "Đăng ký sự kiện thành công! Đang chờ phê duyệt.",
+        severity: "success"
       });
-      
+
       // Navigate to the event detail or management page
       setTimeout(() => {
         navigate(buildEventUrl(createdEvent));
       }, 1500);
-      
+
     } catch (err) {
       console.error("Failed to create event:", err);
       setError(err.response?.data?.message || "Không thể tạo sự kiện. Vui lòng thử lại.");
@@ -163,7 +177,7 @@ const EventForm = () => {
     }
   };
 
-  const isFormValid = formData.title && formData.startAt;
+  const isFormValid = formData.title && formData.startDate;
 
   return (
     <ThreeColumnLayout user={user} role="manager" showRightSidebar={false}>
@@ -192,7 +206,7 @@ const EventForm = () => {
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
             Thông tin cơ bản
           </Typography>
-          
+
           <TextField
             name="title"
             label="Tên sự kiện *"
@@ -201,7 +215,7 @@ const EventForm = () => {
             fullWidth
             sx={{ mb: 2 }}
           />
-          
+
           <TextField
             name="description"
             label="Mô tả sự kiện"
@@ -212,7 +226,7 @@ const EventForm = () => {
             rows={4}
             sx={{ mb: 2 }}
           />
-          
+
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Danh mục</InputLabel>
             <Select
@@ -233,28 +247,51 @@ const EventForm = () => {
           <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>
             Thời gian & Địa điểm
           </Typography>
-          
+
           <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <TextField
-              name="startAt"
-              label="Thời gian bắt đầu *"
-              type="datetime-local"
-              value={formData.startAt}
+              name="startDate"
+              label="Ngày bắt đầu *"
+              type="date"
+              value={formData.startDate}
               onChange={handleChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
             />
             <TextField
-              name="endAt"
-              label="Thời gian kết thúc"
-              type="datetime-local"
-              value={formData.endAt}
+              name="startTime"
+              label="Giờ bắt đầu"
+              type="time"
+              value={formData.startTime}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText="Mặc định 00:00"
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              name="endDate"
+              label="Ngày kết thúc"
+              type="date"
+              value={formData.endDate}
               onChange={handleChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
             />
+            <TextField
+              name="endTime"
+              label="Giờ kết thúc"
+              type="time"
+              value={formData.endTime}
+              onChange={handleChange}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText="Mặc định 00:00"
+            />
           </Box>
-          
+
           <TextField
             name="location"
             label="Địa điểm"
@@ -272,7 +309,7 @@ const EventForm = () => {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Tải lên một hoặc nhiều ảnh bìa cho sự kiện (không bắt buộc)
           </Typography>
-          
+
           {/* Image Previews */}
           {imagePreviewUrls.length > 0 && (
             <ImageList sx={{ mb: 2 }} cols={3} rowHeight={120}>
@@ -302,7 +339,7 @@ const EventForm = () => {
               ))}
             </ImageList>
           )}
-          
+
           {/* Upload Button */}
           <Button
             component="label"
@@ -327,12 +364,12 @@ const EventForm = () => {
           variant="contained"
           fullWidth
           disabled={loading || !isFormValid}
-          sx={{ 
-            borderRadius: "9999px", 
-            textTransform: "none", 
-            fontWeight: 600, 
+          sx={{
+            borderRadius: "9999px",
+            textTransform: "none",
+            fontWeight: 600,
             height: 48,
-            fontSize: 16 
+            fontSize: 16
           }}
         >
           {loading ? (
@@ -352,8 +389,8 @@ const EventForm = () => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
           sx={{ width: "100%", fontWeight: 500, borderRadius: "8px" }}
         >

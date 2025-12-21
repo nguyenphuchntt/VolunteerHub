@@ -29,6 +29,7 @@ public class EventWriteService {
     private final EventRepository eventRepository;
     private final AccountRepository accountRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final PushNotificationService pushNotificationService;
 
     private EventSearchDTO mapToEventSearchDTO(Event event, Account account) {
         var builder = EventSearchDTO.builder()
@@ -55,8 +56,8 @@ public class EventWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public void deleteEvent(Long eventId) {
@@ -65,8 +66,8 @@ public class EventWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public EventSearchDTO registerEvent(Account account, EventManagerCreateDTO eventManagerCreateDTO) {
@@ -113,8 +114,8 @@ public class EventWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public EventSearchDTO createEvent(Account account, EventAdminCreateDTO eventAdminCreateDTO) {
@@ -165,17 +166,17 @@ public class EventWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public EventSearchDTO updateEventStatus(Long eventId, EventStatusUpdateDTO eventStatusUpdateDTO, Account admin) {
         Event event = findEvent(eventId);
         EventStatus oldStatus = event.getStatus();
-        EventStatus newStatus = eventStatusUpdateDTO.getStatus() != null 
-                ? eventStatusUpdateDTO.getStatus() 
+        EventStatus newStatus = eventStatusUpdateDTO.getStatus() != null
+                ? eventStatusUpdateDTO.getStatus()
                 : EventStatus.PENDING;
-        
+
         event.setStatus(newStatus);
         eventRepository.save(event);
         if (oldStatus != newStatus) {
@@ -186,8 +187,8 @@ public class EventWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public EventSearchDTO updateEventStatus(Long eventId, EventStatusUpdateDTO eventStatusUpdateDTO) {
@@ -201,17 +202,19 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 
-    private void publishStatusChangeNotification(Event event, EventStatus oldStatus, 
-                                                   EventStatus newStatus, Account admin, String reason) {
+    private void publishStatusChangeNotification(Event event, EventStatus oldStatus,
+            EventStatus newStatus, Account admin, String reason) {
         if (oldStatus == EventStatus.PENDING && newStatus == EventStatus.SCHEDULED) {
             eventPublisher.publishEvent(new EventApprovedEvent(this, admin, event));
-        }
-        else if (oldStatus == EventStatus.PENDING && 
-                 newStatus != EventStatus.SCHEDULED && 
-                 newStatus != EventStatus.STARTED && 
-                 newStatus != EventStatus.FINISHED) {
-        }
-        else if (newStatus == EventStatus.CANCELLED) {
+            // Push notification to event creator (manager)
+            pushNotificationService.pushNotificationToUser(
+                    event.getCreatedBy().getAccountId(),
+                    "Sự kiện '" + event.getTitle() + "' của bạn đã được phê duyệt!");
+        } else if (oldStatus == EventStatus.PENDING &&
+                newStatus != EventStatus.SCHEDULED &&
+                newStatus != EventStatus.STARTED &&
+                newStatus != EventStatus.FINISHED) {
+        } else if (newStatus == EventStatus.CANCELLED) {
             // Get all approved participants to notify them
             List<Account> participants = accountRepository.findApprovedParticipantsByEventId(event.getEventId());
             eventPublisher.publishEvent(new EventCancelledEvent(this, admin, event, participants, reason));
@@ -219,8 +222,8 @@ public class EventWriteService {
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public EventSearchDTO rejectEvent(Long eventId, Account admin, String reason) {
@@ -228,14 +231,26 @@ public class EventWriteService {
         if (event.getStatus() != EventStatus.PENDING) {
             throw new IllegalArgumentException("Only PENDING events can be rejected");
         }
+        event.setStatus(EventStatus.CANCELLED);
+        eventRepository.save(event);
+
         eventPublisher.publishEvent(new EventRejectedEvent(this, admin, event, reason));
-        
+
+        // Push notification to event creator (manager) about rejection
+        String notificationContent = "Sự kiện '" + event.getTitle() + "' của bạn đã bị từ chối.";
+        if (reason != null && !reason.isBlank()) {
+            notificationContent += " Lý do: " + reason;
+        }
+        pushNotificationService.pushNotificationToUser(
+                event.getCreatedBy().getAccountId(),
+                notificationContent);
+
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 
     @Caching(evict = {
-        @CacheEvict(value = "events", allEntries = true),
-        @CacheEvict(value = "adminDashboard", allEntries = true)
+            @CacheEvict(value = "events", allEntries = true),
+            @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     @Transactional
     public EventSearchDTO updateEventDetails(Long eventId, EventUpdateDTO eventUpdateDTO) {
@@ -275,4 +290,3 @@ public class EventWriteService {
         return mapToEventSearchDTO(event, event.getCreatedBy());
     }
 }
-
