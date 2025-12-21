@@ -217,7 +217,7 @@ const SignIn = () => {
   const handleSignUpSubmit = async () => {
     // Frontend validation
     if (signUpData.username.length < 3) {
-      setError("Tên người dùng phải có ít nhất 3 ký tự.");
+      setError("Username phải có ít nhất 3 ký tự.");
       return;
     }
     if (signUpData.password.length < 8) {
@@ -635,7 +635,7 @@ const SignIn = () => {
 
               <TextField
                 fullWidth
-                label="Email hoặc tên người dùng"
+                label="Email hoặc username"
                 value={signInData.username}
                 onChange={(e) => setSignInData({ ...signInData, username: e.target.value })}
                 onKeyDown={(e) => {
@@ -716,7 +716,7 @@ const SignIn = () => {
               {/* Show username as readonly */}
               <TextField
                 fullWidth
-                label="Email hoặc tên người dùng"
+                label="Email hoặc username"
                 value={signInData.username}
                 variant="outlined"
                 disabled
@@ -968,7 +968,7 @@ const SignIn = () => {
             
             <TextField
               fullWidth
-              label="Tên người dùng"
+              label="Username"
               value={signUpData.username}
               onChange={(e) => setSignUpData({ ...signUpData, username: e.target.value })}
               onKeyDown={(e) => {

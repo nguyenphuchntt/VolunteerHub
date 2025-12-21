@@ -9,6 +9,8 @@ import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.EventStatus;
+import com.uet.VolunteerHub.enums.EventUserRole;
+import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.repository.EventLikeRepository;
 import com.uet.VolunteerHub.repository.EventMediaRepository;
 import com.uet.VolunteerHub.repository.EventRepository;
@@ -119,18 +121,39 @@ public class EventSearchService {
     }
 
     @Transactional
-    public Optional<EventSearchDTO> findByEventID(Long eventID, UUID accountId) {
+    public Optional<EventSearchDTO> findByEventID(Long eventID, Account requestingAccount) {
         Optional<Event> event = eventRepository.findById(eventID);
-        if (event.isPresent() && !event.get().getCreatedBy().getAccountId().equals(accountId)) {
-            if (event.get().getStatus() != null && (event.get().getStatus().equals(EventStatus.PENDING)
-                    || event.get().getStatus().equals(EventStatus.CANCELLED))) {
+        if (event.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Event eventEntity = event.get();
+        EventStatus status = eventEntity.getStatus();
+        
+        // Check if event is PENDING or CANCELLED
+        if (status != null && (status.equals(EventStatus.PENDING) || status.equals(EventStatus.CANCELLED))) {
+            // Allow access if:
+            // 1. User is the creator
+            // 2. User is ADMIN
+            // 3. User is a MANAGER of this event
+            boolean isCreator = requestingAccount != null && 
+                    eventEntity.getCreatedBy() != null &&
+                    eventEntity.getCreatedBy().getAccountId().equals(requestingAccount.getAccountId());
+            boolean isAdmin = requestingAccount != null && 
+                    requestingAccount.getRole() == UserRole.ADMIN;
+            boolean isEventManager = requestingAccount != null && 
+                    eventUserRepository.existsByAccount_AccountIdAndEvent_EventIdAndRole(
+                            requestingAccount.getAccountId(), eventID, EventUserRole.MANAGER);
+            
+            if (!isCreator && !isAdmin && !isEventManager) {
                 return Optional.empty();
             }
         }
+        
         return event.map(value -> {
-            Account account = value.getCreatedBy();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
-            return mapToEventSearchDTO(value, account, userInfo);
+            Account creatorAccount = value.getCreatedBy();
+            UserInfo userInfo = (creatorAccount != null) ? creatorAccount.getUserInfo() : null;
+            return mapToEventSearchDTO(value, creatorAccount, userInfo);
         });
     }
 

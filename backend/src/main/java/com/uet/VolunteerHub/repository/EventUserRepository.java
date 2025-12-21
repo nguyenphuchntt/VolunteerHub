@@ -92,4 +92,10 @@ public interface EventUserRepository
         @Query("SELECT COUNT(eu) FROM EventUser eu WHERE eu.eventId = :eventId AND eu.role = :role")
         long countByEventIdAndRole(@Param("eventId") Long eventId, @Param("role") EventUserRole role);
 
+        /**
+         * Check if an account has a specific role in an event.
+         */
+        boolean existsByAccount_AccountIdAndEvent_EventIdAndRole(UUID accountId, Long eventId, EventUserRole role);
+
 }
+
