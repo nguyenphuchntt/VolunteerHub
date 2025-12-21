@@ -70,6 +70,22 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         String bodyOfResponse = ex.getMessage();
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(SelfRoleChangeException.class)
+    ResponseEntity<Object> handleSelfRoleChangeException(SelfRoleChangeException ex, WebRequest request) {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("error", "SELF_ROLE_CHANGE_NOT_ALLOWED");
+        body.put("message", ex.getMessage());
+        return super.handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(IllegalStateException.class)
+    ResponseEntity<Object> handleIllegalStateException(IllegalStateException ex, WebRequest request) {
+        String bodyOfResponse = ex.getMessage();
+        return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
 }
 
 

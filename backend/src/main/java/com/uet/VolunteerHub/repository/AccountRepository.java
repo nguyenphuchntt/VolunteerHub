@@ -28,6 +28,9 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
     @Override
     @EntityGraph(attributePaths = {"userInfo"})
     Optional<Account> findById(UUID accountId);
+    
+    @Query("SELECT a FROM Account a LEFT JOIN FETCH a.userInfo WHERE a.accountId = :accountId")
+    Optional<Account> findByIdFresh(@Param("accountId") UUID accountId);
 
     boolean existsByEmail(String email);
 

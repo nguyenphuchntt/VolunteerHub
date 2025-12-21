@@ -227,7 +227,19 @@ const EventDetailManagement = () => {
       setSnackbar({ open: true, message: `Đã đổi vai trò thành ${getRoleLabel(newRole)}!`, severity: "success" });
       fetchParticipants();
     } catch (err) {
-      setSnackbar({ open: true, message: err.response?.data?.message || "Không thể đổi vai trò.", severity: "error" });
+      // Handle specific error codes from backend
+      const errorData = err.response?.data;
+      let errorMessage = "Không thể đổi vai trò.";
+
+      if (errorData?.error === "SELF_ROLE_CHANGE_NOT_ALLOWED") {
+        errorMessage = "Bạn không thể tự hạ cấp vai trò của chính mình. Vui lòng liên hệ quản lý hoặc admin khác.";
+      } else if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (typeof errorData === "string") {
+        errorMessage = errorData;
+      }
+
+      setSnackbar({ open: true, message: errorMessage, severity: "error" });
     }
     setRoleDialog({ open: false, participant: null, newRole: "ATTENDEE" });
   };

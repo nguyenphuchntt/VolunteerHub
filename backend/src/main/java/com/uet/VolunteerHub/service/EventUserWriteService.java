@@ -282,10 +282,6 @@ public class EventUserWriteService {
         EventUserRole currRole = eventUser.getRole();
         Event event = eventUser.getEvent();
 
-        // Prevent demoting the event creator from Manager to Attendee, unless by
-        // themselves or Admin
-        // Other managers can still "promote" Creator (re-assign Manager role if lost),
-        // but cannot demote.
         if (accountId.equals(event.getCreatedBy().getAccountId())) {
             boolean isSelf = caller.getAccountId().equals(accountId);
             boolean isAdmin = caller.getRole() == UserRole.ADMIN;
@@ -294,6 +290,15 @@ public class EventUserWriteService {
             if (isDemoting && !isSelf && !isAdmin) {
                 throw new IllegalArgumentException("Cannot remove manager role from the Event Creator.");
             }
+        }
+        boolean isSelfAction = caller.getAccountId().equals(accountId);
+        boolean isAdmin = caller.getRole() == UserRole.ADMIN;
+        boolean isDemotingFromManager = eventUser.getRole() == EventUserRole.MANAGER 
+                && role.getEventUserRole() == EventUserRole.ATTENDEE;
+        
+        if (isSelfAction && isDemotingFromManager && !isAdmin) {
+            throw new com.uet.VolunteerHub.exception.SelfRoleChangeException(
+                "You cannot demote yourself from Manager to Attendee. Please contact another manager or admin.");
         }
 
         // If demoting a manager, ensure at least one manager remains
