@@ -55,8 +55,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String jwt = getJwtFromRequest(request);
             if (jwt != null) {
                 UUID accountId = UUID.fromString(jwtTokenProvider.parseJwtToken(jwt).getSubject());
-                Account account = accountRepository.findById(accountId)
+                Account account = accountRepository.findByIdFresh(accountId)
                         .orElseThrow(() -> new EntityNotFoundException("Account with ID: " + accountId + " not found"));
+                log.debug("Loaded account {} with role {} and status {}", 
+                    accountId, account.getRole(), account.getAccountStatus());
+                // Check if account is BANNED - block all operations
+                if (account.getAccountStatus() == com.uet.VolunteerHub.enums.AccountStatus.BANNED) {
+                    log.warn("Banned account attempted to access: {}", accountId);
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"error\": \"ACCOUNT_BANNED\", \"message\": \"Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.\"}");
+                    return;
+                }
+                // Create authentication with FRESH role from database
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(account,
                         null, account.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

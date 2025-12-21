@@ -13,6 +13,7 @@ import {
   Menu,
   MenuItem,
   Divider,
+  Badge,
 } from "@mui/material";
 import {
   Explore,
@@ -40,6 +41,7 @@ import {
 } from "@mui/icons-material";
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext";
+import { useNotificationContext } from "../../../contexts/NotificationContext";
 
 const NAV_WIDTH = 280;
 
@@ -53,13 +55,16 @@ const LeftNav = ({ isMobile = false }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [adminAnchorEl, setAdminAnchorEl] = useState(null);
   const [managerAnchorEl, setManagerAnchorEl] = useState(null);
-  
+
   // Get user and auth state from context
   const { user, isAuthenticated, isAdmin, isManager, isEventManager, logout } = useAuth();
 
+  // Get unread notification count from context
+  const { unreadCount } = useNotificationContext();
+
   // Get display name from API format
-  const displayName = user?.firstName && user?.lastName 
-    ? `${user.firstName} ${user.lastName}` 
+  const displayName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
     : user?.username || "Người dùng";
 
   const isActive = (path) => {
@@ -90,7 +95,7 @@ const LeftNav = ({ isMobile = false }) => {
       description: "Duyệt/xóa/quản lý sự kiện",
     },
     {
-      label: "Quản lý người dùng",  
+      label: "Quản lý người dùng",
       path: "/admin/users",
       icon: <People />,
       description: "Thay đổi role, khóa/mở tài khoản",
@@ -192,7 +197,7 @@ const LeftNav = ({ isMobile = false }) => {
       icon: <NotificationsOutlined />,
       activeIcon: <Notifications />,
       show: isAuthenticated,
-      badge: 3,
+      badge: unreadCount, // Lấy số thông báo chưa đọc từ context
     },
     {
       label: "Hồ sơ",
@@ -281,7 +286,23 @@ const LeftNav = ({ isMobile = false }) => {
                       color: active ? "primary.main" : "text.primary",
                     }}
                   >
-                    {active ? item.activeIcon : item.icon}
+                    {item.badge > 0 ? (
+                      <Badge
+                        badgeContent={item.badge}
+                        color="error"
+                        sx={{
+                          "& .MuiBadge-badge": {
+                            fontSize: 10,
+                            height: 18,
+                            minWidth: 18
+                          }
+                        }}
+                      >
+                        {active ? item.activeIcon : item.icon}
+                      </Badge>
+                    ) : (
+                      active ? item.activeIcon : item.icon
+                    )}
                   </ListItemIcon>
                   <ListItemText
                     primary={item.label}
@@ -327,12 +348,12 @@ const LeftNav = ({ isMobile = false }) => {
                   color: location.pathname.startsWith("/manage") ? "primary.main" : "text.primary",
                 }}
               />
-              <KeyboardArrowDown 
-                sx={{ 
+              <KeyboardArrowDown
+                sx={{
                   color: "text.secondary",
                   transform: Boolean(managerAnchorEl) ? "rotate(180deg)" : "rotate(0deg)",
                   transition: "transform 0.2s",
-                }} 
+                }}
               />
             </ListItemButton>
           </ListItem>
@@ -420,12 +441,12 @@ const LeftNav = ({ isMobile = false }) => {
                   color: location.pathname.startsWith("/admin") ? "primary.main" : "text.primary",
                 }}
               />
-              <KeyboardArrowDown 
-                sx={{ 
+              <KeyboardArrowDown
+                sx={{
                   color: "text.secondary",
                   transform: Boolean(adminAnchorEl) ? "rotate(180deg)" : "rotate(0deg)",
                   transition: "transform 0.2s",
-                }} 
+                }}
               />
             </ListItemButton>
           </ListItem>
@@ -546,7 +567,7 @@ const LeftNav = ({ isMobile = false }) => {
           }}
           onClick={handleMoreClick}
         >
-          <Avatar 
+          <Avatar
             sx={{ width: 40, height: 40, bgcolor: "primary.main" }}
           >
             {(displayName || "?").charAt(0).toUpperCase()}

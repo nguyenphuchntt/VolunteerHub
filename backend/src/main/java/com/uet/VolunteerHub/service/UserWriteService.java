@@ -136,10 +136,19 @@ public class UserWriteService {
         accountRepository.delete(account);
     }
 
+    @CacheEvict(value = "users", key = "#accountId")
     @Transactional
-    public UserSearchDTO changeAccountRole(UUID accountId, AccountRoleUpdateDTO accountRoleUpdateDTO) {
+    public UserSearchDTO changeAccountRole(UUID accountId, AccountRoleUpdateDTO accountRoleUpdateDTO, Account caller) {
         Pair<Account, UserInfo> accountAndUserInfo = findAccountAndUserInfo(accountId);
         Account account = accountAndUserInfo.getFirst();
+        if (caller == null) {
+            throw new IllegalStateException("Caller account is null - authentication failed");
+        }
+        // Prevent admin from changing their own role
+        if (caller.getAccountId() != null && caller.getAccountId().equals(accountId)) {
+            throw new com.uet.VolunteerHub.exception.SelfRoleChangeException(
+                "You cannot change your own account role. Please contact another admin.");
+        }
         if (accountRoleUpdateDTO.getRole() != null) {
             account.setRole(accountRoleUpdateDTO.getRole());
         }
@@ -147,10 +156,19 @@ public class UserWriteService {
         return mapToUserSearchDTO(account, accountAndUserInfo.getSecond());
     }
 
+    @CacheEvict(value = "users", key = "#accountId")
     @Transactional
-    public UserSearchDTO changeAccountStatus(UUID accountId, AccountStatusUpdateDTO accountStatusUpdateDTO) {
+    public UserSearchDTO changeAccountStatus(UUID accountId, AccountStatusUpdateDTO accountStatusUpdateDTO, Account caller) {
         Pair<Account, UserInfo> accountAndUserInfo = findAccountAndUserInfo(accountId);
         Account account = accountAndUserInfo.getFirst();
+        if (caller == null) {
+            throw new IllegalStateException("Caller account is null - authentication failed");
+        }
+        if (caller.getAccountId() != null && caller.getAccountId().equals(accountId) 
+                && accountStatusUpdateDTO.getStatus() == AccountStatus.BANNED) {
+            throw new com.uet.VolunteerHub.exception.SelfRoleChangeException(
+                "You cannot ban your own account. Please contact another admin.");
+        }
         if (accountStatusUpdateDTO.getStatus() != null) {
             account.setAccountStatus(accountStatusUpdateDTO.getStatus());
         }

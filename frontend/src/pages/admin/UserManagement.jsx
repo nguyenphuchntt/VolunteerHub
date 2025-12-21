@@ -39,13 +39,13 @@ import { useAuth } from "../../context/AuthContext";
 const UserManagement = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   // API states
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  
+
   const [selectedTab, setSelectedTab] = useState(0);
   const [lockDialogOpen, setLockDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -63,7 +63,7 @@ const UserManagement = () => {
       if (selectedTab === 1) params.role = "USER";
       else if (selectedTab === 2) params.role = "MANAGER";
       else if (selectedTab === 3) params.accountStatus = "BANNED";
-      
+
       const response = await userService.searchUsers(params);
       setUsers(response.content || []);
     } catch (err) {
@@ -186,7 +186,7 @@ const UserManagement = () => {
   // Handle role change
   const handleRoleChange = async () => {
     if (!selectedUser || !newRole) return;
-    
+
     try {
       await adminService.updateUserRole(selectedUser.accountID, newRole);
       setSnackbar({ open: true, message: "Đã thay đổi vai trò thành công!", severity: "success" });
@@ -194,10 +194,23 @@ const UserManagement = () => {
       fetchCounts(); // Update counts after role change
     } catch (err) {
       console.error("Failed to update role:", err);
-      setSnackbar({ 
-        open: true, 
-        message: err.response?.data?.message || "Không thể thay đổi vai trò.", 
-        severity: "error" 
+
+      // Handle specific error codes from backend
+      const errorData = err.response?.data;
+      let errorMessage = "Không thể thay đổi vai trò.";
+
+      if (errorData?.error === "SELF_ROLE_CHANGE_NOT_ALLOWED") {
+        errorMessage = "Bạn không thể tự thay đổi vai trò của chính mình. Vui lòng liên hệ admin khác.";
+      } else if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (typeof errorData === "string") {
+        errorMessage = errorData;
+      }
+
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: "error"
       });
     }
     setRoleDialogOpen(false);
@@ -207,24 +220,37 @@ const UserManagement = () => {
   // Handle lock/unlock
   const handleToggleLock = async () => {
     if (!selectedUser) return;
-    
+
     const newStatus = selectedUser.status?.toUpperCase() === "ACTIVE" ? "BANNED" : "ACTIVE";
-    
+
     try {
       await adminService.updateUserStatus(selectedUser.accountID, newStatus);
-      setSnackbar({ 
-        open: true, 
-        message: `Đã ${newStatus === "ACTIVE" ? "mở khóa" : "khóa"} tài khoản thành công!`, 
-        severity: "success" 
+      setSnackbar({
+        open: true,
+        message: `Đã ${newStatus === "ACTIVE" ? "mở khóa" : "khóa"} tài khoản thành công!`,
+        severity: "success"
       });
       fetchUsers();
       fetchCounts(); // Update counts after status change
     } catch (err) {
       console.error("Failed to toggle lock:", err);
-      setSnackbar({ 
-        open: true, 
-        message: err.response?.data?.message || "Không thể thay đổi trạng thái.", 
-        severity: "error" 
+
+      // Handle specific error codes from backend
+      const errorData = err.response?.data;
+      let errorMessage = "Không thể thay đổi trạng thái.";
+
+      if (errorData?.error === "SELF_ROLE_CHANGE_NOT_ALLOWED") {
+        errorMessage = "Bạn không thể tự khóa tài khoản của chính mình. Vui lòng liên hệ admin khác.";
+      } else if (errorData?.message) {
+        errorMessage = errorData.message;
+      } else if (typeof errorData === "string") {
+        errorMessage = errorData;
+      }
+
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: "error"
       });
     }
     setLockDialogOpen(false);
@@ -281,9 +307,9 @@ const UserManagement = () => {
           <Typography variant="h6" fontWeight={700}>
             Quản lý người dùng
           </Typography>
-          <Button 
-            size="small" 
-            startIcon={<Refresh />} 
+          <Button
+            size="small"
+            startIcon={<Refresh />}
             onClick={fetchUsers}
             sx={{ textTransform: "none" }}
           >
@@ -376,8 +402,8 @@ const UserManagement = () => {
           <Button onClick={() => setRoleDialogOpen(false)} sx={{ textTransform: "none" }}>
             Hủy
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={handleRoleChange}
             sx={{ textTransform: "none", borderRadius: "9999px" }}
           >
@@ -401,8 +427,8 @@ const UserManagement = () => {
             </Avatar>
             <Box>
               <Typography variant="h6" fontWeight={700}>
-                {selectedUser?.firstName && selectedUser?.lastName 
-                  ? `${selectedUser.firstName} ${selectedUser.lastName}` 
+                {selectedUser?.firstName && selectedUser?.lastName
+                  ? `${selectedUser.firstName} ${selectedUser.lastName}`
                   : selectedUser?.username}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -413,20 +439,20 @@ const UserManagement = () => {
         </DialogTitle>
         <DialogContent>
           <Divider sx={{ my: 2 }} />
-          
+
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <Email sx={{ color: "text.secondary", fontSize: 20 }} />
               <Typography variant="body2">{selectedUser?.email}</Typography>
             </Box>
-            
+
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {getRoleConfig(selectedUser?.role).icon}
               <Typography variant="body2">
                 Vai trò: <strong>{getRoleConfig(selectedUser?.role).label}</strong>
               </Typography>
             </Box>
-            
+
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <CalendarMonth sx={{ color: "text.secondary", fontSize: 20 }} />
               <Typography variant="body2">
@@ -472,8 +498,8 @@ const UserManagement = () => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
           sx={{ width: "100%" }}
         >
