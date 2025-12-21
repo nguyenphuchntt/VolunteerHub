@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Log
 @Service("commentSecurityService")
+@Transactional(readOnly = true)
 public class CommentSecurityService {
 
     private final CommentRepository commentRepository;
@@ -103,7 +105,22 @@ public class CommentSecurityService {
             return true;
         }
 
-        // 2. Manager of the event
+        // 2. Account with MANAGER role can delete any comment in events they manage
+        if (account.getRole() == com.uet.VolunteerHub.enums.UserRole.MANAGER) {
+            if (comment.getPost() != null && comment.getPost().getEvent() != null) {
+                Long eventId = comment.getPost().getEvent().getEventId();
+                Optional<EventUser> eventUserOptional = eventUserRepository.findByAccountIdAndEventId(
+                        account.getAccountId(),
+                        eventId
+                );
+                if (eventUserOptional.isPresent() && 
+                    eventUserOptional.get().getRole() == EventUserRole.MANAGER) {
+                    return true;
+                }
+            }
+        }
+
+        // 3. Event manager of this specific event
         if (comment.getPost() != null && comment.getPost().getEvent() != null) {
             Long eventId = comment.getPost().getEvent().getEventId();
             Optional<EventUser> eventUserOptional = eventUserRepository.findByAccountIdAndEventId(
@@ -118,3 +135,4 @@ public class CommentSecurityService {
         return false;
     }
 }
+

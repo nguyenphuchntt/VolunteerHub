@@ -235,11 +235,6 @@ const AdminEventManagement = () => {
       onClick: (row) => navigate(buildManageEventUrl(row)),
     },
     {
-      label: "Sửa",
-      icon: <Edit sx={{ fontSize: 18 }} />,
-      onClick: (row) => navigate(buildEditEventUrl(row)),
-    },
-    {
       label: "Duyệt",
       icon: <CheckCircle sx={{ fontSize: 18 }} />,
       color: "success.main",

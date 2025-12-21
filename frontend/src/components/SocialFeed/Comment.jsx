@@ -39,8 +39,8 @@ const getUserAvatarLetter = (user) => {
   return (user?.username || "?").charAt(0).toUpperCase();
 };
 
-const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 }) => {
-  const { user, isAuthenticated } = useAuth();
+const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0, canDelete = false }) => {
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const [showReplies, setShowReplies] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -59,7 +59,13 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
   const content = comment.content || "";
   const createdAt = comment.createAt || comment.createdAt || comment.timestamp;
   const isAuthor = comment.isAuthor || (user && comment.ownerUsername === user.username);
-  const replyCount = comment.replyCount || 0;
+  const initialReplyCount = comment.replyCount || 0;
+
+  // Track reply count dynamically
+  const [currentReplyCount, setCurrentReplyCount] = useState(initialReplyCount);
+
+  // Check if user can delete this comment (author, admin, or has canDelete permission)
+  const canDeleteComment = isAuthor || isAdmin || canDelete;
 
   // Format timestamp
   const formatTimestamp = (dateString) => {
@@ -84,7 +90,10 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
     setLoadingReplies(true);
     try {
       const response = await commentService.getReplies(commentId, { page: 0, size: 20 });
-      setReplies(response.content || []);
+      const fetchedReplies = response.content || [];
+      setReplies(fetchedReplies);
+      // Update current reply count based on actual data
+      setCurrentReplyCount(fetchedReplies.length);
     } catch (err) {
       console.error("Failed to fetch replies:", err);
     } finally {
@@ -94,7 +103,7 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
 
   // Toggle replies visibility
   const handleToggleReplies = () => {
-    if (!showReplies && replies.length === 0 && replyCount > 0) {
+    if (!showReplies && replies.length === 0 && currentReplyCount > 0) {
       fetchReplies();
     }
     setShowReplies(!showReplies);
@@ -176,7 +185,7 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
             <Typography variant="caption" color="text.secondary">
               {formatTimestamp(createdAt)}
             </Typography>
-            {isAuthor && (
+            {canDeleteComment && (
               <IconButton 
                 size="small" 
                 onClick={handleDelete}
@@ -214,7 +223,7 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
             </Button>
           )}
           
-          {(replyCount > 0 || replies.length > 0) && (
+          {(currentReplyCount > 0 || replies.length > 0) && (
             <Button
               size="small"
               startIcon={showReplies ? <ExpandLess sx={{ fontSize: 14 }} /> : <ExpandMore sx={{ fontSize: 14 }} />}
@@ -228,7 +237,7 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
                 "&:hover": { backgroundColor: "transparent" },
               }}
             >
-              {showReplies ? "Ẩn" : `${replyCount || replies.length} phản hồi`}
+              {showReplies ? "Ẩn" : `${currentReplyCount || replies.length} phản hồi`}
             </Button>
           )}
         </Box>
@@ -275,6 +284,7 @@ const Comment = ({ comment, postId, onReplyCreated, onCommentDeleted, level = 0 
                   level={level + 1}
                   onReplyCreated={fetchReplies}
                   onCommentDeleted={fetchReplies}
+                  canDelete={canDelete}
                 />
               ))
             )}
@@ -306,6 +316,7 @@ Comment.propTypes = {
   onReplyCreated: PropTypes.func,
   onCommentDeleted: PropTypes.func,
   level: PropTypes.number,
+  canDelete: PropTypes.bool,
 };
 
 export default Comment;

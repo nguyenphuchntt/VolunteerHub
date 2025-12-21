@@ -73,18 +73,9 @@ public class Account implements UserDetails, CredentialsContainer {
     }
 
     @Override
-    public boolean isAccountNonLocked() {
-        // Return false for BANNED accounts - this will throw LockedException
-        return accountStatus != AccountStatus.BANNED;
-    }
-
-    @Override
     public boolean isEnabled() {
-        // Return false for non-ACTIVE accounts that are not BANNED
-        // This will throw DisabledException for INACTIVE accounts
         return accountStatus == AccountStatus.ACTIVE;
     }
-
 
     @Override
     public void eraseCredentials() {

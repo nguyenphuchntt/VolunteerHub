@@ -61,8 +61,8 @@ const getUserAvatarLetter = (user) => {
   return (user?.username || "?").charAt(0).toUpperCase();
 };
 
-const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = false }) => {
-  const { user, isAuthenticated } = useAuth();
+const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = false, canDelete = false }) => {
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
 
@@ -94,6 +94,9 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
 
   // Check if current user is the owner
   const isOwner = user?.username === post.ownerUsername;
+
+  // Check if user can delete this post (owner, admin, or has canDelete permission)
+  const canDeletePost = isOwner || isAdmin || canDelete;
 
   // Format timestamp helper
   const formatTimestamp = (dateString) => {
@@ -328,7 +331,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
             </Avatar>
           }
           action={
-            isOwner && (
+            canDeletePost && (
               <IconButton size="small" onClick={handleMenuOpen}>
                 <MoreHoriz />
               </IconButton>
@@ -436,6 +439,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted, disableInteraction = fal
                     postId={postId}
                     onReplyCreated={() => fetchComments(0, false)}
                     onCommentDeleted={handleCommentDeleted}
+                    canDelete={canDelete}
                   />
                 ))}
 
@@ -588,6 +592,7 @@ PostCard.propTypes = {
   onPostUpdated: PropTypes.func,
   onPostDeleted: PropTypes.func,
   disableInteraction: PropTypes.bool,
+  canDelete: PropTypes.bool,
 };
 
 export default PostCard;

@@ -44,7 +44,7 @@ import {
 const EventDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, isManager } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
 
   // Extract eventId from slug-id pattern (e.g., "chuong-trinh-123" -> "123")
@@ -380,6 +380,19 @@ const EventDetail = () => {
 
   const participationConfig = getParticipationConfig(participationStatus);
 
+  // Check if current user is a manager of this event (must be before early returns)
+  const isEventManager = useMemo(() => {
+    if (!user || !participants.length) return false;
+    const currentUserParticipant = participants.find(
+      p => p.accountId === user.accountID || p.username === user.username
+    );
+    // Backend returns 'role' field, not 'eventUserRole'
+    return currentUserParticipant?.role === 'MANAGER';
+  }, [user, participants]);
+
+  // Determine if user can delete posts/comments (admin or event manager)
+  const canDeleteContent = isAdmin || isEventManager;
+
   // Loading state
   if (loading) {
     return (
@@ -405,7 +418,6 @@ const EventDetail = () => {
     );
   }
 
-  // Get display values from API format
   const attendeeCount = event.attendeeCount || participants.length || 0;
 
   // Determine cover image: 1) Event media, 2) Latest post with image, 3) Default
@@ -838,6 +850,7 @@ const EventDetail = () => {
                   post={post}
                   onPostUpdated={handlePostUpdated}
                   disableInteraction={event?.status?.toUpperCase() === 'FINISHED' || participationStatus !== 'APPROVED'}
+                  canDelete={canDeleteContent}
                 />
               ))}
               {/* Loading more indicator */}
@@ -922,7 +935,7 @@ const EventDetail = () => {
                         {participant.firstName || participant.username || "Ẩn danh"}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {participant.eventUserRole || "Tình nguyện viên"}
+                        {participant.role === 'MANAGER' ? 'Quản lý' : 'Tình nguyện viên'}
                       </Typography>
                     </Box>
                   </Box>
