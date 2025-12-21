@@ -35,15 +35,11 @@ public class AuthenticationController {
         
         if (authentication.getPrincipal() instanceof Account account) {
             if (account.getAccountStatus() == AccountStatus.BANNED) {
-                throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Your account has been banned"
-                );
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(java.util.Map.of("message", "Your account has been banned"));
             } else if (account.getAccountStatus() == AccountStatus.INACTIVE) {
-                throw new ResponseStatusException(
-                        HttpStatus.FORBIDDEN,
-                        "Your account should be activated before login"
-                );
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(java.util.Map.of("message", "Your account should be activated before login"));
             }
         }
         String jwtToken = jwtTokenProvider.generateJwtToken(authentication);
