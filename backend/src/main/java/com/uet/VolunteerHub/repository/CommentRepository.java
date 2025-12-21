@@ -1,0 +1,22 @@
+package com.uet.VolunteerHub.repository;
+
+import com.uet.VolunteerHub.entity.Comment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface CommentRepository extends JpaRepository<Comment, Long>, JpaSpecificationExecutor<Comment> {
+    Page<Comment> findByPost_PostId(Long postId, Pageable pageable);
+    Page<Comment> findByParentComment_CommentId(Long parentCommentId, Pageable pageable);
+    Long countByPost_PostId(Long postId);
+    
+    // Root comments only (comments without parent)
+    Page<Comment> findByPost_PostIdAndParentCommentIsNull(Long postId, Pageable pageable);
+    
+    // Count replies for a comment
+    Long countByParentComment_CommentId(Long parentCommentId);
+}
+

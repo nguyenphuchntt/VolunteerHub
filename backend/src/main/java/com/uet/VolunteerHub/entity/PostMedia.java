@@ -1,0 +1,37 @@
+package com.uet.VolunteerHub.entity;
+
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED, force=true)
+@Entity
+@IdClass(PostMediaId.class)
+@Table(name="post_media")
+public class PostMedia {
+
+    @Id
+    @Column(name="media_id", nullable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    private UUID mediaId;
+
+    @Id
+    @Column(name="post_id", nullable = false, updatable = false)
+    private Long postId;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "media_id", nullable = false, insertable = false, updatable = false)
+    private Media media;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "post_id", nullable = false, insertable = false, updatable = false)
+    private Post post;
+}

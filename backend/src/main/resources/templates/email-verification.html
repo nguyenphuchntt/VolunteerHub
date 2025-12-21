@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #28a745;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #28a745;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666666;
+            margin-top: 5px;
+        }
+
+        .content {
+            padding: 20px 0;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: #333333;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            font-size: 15px;
+            color: #555555;
+            margin-bottom: 30px;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .verify-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20903c 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .verify-button:hover {
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .info-box {
+            background-color: #e7f3ff;
+            border: 1px solid #4a90d9;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .info-title {
+            color: #004085;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .info-text {
+            color: #004085;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .warning-title {
+            color: #856404;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .warning-text {
+            color: #856404;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .link-text {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            word-break: break-all;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid #eeeeee;
+            margin-top: 30px;
+        }
+
+        .footer p {
+            color: #999999;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+
+        .welcome-icon {
+            font-size: 50px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 th:text="${senderName}">VolunteerHub</h1>
+            <p>Welcome! Please verify your email</p>
+        </div>
+
+        <div class="welcome-icon">🎉</div>
+
+        <div class="content">
+            <p class="greeting">Hello <strong th:text="${username}">User</strong>,</p>
+
+            <p class="message">
+                Thank you for registering with <span th:text="${senderName}">VolunteerHub</span>!
+                To complete your registration and activate your account, please verify your email address by clicking
+                the button below:
+            </p>
+
+            <div class="button-container">
+                <a th:href="${verifyLink}" class="verify-button">Verify My Email</a>
+            </div>
+
+            <div class="info-box">
+                <p class="info-title">✨ What happens next?</p>
+                <p class="info-text">
+                    After verification, you'll be able to login and access all features of <span
+                        th:text="${senderName}">VolunteerHub</span>.
+                </p>
+            </div>
+
+            <div class="warning">
+                <p class="warning-title">⏰ Link Expiration</p>
+                <p class="warning-text">
+                    This verification link will expire in <strong th:text="${expiryMinutes}">30</strong> minutes.
+                </p>
+            </div>
+
+            <p class="message">
+                If you didn't create an account with us, you can safely ignore this email.
+            </p>
+
+            <div class="link-text">
+                <strong>Can't click the button?</strong> Copy and paste this link into your browser:<br>
+                <span th:text="${verifyLink}">Verification Link</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message from <span th:text="${senderName}">VolunteerHub</span>.</p>
+            <p>Please do not reply to this email.</p>
+            <p>&copy; 2025 <span th:text="${senderName}">VolunteerHub</span>. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>

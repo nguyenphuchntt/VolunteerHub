@@ -55,5 +55,12 @@ build/
 
 ### VS Code ###
 .vscode/
-
 .env
+
+.github/
+.agent/
+
+fcmkey.json
+
+frontend/src/config/firebase.config.js
+frontend/public/firebase-messaging-sw.js
