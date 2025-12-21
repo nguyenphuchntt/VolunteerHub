@@ -103,6 +103,7 @@ const SignIn = () => {
       // Actually sign in
       setLoading(true);
       setError("");
+      setNeedsActivation(false);
       try {
         const profile = await login(signInData.username, signInData.password);
         handleSignInClose();
