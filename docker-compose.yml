@@ -15,7 +15,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./backend/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./backend/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - ./backend/src/main/resources/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     networks:
       - volunteerhub-network
     healthcheck:

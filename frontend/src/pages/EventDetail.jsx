@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import ConfirmJoinDialog from "../components/events/ConfirmJoinDialog";
 import WritePost from "../components/SocialFeed/WritePost";
@@ -60,14 +60,20 @@ const EventDetail = () => {
   const [confirmUnregisterOpen, setConfirmUnregisterOpen] = useState(false);
   const [participationStatus, setParticipationStatus] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
-  
+
   // Like event states
   const [isEventLiked, setIsEventLiked] = useState(false);
   const [eventLikeCount, setEventLikeCount] = useState(0);
   const [likingEvent, setLikingEvent] = useState(false);
-  
+
   // Event media for cover image
   const [eventMedia, setEventMedia] = useState([]);
+
+  // Posts pagination states
+  const [postsPage, setPostsPage] = useState(0);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false);
+  const POSTS_PAGE_SIZE = 10;
 
   // Fetch event data
   const fetchEvent = useCallback(async () => {
@@ -77,7 +83,7 @@ const EventDetail = () => {
       const eventData = await eventService.getEventById(eventId);
       setEvent(eventData);
       setEventLikeCount(eventData.likeCount || 0);
-      
+
       // Check if user liked this event
       if (isAuthenticated) {
         try {
@@ -99,13 +105,32 @@ const EventDetail = () => {
     }
   }, [eventId, isAuthenticated]);
 
-  // Fetch event posts
-  const fetchPosts = useCallback(async () => {
+  // Fetch event posts with pagination
+  const fetchPosts = useCallback(async (pageIndex = 0, reset = false) => {
+    if (pageIndex > 0) {
+      setLoadingMorePosts(true);
+    }
     try {
-      const response = await postService.getPostsByEvent(eventId);
-      setPosts(response.content || []);
+      const response = await postService.getPostsByEvent(eventId, {
+        page: pageIndex,
+        size: POSTS_PAGE_SIZE
+      });
+      const newPosts = response.content || [];
+
+      if (reset || pageIndex === 0) {
+        setPosts(newPosts);
+      } else {
+        setPosts(prev => [...prev, ...newPosts]);
+      }
+
+      // Match EventFeed logic exactly
+      const isEndOfPage = newPosts.length === 0 || response.last;
+      setHasMorePosts(!isEndOfPage);
+      setPostsPage(pageIndex);
     } catch (err) {
       console.error("Failed to fetch posts:", err);
+    } finally {
+      setLoadingMorePosts(false);
     }
   }, [eventId]);
 
@@ -142,7 +167,7 @@ const EventDetail = () => {
       }
     } catch (err) {
       if (err.response?.status !== 404) {
-         console.error("Failed to fetch participation status:", err);
+        console.error("Failed to fetch participation status:", err);
       }
       setParticipationStatus(null);
     }
@@ -184,6 +209,43 @@ const EventDetail = () => {
   };
 
 
+  // Handle post update - refresh the first page
+  const handlePostUpdated = () => {
+    fetchPosts(0, true);
+  };
+
+  // Infinite scroll for posts - IntersectionObserver
+  const postsObserverTarget = useRef(null);
+
+  useEffect(() => {
+    // Only activate when Feed tab is active
+    if (activeTab !== 0) return;
+
+    const currentTarget = postsObserverTarget.current;
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          if (!loading && !loadingMorePosts && hasMorePosts) {
+            fetchPosts(postsPage + 1);
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [activeTab, loading, loadingMorePosts, hasMorePosts, postsPage, fetchPosts]);
+
+
   // Handle register click - open dialog
   const handleRegisterClick = () => {
     if (!isAuthenticated) {
@@ -204,10 +266,10 @@ const EventDetail = () => {
       fetchParticipants();
     } catch (err) {
       console.error("Registration failed:", err);
-      setSnackbar({ 
-        open: true, 
-        message: err.response?.data?.message || "Đăng ký thất bại.", 
-        severity: "error" 
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "Đăng ký thất bại.",
+        severity: "error"
       });
       setConfirmJoinOpen(false);
     } finally {
@@ -224,21 +286,21 @@ const EventDetail = () => {
       fetchParticipants();
     } catch (err) {
       console.error("Unregister failed:", err);
-      
+
       // Check if error is about being the last manager
       const errorMessage = err.response?.data?.message || "";
       let displayMessage = "Không thể hủy tham gia.";
-      
+
       if (errorMessage.toLowerCase().includes("last manager")) {
         displayMessage = "Bạn là quản lý cuối cùng của sự kiện này. Vui lòng chỉ định quản lý khác trước khi rời đi.";
       } else if (errorMessage) {
         displayMessage = errorMessage;
       }
-      
-      setSnackbar({ 
-        open: true, 
-        message: displayMessage, 
-        severity: "error" 
+
+      setSnackbar({
+        open: true,
+        message: displayMessage,
+        severity: "error"
       });
     } finally {
       setConfirmUnregisterOpen(false);
@@ -272,40 +334,40 @@ const EventDetail = () => {
   // Event status config with Vietnamese translations
   const getEventStatusConfig = (status) => {
     const configs = {
-      PENDING: { 
-        label: "Chờ duyệt", 
+      PENDING: {
+        label: "Chờ duyệt",
         icon: <HourglassEmpty sx={{ fontSize: 16 }} />,
         bg: "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
         bgLight: "rgba(255, 152, 0, 0.1)",
         color: "#f57c00",
         border: "rgba(255, 152, 0, 0.3)"
       },
-      SCHEDULED: { 
-        label: "Đã lên lịch", 
+      SCHEDULED: {
+        label: "Đã lên lịch",
         icon: <Schedule sx={{ fontSize: 16 }} />,
         bg: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
         bgLight: "rgba(33, 150, 243, 0.1)",
         color: "#1976d2",
         border: "rgba(33, 150, 243, 0.3)"
       },
-      STARTED: { 
-        label: "Đang diễn ra", 
+      STARTED: {
+        label: "Đang diễn ra",
         icon: <PlayCircle sx={{ fontSize: 16 }} />,
         bg: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
         bgLight: "rgba(76, 175, 80, 0.1)",
         color: "#388e3c",
         border: "rgba(76, 175, 80, 0.3)"
       },
-      FINISHED: { 
-        label: "Đã kết thúc", 
+      FINISHED: {
+        label: "Đã kết thúc",
         icon: <CheckCircle sx={{ fontSize: 16 }} />,
         bg: "linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)",
         bgLight: "rgba(156, 39, 176, 0.1)",
         color: "#7b1fa2",
         border: "rgba(156, 39, 176, 0.3)"
       },
-      CANCELLED: { 
-        label: "Đã hủy", 
+      CANCELLED: {
+        label: "Đã hủy",
         icon: <Cancel sx={{ fontSize: 16 }} />,
         bg: "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
         bgLight: "rgba(244, 67, 54, 0.1)",
@@ -315,7 +377,7 @@ const EventDetail = () => {
     };
     return configs[status] || configs.SCHEDULED;
   };
-  
+
   const participationConfig = getParticipationConfig(participationStatus);
 
   // Loading state
@@ -345,7 +407,7 @@ const EventDetail = () => {
 
   // Get display values from API format
   const attendeeCount = event.attendeeCount || participants.length || 0;
-  
+
   // Determine cover image: 1) Event media, 2) Latest post with image, 3) Default
   const getCoverImage = () => {
     // First priority: Event media (cover images uploaded by organizer)
@@ -369,7 +431,7 @@ const EventDetail = () => {
     // Final fallback: default placeholder
     return "/images/default-event.jpg";
   };
-  
+
   const coverImage = getCoverImage();
   const statusDisplay = (event.status || "").toString();
   const eventStatusConfig = getEventStatusConfig(statusDisplay);
@@ -496,10 +558,10 @@ const EventDetail = () => {
       </Box>
 
       {/* Event Info Card */}
-      <Box 
-        sx={{ 
-          p: 2.5, 
-          mx: 2, 
+      <Box
+        sx={{
+          p: 2.5,
+          mx: 2,
           mt: -4,
           position: "relative",
           zIndex: 2,
@@ -516,13 +578,13 @@ const EventDetail = () => {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5, lineHeight: 1.6 }}>
           {event.description || "Không có mô tả"}
         </Typography>
-        
+
         {/* Event details with icons */}
-        <Box 
-          sx={{ 
-            display: "flex", 
-            flexDirection: "column", 
-            gap: 1.5, 
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1.5,
             p: 2,
             backgroundColor: "grey.50",
             borderRadius: "12px",
@@ -556,7 +618,7 @@ const EventDetail = () => {
               </Typography>
             </Box>
           </Box>
-          
+
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
             <Box
               sx={{
@@ -581,7 +643,7 @@ const EventDetail = () => {
               </Typography>
             </Box>
           </Box>
-          
+
           <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
             <Box
               sx={{
@@ -607,97 +669,97 @@ const EventDetail = () => {
             </Box>
           </Box>
         </Box>
-        
+
         {/* Tags */}
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
           {event.category && (
-            <Chip 
+            <Chip
               icon={<Category sx={{ fontSize: 16 }} />}
-              label={getCategoryLabel(event.category)} 
-              size="small" 
-              sx={{ 
+              label={getCategoryLabel(event.category)}
+              size="small"
+              sx={{
                 fontWeight: 600,
                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                 color: "#fff",
                 "& .MuiChip-icon": { color: "#fff" },
-              }} 
+              }}
             />
           )}
         </Box>
-        
+
         {/* Participation Status or Register Button */}
         <Box sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}>
           {participationStatus ? (
-             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-               <Box sx={{ 
-                 p: 2, 
-                 borderRadius: "12px", 
-                 backgroundColor: participationConfig?.bg || "grey.100",
-                 border: "1px solid",
-                 borderColor: participationConfig?.color ? `${participationConfig.color}40` : "grey.300",
-                 display: "flex",
-                 alignItems: "center",
-                 justifyContent: "space-between",
-                 gap: 2
-               }}>
-                 <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                   <Chip 
-                     label={participationConfig?.label || participationStatus} 
-                     sx={{ 
-                       fontWeight: 700, 
-                       backgroundColor: participationConfig?.color, 
-                       color: "white" 
-                     }} 
-                   />
-                   <Typography variant="body2" fontWeight={500} sx={{ color: participationConfig?.color }}>
-                     {participationStatus === "PENDING" 
-                       ? "Đang chờ duyệt."
-                       : participationStatus === "APPROVED"
-                       ? "Bạn đã tham gia sự kiện này."
-                       : participationStatus === "REJECTED"
-                       ? "Yêu cầu của bạn đã bị từ chối."
-                       : ""}
-                   </Typography>
-                 </Box>
-                 
-                {(participationStatus === "PENDING" || participationStatus === "APPROVED") && 
-                 event.status !== "FINISHED" && 
-                 event.status !== "CANCELLED" && 
-                 new Date(event.startAt) > new Date() && (
-                   <Button 
-                     size="small" 
-                     color="error"
-                     sx={{ textTransform: "none", minWidth: "auto" }}
-                     onClick={() => setConfirmUnregisterOpen(true)}
-                   >
-                     Hủy tham gia
-                   </Button>
-                 )}
-                 
-                 {participationStatus === "REJECTED" && 
-                 event.status !== "FINISHED" && 
-                 event.status !== "CANCELLED" && (
-                   <Button 
-                     size="small" 
-                     variant="contained"
-                     color="primary"
-                     sx={{ textTransform: "none", borderRadius: "9999px" }}
-                     onClick={handleRegisterClick}
-                   >
-                     Gửi lại yêu cầu
-                   </Button>
-                 )}
-               </Box>
-             </Box>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              <Box sx={{
+                p: 2,
+                borderRadius: "12px",
+                backgroundColor: participationConfig?.bg || "grey.100",
+                border: "1px solid",
+                borderColor: participationConfig?.color ? `${participationConfig.color}40` : "grey.300",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2
+              }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Chip
+                    label={participationConfig?.label || participationStatus}
+                    sx={{
+                      fontWeight: 700,
+                      backgroundColor: participationConfig?.color,
+                      color: "white"
+                    }}
+                  />
+                  <Typography variant="body2" fontWeight={500} sx={{ color: participationConfig?.color }}>
+                    {participationStatus === "PENDING"
+                      ? "Đang chờ duyệt."
+                      : participationStatus === "APPROVED"
+                        ? "Bạn đã tham gia sự kiện này."
+                        : participationStatus === "REJECTED"
+                          ? "Yêu cầu của bạn đã bị từ chối."
+                          : ""}
+                  </Typography>
+                </Box>
+
+                {(participationStatus === "PENDING" || participationStatus === "APPROVED") &&
+                  event.status !== "FINISHED" &&
+                  event.status !== "CANCELLED" &&
+                  new Date(event.startAt) > new Date() && (
+                    <Button
+                      size="small"
+                      color="error"
+                      sx={{ textTransform: "none", minWidth: "auto" }}
+                      onClick={() => setConfirmUnregisterOpen(true)}
+                    >
+                      Hủy tham gia
+                    </Button>
+                  )}
+
+                {participationStatus === "REJECTED" &&
+                  event.status !== "FINISHED" &&
+                  event.status !== "CANCELLED" && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      color="primary"
+                      sx={{ textTransform: "none", borderRadius: "9999px" }}
+                      onClick={handleRegisterClick}
+                    >
+                      Gửi lại yêu cầu
+                    </Button>
+                  )}
+              </Box>
+            </Box>
           ) : (
-            <Button 
-              variant="contained" 
-              fullWidth 
+            <Button
+              variant="contained"
+              fullWidth
               onClick={handleRegisterClick}
               disabled={registering || event.status === "FINISHED" || event.status === "CANCELLED"}
-              sx={{ 
-                borderRadius: "9999px", 
-                textTransform: "none", 
+              sx={{
+                borderRadius: "9999px",
+                textTransform: "none",
                 fontWeight: 600,
                 height: 48,
                 fontSize: 16
@@ -707,7 +769,7 @@ const EventDetail = () => {
             </Button>
           )}
         </Box>
-        
+
         {/* Confirm Dialogs */}
         <ConfirmJoinDialog
           open={confirmJoinOpen}
@@ -733,8 +795,8 @@ const EventDetail = () => {
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         >
-          <Alert 
-            onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
             severity={snackbar.severity}
             sx={{ width: "100%", fontWeight: 500, borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
           >
@@ -762,21 +824,41 @@ const EventDetail = () => {
       {activeTab === 0 && (
         <Box sx={{ p: 2 }}>
           {isAuthenticated && participationStatus === 'APPROVED' && event?.status?.toUpperCase() !== 'FINISHED' && (
-            <WritePost 
-              currentUser={user} 
-              eventId={parseInt(eventId)} 
-              onPostCreated={handlePostCreated} 
+            <WritePost
+              currentUser={user}
+              eventId={parseInt(eventId)}
+              onPostCreated={handlePostCreated}
             />
           )}
           {posts.length > 0 ? (
-            posts.map((post) => (
-              <PostCard 
-                key={post.postId || post.id} 
-                post={post} 
-                onPostUpdated={fetchPosts}
-                disableInteraction={event?.status?.toUpperCase() === 'FINISHED' || participationStatus !== 'APPROVED'}
-              />
-            ))
+            <>
+              {posts.map((post) => (
+                <PostCard
+                  key={post.postId || post.id}
+                  post={post}
+                  onPostUpdated={handlePostUpdated}
+                  disableInteraction={event?.status?.toUpperCase() === 'FINISHED' || participationStatus !== 'APPROVED'}
+                />
+              ))}
+              {/* Loading more indicator */}
+              {loadingMorePosts && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+              {/* Sentinel element for infinite scroll */}
+              {hasMorePosts && (
+                <div ref={postsObserverTarget} style={{ height: '10px', width: '100%' }} />
+              )}
+              {/* End of posts message */}
+              {!hasMorePosts && posts.length > 0 && (
+                <Box sx={{ textAlign: 'center', py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    — Đã hết bài viết —
+                  </Typography>
+                </Box>
+              )}
+            </>
           ) : (
             <Box sx={{ textAlign: "center", py: 8 }}>
               <Typography variant="h2" sx={{ mb: 2 }}>💬</Typography>
@@ -819,7 +901,7 @@ const EventDetail = () => {
           {participants.length > 0 ? (
             <Grid container spacing={1}>
               {participants.map((participant) => (
-              <Grid size={6} key={participant.accountId || participant.id}>
+                <Grid size={6} key={participant.accountId || participant.id}>
                   <Box
                     onClick={() => participant.username && navigate(`/profiles/${participant.username}`)}
                     sx={{
