@@ -120,6 +120,9 @@ const SignIn = () => {
 
       } catch (err) {
         console.error("Sign in error:", err);
+        console.log("err.response:", err.response);
+        console.log("err.response?.data:", err.response?.data);
+        console.log("err.message:", err.message);
         // Better error messages for common cases
         const status = err.response?.status;
         const serverMessage = err.response?.data?.message || err.response?.data;
