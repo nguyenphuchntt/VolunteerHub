@@ -123,7 +123,7 @@ const FollowListModal = ({ open, onClose, type, userId }) => {
                         key={index} 
                         button 
                         onClick={() => {
-                            navigate(`/profile/${userData.username}`);
+                            navigate(`/profiles/${userData.username}`);
                             onClose();
                         }}
                         sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
