@@ -22,11 +22,10 @@ public class PostSecurityService {
     private final PostRepository postRepository;
     private final EventUserRepository eventUserRepository;
 
-
     @Autowired
     public PostSecurityService(PostReadService postReadService,
-                               PostRepository postRepository,
-                               EventUserRepository eventUserRepository) {
+            PostRepository postRepository,
+            EventUserRepository eventUserRepository) {
         this.postReadService = postReadService;
         this.postRepository = postRepository;
         this.eventUserRepository = eventUserRepository;
@@ -34,7 +33,7 @@ public class PostSecurityService {
 
     public boolean isOwnerOfPost(Long postId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null ||  !(authentication.getPrincipal() instanceof Account account)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof Account account)) {
             return false;
         }
         if (postId == null) {
@@ -61,7 +60,6 @@ public class PostSecurityService {
         }
         Post post = postOptional.get();
 
-
         if (post.getCreatedByAccount().getAccountId().equals(account.getAccountId())) {
             return true;
         }
@@ -72,7 +70,6 @@ public class PostSecurityService {
         Long eventId = post.getEvent().getEventId();
         return isEventAttendee(account.getAccountId(), eventId);
     }
-
 
     public boolean canCreatePost(Long eventId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -89,22 +86,23 @@ public class PostSecurityService {
         return result;
     }
 
-
     private boolean isEventAttendee(java.util.UUID accountId, Long eventId) {
         Optional<EventUser> eventUserOptional = eventUserRepository.findByAccountIdAndEventId(
                 accountId,
-                eventId
-        );
+                eventId);
         if (eventUserOptional.isEmpty()) {
             log.warning("isEventAttendee: No EventUser found for accountId=" + accountId + ", eventId=" + eventId);
             return false;
         }
         EventUser eventUser = eventUserOptional.get();
         boolean hasRole = eventUser.getRole().equals(EventUserRole.MANAGER) ||
-               eventUser.getRole().equals(EventUserRole.ATTENDEE);
-        log.info("isEventAttendee: found EventUser with role=" + eventUser.getRole() + ", status=" + eventUser.getStatus() + ", hasRole=" + hasRole);
-        return hasRole;
+                eventUser.getRole().equals(EventUserRole.ATTENDEE);
+
+        boolean isApproved = eventUser.getStatus() == com.uet.VolunteerHub.enums.EventUserStatus.APPROVED ||
+                eventUser.getStatus() == com.uet.VolunteerHub.enums.EventUserStatus.FINISHED;
+
+        log.info("isEventAttendee: found EventUser with role=" + eventUser.getRole() + ", status="
+                + eventUser.getStatus() + ", hasRole=" + hasRole + ", isApproved=" + isApproved);
+        return hasRole && isApproved;
     }
 }
-
-
