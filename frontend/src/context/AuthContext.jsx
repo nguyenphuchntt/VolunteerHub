@@ -80,11 +80,14 @@ export const AuthProvider = ({ children }) => {
       let errorMessage = serverMessage || err.message || 'Đăng nhập thất bại';
       
       // Translate backend messages to Vietnamese
-      if (serverMessage === 'Your account should be activated before login') {
+      if (serverMessage === 'Your account should be activated before login' ||
+        (typeof serverMessage === 'string' && serverMessage.toLowerCase().includes('activated'))) {
         errorMessage = 'Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh tài khoản.';
-      } else if (serverMessage === 'Your account has been banned') {
-        errorMessage = 'Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.';
+      } else if (serverMessage === 'Your account has been banned' ||
+        (typeof serverMessage === 'string' && serverMessage.toLowerCase().includes('banned'))) {
+        errorMessage = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.';
       }
+
       
       setError(errorMessage);
       throw err;

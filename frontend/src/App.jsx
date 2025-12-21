@@ -24,7 +24,9 @@ import {
   EventDetailManagement,
   ParticipantManagement,
   EventForm,
+  EventEditForm,
 } from "./pages/manager";
+
 
 // Admin Pages
 import {
@@ -108,10 +110,11 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/manage/events/:slug/edit" element={
-              <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']}>
-                <EventForm />
+              <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
+                <EventEditForm />
               </ProtectedRoute>
             } />
+
             <Route path="/manage/events/:slug" element={
               <ProtectedRoute requiredRoles={['MANAGER', 'ADMIN']} allowEventManager={true}>
                 <EventDetailManagement />

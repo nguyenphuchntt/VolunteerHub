@@ -167,27 +167,39 @@ const SignIn = () => {
         const status = err.response?.status;
         const serverMessage = err.response?.data?.message || err.response?.data;
 
-        // Check for banned account
-        if (serverMessage === "Your account has been banned" ||
-          (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
-          setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
-        } else if (serverMessage === "Your account should be activated before login" ||
+        // Check for inactive account (not activated)
+        if (serverMessage === "Your account should be activated before login" ||
           (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("activated"))) {
           setError("Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh tài khoản.");
           setNeedsActivation(true);
-        } else if (serverMessage === "Invalid username or password" || status === 401) {
+        } 
+        // Check for banned account
+        else if (serverMessage === "Your account has been banned" ||
+          (typeof serverMessage === "string" && serverMessage.toLowerCase().includes("banned"))) {
+          setError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.");
+        } 
+        // Invalid credentials
+        else if (serverMessage === "Invalid username or password" || status === 401) {
           setError("Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.");
-        } else if (status === 403) {
-          setError("Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.");
-        } else if (status === 404) {
+        } 
+        // Generic 403 - could be banned or other forbidden
+        else if (status === 403) {
+          // Don't assume banned - show generic forbidden message
+          setError("Bạn không có quyền truy cập. Vui lòng liên hệ quản trị viên.");
+        } 
+        // Account not found
+        else if (status === 404) {
           setError("Tài khoản không tồn tại. Vui lòng kiểm tra lại tên đăng nhập.");
-        } else if (typeof serverMessage === "string" && serverMessage) {
+        } 
+        // Other server messages
+        else if (typeof serverMessage === "string" && serverMessage) {
           setError(serverMessage);
         } else if (err.message) {
           setError(err.message);
         } else {
           setError("Đăng nhập thất bại. Vui lòng thử lại sau.");
         }
+
 
       } finally {
         setLoading(false);

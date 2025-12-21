@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import {
   CheckCircle, Cancel, Refresh, TaskAlt, PersonRemove, AdminPanelSettings,
-  Dashboard, People, TrendingUp, PieChart, Timeline
+  Dashboard, People, TrendingUp, PieChart, Timeline, Edit
 } from "@mui/icons-material";
 import { ThreeColumnLayout, DataTable, ConfirmDialog, EmptyState } from "../../components/common";
 import { eventUserService, eventService, managerService } from "../../api";
@@ -476,6 +476,15 @@ const EventDetailManagement = () => {
                 Hoàn thành ({selectedIds.length})
               </Button>
             )}
+            <Button 
+              size="small" 
+              variant="outlined"
+              startIcon={<Edit />} 
+              onClick={() => navigate(`/manage/events/${slug}/edit`)} 
+              sx={{ textTransform: "none" }}
+            >
+              Chỉnh sửa
+            </Button>
             <Button size="small" startIcon={<Refresh />} onClick={() => { fetchParticipants(); fetchDashboard(); }} sx={{ textTransform: "none" }}>
               Làm mới
             </Button>
