@@ -64,6 +64,22 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
     Page<Event> findHotEvents(Pageable pageable);
 
+    @Query(value = """
+                SELECT e FROM Event e
+                WHERE e.status IN ('SCHEDULED', 'STARTED')
+                AND e.category = :category
+                ORDER BY (
+                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5 +
+                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5
+                ) DESC
+            """, countQuery = """
+                SELECT COUNT(e) FROM Event e
+                WHERE e.status IN ('SCHEDULED', 'STARTED')
+                AND e.category = :category
+            """)
+    @EntityGraph(attributePaths = { "createdBy", "createdBy.userInfo" })
+    Page<Event> findHotEventsByCategory(@Param("category") String category, Pageable pageable);
+
     @Query("SELECT e FROM Event e " +
             "WHERE e.startAt BETWEEN :start AND :end " +
             "AND e.status = com.uet.VolunteerHub.enums.EventStatus.SCHEDULED " +

@@ -73,8 +73,8 @@ const EventFeed = () => {
         }
         response = await eventService.searchEvents(params);
       } else if (viewMode === "hot") {
-        // Fetch hot events only when no search query
-        response = await eventService.getHotEvents(pageIndex, 10);
+        // Fetch hot events with optional category filter
+        response = await eventService.getHotEvents(pageIndex, 10, selectedCategory);
       } else {
         // Fetch newest events sorted by startAt desc
         const params = {

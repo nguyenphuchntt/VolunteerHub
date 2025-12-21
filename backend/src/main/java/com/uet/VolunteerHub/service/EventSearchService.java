@@ -288,6 +288,30 @@ public class EventSearchService {
         });
     }
 
+    @Cacheable(value = "events", key = "'hot:' + #category + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
+    @Transactional
+    public Page<EventSearchDTO> findHotEvents(String category, Pageable pageable) {
+        Page<Event> eventPage;
+        if (category != null && !category.isEmpty() && !category.equals("all")) {
+            eventPage = eventRepository.findHotEventsByCategory(category, pageable);
+        } else {
+            eventPage = eventRepository.findHotEvents(pageable);
+        }
+
+        // Batch fetch cover images
+        List<Long> eventIds = eventPage.getContent().stream()
+                .map(Event::getEventId)
+                .collect(Collectors.toList());
+        Map<Long, String> coverImageMap = batchFetchCoverImages(eventIds);
+
+        return eventPage.map(event -> {
+            Account account = event.getCreatedBy();
+            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            String coverImageUrl = coverImageMap.get(event.getEventId());
+            return mapToEventSearchDTO(event, account, userInfo, coverImageUrl);
+        });
+    }
+
     @Transactional
     public Page<EventSearchDTO> findManagedEvents(UUID accountId, Pageable pageable) {
         var eventUserPage = eventUserRepository.findManagedEventsByAccountId(accountId, pageable);

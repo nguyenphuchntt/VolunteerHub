@@ -102,8 +102,10 @@ public class EventController {
     }
 
     @GetMapping("/hot")
-    public ResponseEntity<Page<EventSearchDTO>> getHotEvents(@PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findHotEvents(pageable);
+    public ResponseEntity<Page<EventSearchDTO>> getHotEvents(
+            @RequestParam(required = false) String category,
+            @PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<EventSearchDTO> eventSearchDTOPage = eventSearchService.findHotEvents(category, pageable);
         return ResponseEntity.ok(eventSearchDTOPage);
     }
 
