@@ -78,7 +78,7 @@ public class NotificationService {
 
     @Cacheable(value = "notificationCounts", key = "#receiverId")
     @Transactional(readOnly = true)
-    public Long getUnreadNotificationCount(UUID receiverId) {
+    public long getUnreadNotificationCount(UUID receiverId) {
         return notificationRepository.countByReceiverAccount_AccountIdAndIsReadFalseAndIsDeletedFalse(receiverId);
     }
 
