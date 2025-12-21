@@ -71,10 +71,10 @@ public class EventController {
     @GetMapping("/{eventId}")
     public ResponseEntity<EventSearchDTO> getEventByEventId(@PathVariable Long eventId,
             @AuthenticationPrincipal Account account) {
-        UUID accountId = (account != null) ? account.getAccountId() : null;
-        Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, accountId);
+        Optional<EventSearchDTO> eventSearchDTOOptional = eventSearchService.findByEventID(eventId, account);
         return eventSearchDTOOptional.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
+
 
     @GetMapping("/{eventId}/participants")
     public ResponseEntity<Page<EventUserSearchDTO>> getEventParticipants(
