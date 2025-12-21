@@ -354,7 +354,8 @@ public class EventUserWriteService {
                 pushNotificationService.pushNotificationToUser(accountId,
                         "Bạn đã được duyệt để tham gia sự kiện: " + event.getTitle());
                 Account manager = event.getCreatedBy();
-                eventPublisher.publishEvent(new EventJoinApprovedEvent(this, manager, event, List.of(eventUser.getAccount())));
+                eventPublisher.publishEvent(
+                        new EventJoinApprovedEvent(this, manager, event, List.of(eventUser.getAccount())));
             } else if (oldStatus == EventUserStatus.APPROVED &&
                     newStatus != EventUserStatus.APPROVED &&
                     newStatus != EventUserStatus.FINISHED &&
@@ -365,7 +366,8 @@ public class EventUserWriteService {
                 pushNotificationService.pushNotificationToUser(accountId,
                         "Bạn không được duyệt tham gia sự kiện: " + event.getTitle());
                 Account manager = event.getCreatedBy();
-                eventPublisher.publishEvent(new EventJoinRejectedEvent(this, manager, event, List.of(eventUser.getAccount())));
+                eventPublisher.publishEvent(
+                        new EventJoinRejectedEvent(this, manager, event, List.of(eventUser.getAccount())));
             } else if (oldStatus == EventUserStatus.APPROVED &&
                     (newStatus == EventUserStatus.FINISHED || newStatus == EventUserStatus.UNFINISHED)) {
                 // User finished/unfinished - decrement count but don't send rejected message
@@ -416,7 +418,12 @@ public class EventUserWriteService {
         eventRepository.save(event);
 
         if (!approvedAccountIds.isEmpty()) {
-            // Get approved user accounts and publish event
+            // Send push notifications to approved users
+            pushNotificationService.pushNotificationToMultipleUsers(
+                    approvedAccountIds,
+                    "Bạn đã được duyệt để tham gia sự kiện: " + event.getTitle());
+
+            // Get approved user accounts and publish event for in-app notifications
             List<Account> approvedUsers = accountRepository.findAllById(approvedAccountIds);
             // Use first manager or event creator as the actor
             Account manager = event.getCreatedBy();
@@ -462,7 +469,12 @@ public class EventUserWriteService {
         eventRepository.save(event);
 
         if (!rejectedAccountIds.isEmpty()) {
-            // Get rejected user accounts and publish event
+            // Send push notifications to rejected users
+            pushNotificationService.pushNotificationToMultipleUsers(
+                    rejectedAccountIds,
+                    "Bạn không được duyệt tham gia sự kiện: " + event.getTitle());
+
+            // Get rejected user accounts and publish event for in-app notifications
             List<Account> rejectedUsers = accountRepository.findAllById(rejectedAccountIds);
             // Use first manager or event creator as the actor
             Account manager = event.getCreatedBy();

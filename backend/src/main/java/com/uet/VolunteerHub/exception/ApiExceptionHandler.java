@@ -5,6 +5,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -85,6 +87,22 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     ResponseEntity<Object> handleIllegalStateException(IllegalStateException ex, WebRequest request) {
         String bodyOfResponse = ex.getMessage();
         return super.handleExceptionInternal(ex, bodyOfResponse, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(DisabledException.class)
+    ResponseEntity<Object> handleDisabledException(DisabledException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex,
+                java.util.Map.of("message", "Your account should be activated before login"),
+                new HttpHeaders(), HttpStatus.FORBIDDEN, request);
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(LockedException.class)
+    ResponseEntity<Object> handleLockedException(LockedException ex, WebRequest request) {
+        return super.handleExceptionInternal(ex,
+                java.util.Map.of("message", "Your account has been banned"),
+                new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
 }
 

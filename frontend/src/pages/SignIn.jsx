@@ -142,6 +142,7 @@ const SignIn = () => {
       // Actually sign in
       setLoading(true);
       setError("");
+      setNeedsActivation(false);
       try {
         const profile = await login(signInData.username, signInData.password);
         handleSignInClose();
@@ -159,6 +160,9 @@ const SignIn = () => {
 
       } catch (err) {
         console.error("Sign in error:", err);
+        console.log("err.response:", err.response);
+        console.log("err.response?.data:", err.response?.data);
+        console.log("err.message:", err.message);
         // Better error messages for common cases
         const status = err.response?.status;
         const serverMessage = err.response?.data?.message || err.response?.data;

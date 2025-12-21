@@ -64,7 +64,16 @@ export const AuthProvider = ({ children }) => {
       }
       return profile;
     } catch (err) {
-      const errorMessage = err.message || err.response?.data?.message || 'Đăng nhập thất bại';
+      const serverMessage = err.response?.data?.message;
+      let errorMessage = serverMessage || err.message || 'Đăng nhập thất bại';
+      
+      // Translate backend messages to Vietnamese
+      if (serverMessage === 'Your account should be activated before login') {
+        errorMessage = 'Tài khoản của bạn chưa được kích hoạt. Vui lòng kiểm tra email để xác minh tài khoản.';
+      } else if (serverMessage === 'Your account has been banned') {
+        errorMessage = 'Tài khoản của bạn đã bị cấm. Xin liên hệ với admin để được hỗ trợ.';
+      }
+      
       setError(errorMessage);
       throw err;
     }
