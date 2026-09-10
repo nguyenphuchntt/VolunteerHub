@@ -6,14 +6,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostMediaId implements Serializable {
-    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID mediaId;
-    private Long postId;
+    private UUID postId;
 }

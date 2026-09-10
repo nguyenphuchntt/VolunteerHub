@@ -1,62 +1,48 @@
 package com.uet.VolunteerHub.entity;
 
-import com.uet.VolunteerHub.enums.DestinationType;
-import com.uet.VolunteerHub.enums.NotificationType;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.uet.VolunteerHub.enums.NotificationType;
+
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(of = "notificationId")
-@Table(name = "notification")
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "notifications")
 public class Notification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "notification_id", nullable = false, updatable = false)
-    private Long notificationId;
+    private UUID notificationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @NotNull
-    @JoinColumn(name = "sender_account_id")
-    private Account senderAccount;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @NotNull
-    @JoinColumn(name = "receiver_account_id")
-    private Account receiverAccount;
+    @JoinColumn(name = "actor_id")
+    private Account actor;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
-    private NotificationType notificationType;
+    @Column(name = "type", nullable = false, length = 50)
+    private NotificationType type;
 
-    @Column(name = "content", nullable = false)
-    private String content;
-
-    @Column(name = "is_read", nullable = false)
-    private Boolean isRead;
+    @Column(name = "target_id")
+    private UUID targetId;
 
     @Builder.Default
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+    @Column(name = "is_read", nullable = false)
+    private Boolean isRead = false;
 
     @CreationTimestamp
-    @Column(name = "create_at", nullable = false, updatable = false)
-    private OffsetDateTime createAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "destination_type")
-    private DestinationType destinationType;
-
-    @Column(name = "destination_id")
-    private String destinationId;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
 }
-

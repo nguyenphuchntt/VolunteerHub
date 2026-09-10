@@ -1,8 +1,8 @@
 package com.uet.VolunteerHub.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.OffsetDateTime;
 
@@ -14,8 +14,9 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PostLike {
+
     @EmbeddedId
-    private LikeId likeId;
+    private PostLikeId likeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("postId")
@@ -27,6 +28,7 @@ public class PostLike {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @Column(name = "create_at", nullable = false, updatable = false)
-    private OffsetDateTime createAt;
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
 }

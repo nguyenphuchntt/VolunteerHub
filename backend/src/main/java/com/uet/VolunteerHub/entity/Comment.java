@@ -1,20 +1,20 @@
 package com.uet.VolunteerHub.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Set;
 
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(of = "commentId")
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@Builder
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "comment")
 public class Comment {
 
@@ -23,29 +23,30 @@ public class Comment {
     @Column(name = "comment_id", updatable = false, nullable = false)
     private Long commentId;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_account_id")
-    private Account createdByAccount;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account owner;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id")
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     @CreationTimestamp
-    @Column(name = "create_at", nullable = false, updatable = false)
-    private OffsetDateTime createAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @NotNull
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
+
     @Size(min = 1, max = 300, message = "Comment's length should between 1 and 300 characters")
-    @Column(name = "content", nullable = false)
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reply_to")
+    @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;
 
-    @OneToMany(mappedBy = "parentComment", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "parentComment")
     private Set<Comment> replies;
 }

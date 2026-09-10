@@ -8,19 +8,16 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Embeddable
-public class LikeId implements Serializable {
-
-    @Column(name = "post_id", nullable = false, updatable = false)
-    private Long postId;
+public class PostLikeId implements Serializable {
 
     @Column(name = "account_id", nullable = false, updatable = false)
-    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID accountId;
+
+    @Column(name = "post_id", nullable = false, updatable = false)
+    private UUID postId;
 }

@@ -4,15 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class EventMediaId {
-    @JdbcTypeCode(SqlTypes.VARCHAR)
+public class EventMediaId implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private UUID mediaId;
     private Long eventId;
 }

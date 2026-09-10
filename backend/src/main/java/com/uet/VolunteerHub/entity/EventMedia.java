@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Data
 @AllArgsConstructor
@@ -22,7 +20,6 @@ public class EventMedia {
 
     @Id
     @Column(name = "media_id", nullable = false, updatable = false)
-    @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID mediaId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

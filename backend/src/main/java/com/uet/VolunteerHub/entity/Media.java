@@ -1,53 +1,73 @@
 package com.uet.VolunteerHub.entity;
 
+import com.uet.VolunteerHub.enums.MediaStatus;
+import com.uet.VolunteerHub.enums.MediaType;
+import com.uet.VolunteerHub.util.HashMapConverter;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
-@Data
 @Getter
 @Setter
 @Entity
-@Table(name="media")
+@Table(name = "media")
+@Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force=true)
+@NoArgsConstructor
 public class Media {
+
     @Id
-    @NotNull
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "media_id", updatable = false, nullable = false)
+    private UUID mediaId;
 
-    @NotNull
-    @Column(name="url")
-    private String url;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private Account owner;
 
-    @NotNull
-    @Column(name="file_path")
-    private String filePath;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 20)
+    private MediaType type;
 
-    @Column(name="file_type")
-    private String fileType;
-
-    @Column(name="mime_type")
+    @Column(name = "mime_type", nullable = false, length = 100)
     private String mimeType;
 
-    @Column(name="size_bytes")
-    private Long sizeBytes;
+    @Column(name = "storage_key", nullable = false, columnDefinition = "TEXT")
+    private String storageKey;
+
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "width")
+    private Integer width;
+
+    @Column(name = "height")
+    private Integer height;
+
+    @Column(name = "duration")
+    private Float duration;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private MediaStatus mediaStatus;
 
     @CreationTimestamp
-    @Column(name="uploaded_at")
-    private OffsetDateTime uploadedAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="uploaded_by", nullable = false)
-    private Account uploadedBy;
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
-
+    @Convert(converter = HashMapConverter.class)
+    @Column(name = "metadata", columnDefinition = "JSONB")
+    private Map<String, Object> metadata;
 }
