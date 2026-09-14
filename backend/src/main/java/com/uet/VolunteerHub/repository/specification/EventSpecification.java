@@ -3,7 +3,7 @@ package com.uet.VolunteerHub.repository.specification;
 import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.entity.Profile;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -17,7 +17,7 @@ public class EventSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             Join<Event, Account> account = root.join("createdBy", JoinType.LEFT);
-            Join<Account, UserInfo> userInfo = account.join("userInfo", JoinType.LEFT);
+            Join<Account, Profile> userInfo = account.join("userInfo", JoinType.LEFT);
 
             if (criteria.getAccountId() != null) {
                 predicates.add(criteriaBuilder.equal(account.get("accountId"), criteria.getAccountId()));

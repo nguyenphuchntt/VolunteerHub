@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -84,7 +85,7 @@ public class ManagerDashboardService {
         Map<LocalDate, Long> dateGrouping = eventUsers.stream()
                 .filter(eu -> eu.getRegisteredAt() != null)
                 .collect(Collectors.groupingBy(
-                        eu -> eu.getRegisteredAt().toLocalDate(),
+                        eu -> eu.getRegisteredAt().atZone(ZoneOffset.UTC).toLocalDate(),
                         Collectors.counting()
                 ));
         return dateGrouping.entrySet().stream()

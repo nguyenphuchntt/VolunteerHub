@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -24,5 +24,5 @@ public class ManagerJoinRequestNotificationDTO {
     private String requesterFullName;
     private String requesterAvatarUrl;
     private EventUserStatus status;
-    private OffsetDateTime requestedAt;
+    private Instant requestedAt;
 }

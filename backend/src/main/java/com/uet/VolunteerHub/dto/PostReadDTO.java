@@ -1,10 +1,10 @@
 package com.uet.VolunteerHub.dto;
 
 import com.uet.VolunteerHub.enums.PostStatus;
-import com.uet.VolunteerHub.enums.PostType;
+import com.uet.VolunteerHub.enums.PostVisibility;
 import lombok.*;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -13,8 +13,8 @@ import java.time.OffsetDateTime;
 public class PostReadDTO {
     private Long postId;
     private String content;
-    private OffsetDateTime createAt;
-    private PostType postType;
+    private Instant createAt;
+    private PostVisibility postType;
     private PostStatus postStatus;
     private String eventTitle;
     private String ownerUsername;

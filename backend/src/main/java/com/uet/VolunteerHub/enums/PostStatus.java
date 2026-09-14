@@ -1,7 +1,8 @@
 package com.uet.VolunteerHub.enums;
 
 public enum PostStatus {
-    CREATED,
-    HIDDEN,
+    DRAFT,
+    PUBLISHED,
+    ARCHIVED,
     DELETED
 }

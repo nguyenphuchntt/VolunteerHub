@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -22,7 +22,7 @@ public class UserRoleRequestNotificationDTO {
     private String content;
     private String adminResponse; // Admin's response message
     private Boolean isRead;
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
     private UUID adminAccountId;
     private String adminUsername;
 }

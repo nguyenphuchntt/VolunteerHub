@@ -1,12 +1,9 @@
 package com.uet.VolunteerHub.service;
 
 import com.uet.VolunteerHub.dto.EventUser.*;
-import com.uet.VolunteerHub.entity.Account;
-import com.uet.VolunteerHub.entity.Event;
-import com.uet.VolunteerHub.entity.EventUser;
+import com.uet.VolunteerHub.entity.*;
 import com.uet.VolunteerHub.enums.UserRole;
-import com.uet.VolunteerHub.entity.EventUserId;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.entity.Profile;
 import com.uet.VolunteerHub.enums.EventUserRole;
 import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.events.event.EventJoinApprovedEvent;
@@ -26,7 +23,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +41,7 @@ public class EventUserWriteService {
     private final ApplicationEventPublisher eventPublisher;
 
     private EventUserSearchDTO mapToEventUserSearchDTO(EventUser eventUser, Account account,
-            UserInfo userInfo, Event event) {
+                                                       Profile userInfo, Event event) {
         var builder = EventUserSearchDTO.builder()
                 .accountId(eventUser.getAccountId())
                 .eventId(eventUser.getEventId())
@@ -79,7 +76,7 @@ public class EventUserWriteService {
                         "EventUser with accountId: " + accountId + " and eventId: " + eventId + " not found"));
     }
 
-    private void validateTime(Event event, OffsetDateTime start, OffsetDateTime end) {
+    private void validateTime(Event event, Instant start, Instant end) {
         if (start != null && end != null) {
             if (start.isAfter(end)) {
                 throw new IllegalArgumentException("Start must be before end time");
@@ -100,7 +97,7 @@ public class EventUserWriteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
 
         if (event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.CANCELLED ||
-                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.COMPLETED) {
             throw new IllegalArgumentException("Cannot register for a CANCELLED or FINISHED event.");
         }
         if (eventUserRegisterDTO.getStartAt() == null) {
@@ -143,7 +140,7 @@ public class EventUserWriteService {
         }
         Event event1 = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event with id: " + eventId + " not found"));
-        if (event1.getStartAt().isBefore(OffsetDateTime.now())) {
+        if (event1.getStartAt().isBefore(Instant.now())) {
             throw new IllegalStateException("Cannot unregister after the event has started.");
         }
         EventUser eventUser = findEventUser(account.getAccountId(), eventId);
@@ -188,7 +185,7 @@ public class EventUserWriteService {
             eventUser.setStatus(EventUserStatus.PENDING);
         }
         eventUserRepository.save(eventUser);
-        UserInfo userInfo = account.getUserInfo();
+        Profile userInfo = account.getUserInfo();
         return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
     }
 
@@ -276,7 +273,7 @@ public class EventUserWriteService {
             eventUser.setStatus(EventUserStatus.PENDING);
         }
         eventUserRepository.save(eventUser);
-        UserInfo userInfo = account.getUserInfo();
+        Profile userInfo = account.getUserInfo();
         return mapToEventUserSearchDTO(eventUser, account, userInfo, event);
     }
 
@@ -381,8 +378,8 @@ public class EventUserWriteService {
 
         if (newStatus == EventUserStatus.FINISHED) {
             Event event = eventUser.getEvent();
-            if (event.getStatus() != com.uet.VolunteerHub.enums.EventStatus.STARTED &&
-                    event.getStatus() != com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+            if (event.getStatus() != com.uet.VolunteerHub.enums.EventStatus.ONGOING &&
+                    event.getStatus() != com.uet.VolunteerHub.enums.EventStatus.COMPLETED) {
                 throw new IllegalArgumentException(
                         "Cannot mark user as FINISHED because the event has not started or finished yet.");
             }
@@ -413,7 +410,7 @@ public class EventUserWriteService {
         Event event = eventRepository.findById(eventId).orElseThrow();
 
         if (event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.CANCELLED ||
-                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.COMPLETED) {
             throw new IllegalArgumentException("Cannot approve volunteers for a CANCELLED or FINISHED event.");
         }
 
@@ -467,7 +464,7 @@ public class EventUserWriteService {
         Event event = eventRepository.findById(eventId).orElseThrow();
 
         if (event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.CANCELLED ||
-                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.FINISHED) {
+                event.getStatus() == com.uet.VolunteerHub.enums.EventStatus.COMPLETED) {
             throw new IllegalArgumentException("Cannot reject volunteers for a CANCELLED or FINISHED event.");
         }
 

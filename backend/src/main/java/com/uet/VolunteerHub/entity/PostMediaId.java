@@ -12,5 +12,5 @@ import java.util.UUID;
 @NoArgsConstructor
 public class PostMediaId implements Serializable {
     private UUID mediaId;
-    private UUID postId;
+    private Long postId;
 }

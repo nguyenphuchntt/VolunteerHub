@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -15,9 +15,9 @@ public class EventUpdateDTO {
     @Size(min = 2, max = 50, message = "Title must be between 2 and 50 characters")
     private String title;
 
-    private OffsetDateTime startAt;
+    private Instant startAt;
 
-    private OffsetDateTime endAt;
+    private Instant endAt;
 
     @ValidEventCategory
     private String category;

@@ -11,6 +11,7 @@ import com.uet.VolunteerHub.repository.FcmTokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -27,51 +28,40 @@ public class PushNotificationService {
     private final AccountRepository accountRepository;
 
     @Autowired
-    public PushNotificationService(FirebaseMessaging firebaseMessaging,
+    public PushNotificationService(@Nullable FirebaseMessaging firebaseMessaging,
             FcmTokenRepository fcmTokenRepository, AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
         this.fcmTokenRepository = fcmTokenRepository;
         this.firebaseMessaging = firebaseMessaging;
     }
 
-    @Async
-    public void pushNotificationToUser(UUID accountId, String content) {
-        log.info("Attempting to send push notification to accountId: {}, content: {}", accountId, content);
-        List<FcmToken> fcmTokens = fcmTokenRepository.findAllByAccountId(accountId);
+@Async
+public void pushNotificationToUser(UUID accountId, String content) {
+    if (firebaseMessaging == null) {
+        log.debug("Firebase push notifications are disabled");
+        return;
+    }
+    log.info("Attempting to send push notification to accountId: {}, content: {}", accountId, content);
+    List<FcmToken> fcmTokens = fcmTokenRepository.findAllByAccountId(accountId);
 
-        if (fcmTokens.isEmpty()) {
-            log.warn("No FCM tokens found for accountId: {}", accountId);
-            return;
-        }
+    if (fcmTokens.isEmpty()) {
+        log.warn("No FCM tokens found for accountId: {}", accountId);
+        return;
+    }
 
-        log.info("Found {} FCM token(s) for accountId: {}", fcmTokens.size(), accountId);
-        List<FcmToken> invalidTokens = new ArrayList<>();
-
-        for (var token : fcmTokens) {
-            Message message = Message.builder()
-                    .putData("content", content)
-                    .setToken(token.getToken())
-                    .build();
-            try {
-                String result = firebaseMessaging.send(message);
-                log.info("Successfully sent push notification, response: {}", result);
-            } catch (Exception e) {
-                String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-                log.error("Error sending push notification to token {}: {}", token.getToken(), e.getMessage());
-
-                // Check if token is invalid and should be removed
-                if (isInvalidTokenError(errorMessage)) {
-                    log.warn("Invalid FCM token detected, marking for deletion: {}", token.getToken());
-                    invalidTokens.add(token);
-                }
-            }
-        }
-
-        // Delete invalid tokens from database
-        if (!invalidTokens.isEmpty()) {
-            deleteInvalidTokens(invalidTokens);
+    List<FcmToken> invalidTokens = new ArrayList<>();
+    for (var token : fcmTokens) {
+        Message message = Message.builder().putData("content", content).setToken(token.getToken()).build();
+        try {
+            firebaseMessaging.send(message);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            log.error("Error sending push notification to token {}: {}", token.getToken(), e.getMessage());
+            if (isInvalidTokenError(errorMessage)) invalidTokens.add(token);
         }
     }
+    if (!invalidTokens.isEmpty()) deleteInvalidTokens(invalidTokens);
+}
 
     /**
      * Check if the error indicates an invalid/expired token
@@ -103,6 +93,7 @@ public class PushNotificationService {
 
     @Async
     public void pushNotificationToMultipleUsers(List<UUID> accountIds, String content) {
+        if (firebaseMessaging == null) return;
         List<FcmToken> fcmTokens = fcmTokenRepository.findAllByAccountIdIn(accountIds);
         if (fcmTokens.isEmpty())
             return;

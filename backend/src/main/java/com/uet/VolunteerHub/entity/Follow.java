@@ -16,6 +16,16 @@ public class Follow {
     @EmbeddedId
     private FollowId followId;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @MapsId("followerId")
+    @JoinColumn(name = "follower_id", nullable = false)
+    private Account follower;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @MapsId("followingId")
+    @JoinColumn(name = "following_id", nullable = false)
+    private Account following;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

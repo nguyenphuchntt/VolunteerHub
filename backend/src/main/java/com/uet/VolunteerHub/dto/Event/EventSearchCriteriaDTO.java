@@ -3,19 +3,19 @@ package com.uet.VolunteerHub.dto.Event;
 import com.uet.VolunteerHub.enums.EventStatus;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
 public class EventSearchCriteriaDTO {
     private Long eventId;
     private String title;
-    private OffsetDateTime createAtFrom;
-    private OffsetDateTime createAtTo;
-    private OffsetDateTime startAtFrom;
-    private OffsetDateTime startAtTo;
-    private OffsetDateTime endAtFrom;
-    private OffsetDateTime endAtTo;
+    private Instant createAtFrom;
+    private Instant createAtTo;
+    private Instant startAtFrom;
+    private Instant startAtTo;
+    private Instant endAtFrom;
+    private Instant endAtTo;
     private String category;
     private String location;
     private EventStatus status;

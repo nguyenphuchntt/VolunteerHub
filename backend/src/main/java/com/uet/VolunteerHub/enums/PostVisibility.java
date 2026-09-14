@@ -1,9 +1,8 @@
 package com.uet.VolunteerHub.enums;
 
-public enum PostType {
-    DISCUSSION,
-    ANNOUNCEMENT,
-    ARTICLE,
-    ADVERTISEMENT,
-    EVENT
+public enum PostVisibility {
+    PUBLIC,
+    FOLLOWERS,
+    PRIVATE,
+    EVENT_MEMBER
 }

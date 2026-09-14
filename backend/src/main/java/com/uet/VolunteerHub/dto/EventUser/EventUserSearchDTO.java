@@ -6,7 +6,7 @@ import com.uet.VolunteerHub.enums.EventUserStatus;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -14,11 +14,11 @@ import java.util.UUID;
 public class EventUserSearchDTO {
     private Long eventId;
     private UUID accountId;
-    private OffsetDateTime registeredAt;
+    private Instant registeredAt;
     private EventUserStatus status;
     private EventUserRole role;
-    private OffsetDateTime startAt;
-    private OffsetDateTime endAt;
+    private Instant startAt;
+    private Instant endAt;
     private String username;
     private String email;
     private String firstName;
@@ -28,6 +28,6 @@ public class EventUserSearchDTO {
     private String location;
     private EventStatus eventStatus;
     private String coverImageUrl;
-    private OffsetDateTime eventStartAt;
-    private OffsetDateTime eventEndAt;
+    private Instant eventStartAt;
+    private Instant eventEndAt;
 }

@@ -116,7 +116,7 @@ public class RoleBasedNotificationService {
                 .type(notification.getNotificationType())
                 .content(notification.getContent())
                 .isRead(notification.getIsRead())
-                .createdAt(notification.getCreateAt())
+                .createdAt(notification.getCreatedAt())
                 .senderAccountId(notification.getSenderAccount() != null 
                         ? notification.getSenderAccount().getAccountId() : null)
                 .senderUsername(notification.getSenderAccount() != null 
@@ -182,7 +182,7 @@ public class RoleBasedNotificationService {
                 .type(notification.getNotificationType())
                 .content(notification.getContent())
                 .isRead(notification.getIsRead())
-                .createdAt(notification.getCreateAt())
+                .createdAt(notification.getCreatedAt())
                 .adminAccountId(notification.getSenderAccount() != null 
                         ? notification.getSenderAccount().getAccountId() : null)
                 .adminUsername(notification.getSenderAccount() != null 

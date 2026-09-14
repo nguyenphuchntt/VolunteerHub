@@ -22,5 +22,7 @@ public interface PostMapper {
     @Mapping(target = "event", ignore = true)
     @Mapping(target = "createdByAccount", ignore = true)
     @Mapping(target = "createAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "comments", ignore = true)
     Post toPostEntity(PostCreateDTO postDTO);
 }

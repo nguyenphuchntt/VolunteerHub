@@ -10,19 +10,17 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = { "accountId", "eventId" })
-@ToString(exclude = { "account", "event" })
 @Entity
 @IdClass(EventUserId.class)
 @Table(name = "event_user")
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@NoArgsConstructor
 public class EventUser {
 
     @Id
@@ -35,7 +33,7 @@ public class EventUser {
 
     @CreationTimestamp
     @Column(name = "registered_at", updatable = false)
-    private OffsetDateTime registeredAt;
+    private Instant registeredAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -46,10 +44,10 @@ public class EventUser {
     private EventUserRole role;
 
     @Column(name = "start_at")
-    private OffsetDateTime startAt;
+    private Instant startAt;
 
     @Column(name = "end_at")
-    private OffsetDateTime endAt;
+    private Instant endAt;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false, insertable = false, updatable = false)

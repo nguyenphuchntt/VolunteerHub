@@ -4,7 +4,7 @@ import com.uet.VolunteerHub.dto.EventUser.EventUserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.EventUser;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.entity.Profile;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -60,7 +60,7 @@ public class EventUserSpecification {
 
             if (criteria.getFirstName() != null || criteria.getLastName() != null) {
                 Join<EventUser, Account> account = root.join("account", JoinType.LEFT);
-                Join<Account, UserInfo> userInfo = account.join("userInfo", JoinType.LEFT);
+                Join<Account, Profile> userInfo = account.join("userInfo", JoinType.LEFT);
 
                 if (criteria.getFirstName() != null) {
                     predicates.add(criteriaBuilder.like(

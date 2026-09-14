@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,7 +43,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     List<Object[]> countEventsByCategory();
 
     @Query("SELECT DATE(e.createAt) as date, COUNT(e) as count FROM Event e WHERE e.createAt >= :startDate GROUP BY DATE(e.createAt) ORDER BY date ASC")
-    List<Object[]> countNewEventsByDate(java.time.OffsetDateTime startDate);
+    List<Object[]> countNewEventsByDate(java.time.Instant startDate);
 
     @Query("SELECT SUM(e.attendeeCount) FROM Event e")
     Long sumAttendeeCount();
@@ -54,8 +54,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
                 SELECT e FROM Event e
                 WHERE e.status IN ('SCHEDULED', 'STARTED')
                 ORDER BY (
-                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5 +
-                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5
+                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5 +
+                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5
                 ) DESC
             """, countQuery = """
                 SELECT COUNT(e) FROM Event e
@@ -69,8 +69,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
                 WHERE e.status IN ('SCHEDULED', 'STARTED')
                 AND e.category = :category
                 ORDER BY (
-                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5 +
-                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATEDIFF', CURRENT_DATE, CAST(e.createAt AS date)))) * 0.5
+                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5 +
+                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5
                 ) DESC
             """, countQuery = """
                 SELECT COUNT(e) FROM Event e
@@ -82,12 +82,12 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
 
     @Query("SELECT e FROM Event e " +
             "WHERE e.startAt BETWEEN :start AND :end " +
-            "AND e.status = com.uet.VolunteerHub.enums.EventStatus.SCHEDULED " +
+            "AND e.status = com.uet.VolunteerHub.enums.EventStatus.PUBLISHED " +
             "ORDER BY e.startAt ASC")
-    List<Event> findScheduledEventsBetweenTimes(@Param("start") OffsetDateTime start, @Param("end") OffsetDateTime end);
+    List<Event> findScheduledEventsBetweenTimes(@Param("start") Instant start, @Param("end") Instant end);
 
     @Query(value = "SELECT * FROM event e " +
-            "WHERE MATCH(e.title) AGAINST(CONCAT(:query, '*') IN BOOLEAN MODE) " +
+            "WHERE e.title ILIKE CONCAT('%', :query, '%') " +
             "AND e.status IN ('SCHEDULED', 'STARTED') " +
             "ORDER BY e.like_count DESC", nativeQuery = true)
     List<Event> findSuggestionsByTitle(@Param("query") String query, Pageable pageable);

@@ -1,25 +1,21 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: volunteerhub-mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  postgres:
+    image: postgres:16-alpine
+    container_name: volunteerhub-postgres
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: volunteer_hub
-      MYSQL_USER: ${MYSQL_USER:-volunteer}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-volunteerpass}
+      POSTGRES_DB: volunteer_hub
+      POSTGRES_USER: ${POSTGRES_USER:-volunteer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-volunteerpass}
     ports:
-      - "3307:3306"
+      - "5432:5432"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - volunteerhub-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-volunteer} -d ${POSTGRES_DB:-volunteer_hub}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -28,7 +24,7 @@ services:
     image: redis:7-alpine
     container_name: volunteerhub-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -46,9 +42,9 @@ services:
       dockerfile: Dockerfile
     container_name: volunteerhub-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/volunteer_hub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&characterEncoding=UTF-8&useUnicode=true
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-volunteer}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-volunteerpass}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/volunteer_hub
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-volunteer}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-volunteerpass}
       SPRING_SQL_INIT_MODE: never
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
       UPLOAD_DIR: /app/uploads
@@ -69,7 +65,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -82,7 +78,7 @@ networks:
     driver: bridge
 
 volumes:
-  mysql_data:
+  postgres_data:
   redis_data:
   uploaded-files:
 

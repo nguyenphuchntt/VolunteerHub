@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -23,7 +23,7 @@ public class ManagerEventNotificationDTO {
     private NotificationType type; // EVENT_APPROVED, EVENT_REJECTED, etc.
     private String content;
     private Boolean isRead;
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
     private UUID senderAccountId;
     private String senderUsername;
 }

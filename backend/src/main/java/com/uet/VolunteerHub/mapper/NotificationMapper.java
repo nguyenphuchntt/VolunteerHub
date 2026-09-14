@@ -15,13 +15,13 @@ public interface NotificationMapper {
     @Mapping(source = "senderAccount.accountId", target = "senderAccountId")
     @Mapping(source = "senderAccount.username", target = "senderUsername")
     @Mapping(source = "receiverAccount.accountId", target = "receiverAccountId")
-    @Mapping(source = "createAt", target = "createdAt")
+    @Mapping(source = "createdAt", target = "createdAt")
     NotificationReadDTO toDTO(Notification notification);
 
     @Mapping(source = "type", target = "notificationType")
     @Mapping(source = "senderAccountId", target = "senderAccount.accountId")
     @Mapping(source = "receiverAccountId", target = "receiverAccount.accountId")
-    @Mapping(source = "createdAt", target = "createAt")
+    @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(target = "notificationId", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     Notification toEntity(NotificationReadDTO dto);

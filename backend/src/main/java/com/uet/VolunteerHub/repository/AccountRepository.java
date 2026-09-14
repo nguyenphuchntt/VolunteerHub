@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,9 +47,9 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
 
     long countByAccountStatus(AccountStatus status);
 
-    long countByCreateAtBetween(OffsetDateTime start, OffsetDateTime end);
+    long countByCreateAtBetween(Instant start, Instant end);
 
-    @Query(value = "SELECT CAST(a.account_id AS CHAR) as account_id, a.username, a.email, " +
+    @Query(value = "SELECT CAST(a.account_id AS TEXT) as account_id, a.username, a.email, " +
             "(COALESCE((SELECT COUNT(*) FROM comment c WHERE c.created_by_account_id = a.account_id), 0) + " +
             " COALESCE((SELECT COUNT(*) FROM post_like pl WHERE pl.account_id = a.account_id), 0) + " +
             " COALESCE((SELECT COUNT(*) FROM event_like el WHERE el.account_id = a.account_id), 0)) as score " +
@@ -59,7 +59,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
     List<Object[]> findTopInteractiveUsers();
 
     @Query("SELECT DATE(a.createAt) as date, COUNT(a) as count FROM Account a WHERE a.createAt >= :startDate GROUP BY DATE(a.createAt) ORDER BY date ASC")
-    List<Object[]> countNewUsersByDate(java.time.OffsetDateTime startDate);
+    List<Object[]> countNewUsersByDate(java.time.Instant startDate);
 
     List<Account> findAllByRoleNot(UserRole role);
 

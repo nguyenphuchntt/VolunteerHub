@@ -6,7 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -25,5 +26,5 @@ public class AdminRequestNotificationDTO {
     private String requesterAvatarUrl;
     private RequestStatus status;
     private String reason; // User's reason for the request
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 }

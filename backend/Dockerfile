@@ -19,7 +19,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 COPY --from=build /app/target/*.jar app.jar
 
-COPY ./images /app/uploads
+COPY ./src/main/resources/images /app/uploads
 
 RUN chown -R spring:spring /app/uploads && chmod -R 775 /app/uploads
 

@@ -4,7 +4,7 @@ import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import lombok.*;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -37,6 +37,6 @@ public class UserSearchDTO {
 
     private String organization;
 
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
 }

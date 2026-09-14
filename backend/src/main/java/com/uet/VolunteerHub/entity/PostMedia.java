@@ -9,7 +9,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED, force = true)
+@NoArgsConstructor
 @Entity
 @IdClass(PostMediaId.class)
 @Table(name = "post_media")
@@ -21,7 +21,7 @@ public class PostMedia {
 
     @Id
     @Column(name = "post_id", nullable = false, updatable = false)
-    private UUID postId;
+    private Long postId;
 
     @Column(name = "position", nullable = false)
     private Integer position = 0;

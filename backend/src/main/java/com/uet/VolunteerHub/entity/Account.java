@@ -15,7 +15,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -25,7 +25,6 @@ import java.util.UUID;
 @Builder
 @Getter
 @Setter
-@EqualsAndHashCode(of = "accountId")
 @AllArgsConstructor
 public class Account implements UserDetails, CredentialsContainer {
 
@@ -60,6 +59,9 @@ public class Account implements UserDetails, CredentialsContainer {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+    private Profile userInfo;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

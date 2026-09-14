@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class CreateCommentResponse {
     private Long id;
     private String content;
-    private java.time.OffsetDateTime createdAt;
+    private java.time.Instant createdAt;
     private String createdBy;
 }

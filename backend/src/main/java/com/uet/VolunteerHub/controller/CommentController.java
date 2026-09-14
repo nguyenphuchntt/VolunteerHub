@@ -81,7 +81,7 @@ public class CommentController {
         return ResponseEntity.ok(CreateCommentResponse.builder()
                 .id(result.getCommentId())
                 .content(result.getContent())
-                .createdAt(result.getCreateAt())
+                .createdAt(result.getCreatedAt())
                 .createdBy(result.getOwnerUsername())
                 .build());
     }

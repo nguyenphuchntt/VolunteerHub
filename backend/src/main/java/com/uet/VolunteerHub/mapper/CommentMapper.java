@@ -20,7 +20,8 @@ public interface CommentMapper {
     CommentReadDTO toCommentReadDTO(Comment comment);
 
     @Mapping(target = "commentId", ignore = true)
-    @Mapping(target = "createAt", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "post", ignore = true) // Service sẽ set
     @Mapping(target = "createdByAccount", ignore = true) // Service sẽ set
     @Mapping(target = "parentComment", ignore = true) // Service sẽ set

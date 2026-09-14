@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.dto;
 
-import com.uet.VolunteerHub.enums.PostType;
+import com.uet.VolunteerHub.enums.PostVisibility;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -16,7 +16,7 @@ public class PostCreateDTO {
     private String content;
 
     @NotNull(message = "Post type cannot be null")
-    private PostType postType;
+    private PostVisibility postType;
 
     private Long eventId;
     private UUID createByAccountId;

@@ -4,7 +4,7 @@ import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -22,6 +22,6 @@ public class UserSearchCriteriaDTO {
     private String lastName;
     private Date dateOfBirthFrom;
     private Date dateOfBirthTo;
-    private OffsetDateTime createAtFrom;
-    private OffsetDateTime createAtTo;
+    private Instant createAtFrom;
+    private Instant createAtTo;
 }

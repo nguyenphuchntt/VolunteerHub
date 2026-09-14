@@ -3,7 +3,7 @@ package com.uet.VolunteerHub.repository.specification;
 import com.uet.VolunteerHub.dto.Event.EventSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.entity.Profile;
 import com.uet.VolunteerHub.enums.EventStatus;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -18,7 +18,7 @@ public class PublicEventSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
             Join<Event, Account> account = root.join("createdBy", JoinType.LEFT);
-            Join<Account, UserInfo> userInfo = account.join("userInfo", JoinType.LEFT);
+            Join<Account, Profile> userInfo = account.join("userInfo", JoinType.LEFT);
 
             if (criteria.getAccountId() != null) {
                 predicates.add(criteriaBuilder.equal(account.get("accountId"), criteria.getAccountId()));
@@ -86,7 +86,7 @@ public class PublicEventSpecification {
             }
 
             // Exclude PENDING and CANCELLED events from public search
-            predicates.add(root.get("status").in(EventStatus.SCHEDULED, EventStatus.STARTED, EventStatus.FINISHED));
+            predicates.add(root.get("status").in(EventStatus.PUBLISHED, EventStatus.ONGOING, EventStatus.COMPLETED));
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };

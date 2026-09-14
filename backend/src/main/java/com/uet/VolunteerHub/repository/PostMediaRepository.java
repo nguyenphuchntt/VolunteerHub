@@ -13,4 +13,6 @@ public interface PostMediaRepository extends JpaRepository<PostMedia, PostMediaI
 
     @EntityGraph(attributePaths = {"media"})
     Page<PostMedia> findAllByPost_PostId(Long postId, Pageable pageable);
+
+    long countByPost_PostId(Long postId);
 }

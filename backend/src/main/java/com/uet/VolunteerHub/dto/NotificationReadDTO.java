@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -24,6 +24,6 @@ public class NotificationReadDTO {
     private NotificationType type;
     private DestinationType destinationType;
     private String destinationId;
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 }
 

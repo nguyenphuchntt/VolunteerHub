@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Data
 public class EventAdminCreateDTO {
@@ -17,10 +17,10 @@ public class EventAdminCreateDTO {
     private String title;
 
     @FutureOrPresent(message = "Start date must be today or in the future")
-    private OffsetDateTime startAt;
+    private Instant startAt;
 
     @FutureOrPresent(message = "End date must be today or in the future")
-    private OffsetDateTime endAt;
+    private Instant endAt;
 
     @ValidEventCategory
     private String category;

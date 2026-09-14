@@ -2,7 +2,7 @@ package com.uet.VolunteerHub.repository.specification;
 
 import com.uet.VolunteerHub.dto.Account.UserSearchCriteriaDTO;
 import com.uet.VolunteerHub.entity.Account;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.entity.Profile;
 import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -13,7 +13,7 @@ public class UserSpecification {
    public static Specification<Account> fromCriteria(final UserSearchCriteriaDTO criteria) {
        return (root, query, criteriaBuilder) -> {
            List<Predicate> predicates = new ArrayList<>();
-           Join<Account, UserInfo> userInfo = root.join("userInfo", JoinType.LEFT);
+           Join<Account, Profile> userInfo = root.join("userInfo", JoinType.LEFT);
 
            if (criteria.getUserId() != null) {
                predicates.add(criteriaBuilder.equal(userInfo.get("accountId"), criteria.getUserId()));

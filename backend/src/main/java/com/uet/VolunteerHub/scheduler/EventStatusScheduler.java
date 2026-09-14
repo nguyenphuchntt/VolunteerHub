@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -42,14 +42,14 @@ public class EventStatusScheduler {
         @CacheEvict(value = "adminDashboard", allEntries = true)
     })
     public void updateEventStatuses() {
-        OffsetDateTime now = OffsetDateTime.now();
+        Instant now = Instant.now();
         
         // 1. Update SCHEDULED -> STARTED (event has started)
-        List<Event> scheduledEvents = eventRepository.findAllByStatus(EventStatus.SCHEDULED);
+        List<Event> scheduledEvents = eventRepository.findAllByStatus(EventStatus.PUBLISHED);
         int startedCount = 0;
         for (Event event : scheduledEvents) {
             if (event.getStartAt() != null && event.getStartAt().isBefore(now)) {
-                event.setStatus(EventStatus.STARTED);
+                event.setStatus(EventStatus.ONGOING);
                 eventRepository.save(event);
                 startedCount++;
                 log.info("Event '{}' (ID: {}) status changed from SCHEDULED to STARTED", 
@@ -58,11 +58,11 @@ public class EventStatusScheduler {
         }
 
         // 2. Update STARTED -> FINISHED (event has ended)
-        List<Event> startedEvents = eventRepository.findAllByStatus(EventStatus.STARTED);
+        List<Event> startedEvents = eventRepository.findAllByStatus(EventStatus.ONGOING);
         int finishedCount = 0;
         for (Event event : startedEvents) {
             if (event.getEndAt() != null && event.getEndAt().isBefore(now)) {
-                event.setStatus(EventStatus.FINISHED);
+                event.setStatus(EventStatus.COMPLETED);
                 eventRepository.save(event);
                 finishedCount++;
                 log.info("Event '{}' (ID: {}) status changed from STARTED to FINISHED", 

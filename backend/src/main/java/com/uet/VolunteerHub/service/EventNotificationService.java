@@ -10,7 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,8 +34,20 @@ public class EventNotificationService {
     @Scheduled(cron= "0 0 8 * * *")
     @Transactional
     public void notifyUpcomingEvents() {
-        OffsetDateTime start = OffsetDateTime.now().plusDays(3).withHour(0).withMinute(0);
-        OffsetDateTime end = start.withHour(23).withMinute(59);
+        ZoneId zone = ZoneId.systemDefault();
+
+        ZonedDateTime startZone = ZonedDateTime.now(zone).plusDays(3)
+                .withHour(3)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
+        Instant start = startZone.toInstant();
+        ZonedDateTime endZone = startZone
+                .withHour(23)
+                .withMinute(59)
+                .withSecond(59);
+
+        Instant end = endZone.toInstant();
 
         List<Event> events = eventRepository.findScheduledEventsBetweenTimes(start, end);
 
@@ -55,8 +68,11 @@ public class EventNotificationService {
     @Scheduled(cron= "0 0 8 * * *")
     @Transactional
     public void notifyStartingEvents() {
-        OffsetDateTime start = OffsetDateTime.now().withHour(0).withMinute(0);
-        OffsetDateTime end = start.withHour(23).withMinute(59);
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+
+        Instant start = today.atStartOfDay(zone).toInstant();
+        Instant end = today.atTime(LocalTime.MAX).atZone(zone).toInstant();
 
         List<Event> events = eventRepository.findScheduledEventsBetweenTimes(start, end);
 

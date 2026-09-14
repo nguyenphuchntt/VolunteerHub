@@ -6,7 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -15,7 +16,7 @@ import java.time.OffsetDateTime;
 public class CommentReadDTO {
     private Long commentId;
     private String content;
-    private OffsetDateTime createAt;
+    private Instant createdAt;
 
     private Long parentCommentId;
 

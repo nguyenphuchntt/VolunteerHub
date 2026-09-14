@@ -5,6 +5,8 @@ import com.uet.VolunteerHub.dto.MediaReadDTO;
 import com.uet.VolunteerHub.dto.MediaUploadResponse;
 import com.uet.VolunteerHub.entity.*;
 import com.uet.VolunteerHub.enums.UserRole;
+import com.uet.VolunteerHub.enums.MediaStatus;
+import com.uet.VolunteerHub.enums.MediaType;
 import com.uet.VolunteerHub.exception.ForbiddenException;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.*;
@@ -68,24 +70,22 @@ public class MediaService {
         String mimeType = file.getContentType();
         Long sizeBytes = file.getSize();
 
-        String downloadUrl = baseUrl + "/api/media/download/" + storedFilename;
+        Media media = Media.builder()
+                .owner(uploader)
+                .type(resolveMediaType(mimeType))
+                .mimeType(mimeType != null ? mimeType : "application/octet-stream")
+                .storageKey(storedFilename)
+                .fileName(file.getOriginalFilename())
+                .fileSize(sizeBytes)
+                .mediaStatus(MediaStatus.READY)
+                .build();
 
-        Media media = new Media(
-                UUID.randomUUID(),
-                downloadUrl,
-                storedFilename,
-                extension,
-                mimeType,
-                sizeBytes,
-                null,
-                uploader);
-
-        mediaRepository.save(media);
+        media = mediaRepository.save(media);
 
         return new MediaUploadResponse(
-                media.getId(),
-                media.getUrl(),
-                storedFilename,
+                media.getMediaId(),
+                toDownloadUrl(media),
+                media.getFileName(),
                 extension,
                 mimeType,
                 sizeBytes,
@@ -164,7 +164,7 @@ public class MediaService {
         Media media = mediaRepository.findById(response.id())
                 .orElseThrow(() -> new ResourceNotFoundException("Media not found"));
 
-        PostMedia postMedia = new PostMedia(response.id(), postId, media, post);
+        PostMedia postMedia = new PostMedia(response.id(), postId, nextPostMediaPosition(postId), media, post);
         postMediaRepository.save(postMedia);
 
         return response;
@@ -181,14 +181,7 @@ public class MediaService {
         Media media = mediaRepository.findById(mediaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Media not found with id: " + mediaId));
 
-        return new MediaReadDTO(
-                media.getId(),
-                media.getUrl(),
-                media.getFileType(),
-                media.getMimeType(),
-                media.getSizeBytes(),
-                media.getUploadedAt(),
-                media.getUploadedBy().getAccountId());
+        return toMediaReadDTO(media);
     }
 
     /**
@@ -210,7 +203,7 @@ public class MediaService {
             throw new ForbiddenException("You don't have permission to delete this media");
         }
 
-        fileStorageService.deleteFile(media.getFilePath());
+        fileStorageService.deleteFile(media.getStorageKey());
         mediaRepository.deleteById(mediaId);
 
         return new MediaDeleteResponse("Media deleted successfully", mediaId);
@@ -227,7 +220,7 @@ public class MediaService {
         if (requester.getRole() == UserRole.ADMIN) {
             return true;
         }
-        return media.getUploadedBy().getAccountId().equals(requester.getAccountId());
+        return media.getOwner().getAccountId().equals(requester.getAccountId());
     }
 
     @Transactional
@@ -254,8 +247,7 @@ public class MediaService {
         return accountMediaRepository.findAllByAccount_AccountId(accountId, pageable)
                 .map(am -> {
                     Media m = am.getMedia();
-                    return new MediaReadDTO(m.getId(), m.getUrl(), m.getFileType(), m.getMimeType(),
-                            m.getSizeBytes(), m.getUploadedAt(), m.getUploadedBy().getAccountId());
+                    return toMediaReadDTO(m);
                 });
     }
 
@@ -283,8 +275,7 @@ public class MediaService {
         return eventMediaRepository.findAllByEvent_EventId(eventId, pageable)
                 .map(em -> {
                     Media m = em.getMedia();
-                    return new MediaReadDTO(m.getId(), m.getUrl(), m.getFileType(), m.getMimeType(),
-                            m.getSizeBytes(), m.getUploadedAt(), m.getUploadedBy().getAccountId());
+                    return toMediaReadDTO(m);
                 });
     }
 
@@ -295,7 +286,7 @@ public class MediaService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
 
-        PostMedia postMedia = new PostMedia(mediaId, postId, media, post);
+        PostMedia postMedia = new PostMedia(mediaId, postId, nextPostMediaPosition(postId), media, post);
         postMediaRepository.save(postMedia);
     }
 
@@ -312,8 +303,28 @@ public class MediaService {
         return postMediaRepository.findAllByPost_PostId(postId, pageable)
                 .map(pm -> {
                     Media m = pm.getMedia();
-                    return new MediaReadDTO(m.getId(), m.getUrl(), m.getFileType(), m.getMimeType(),
-                            m.getSizeBytes(), m.getUploadedAt(), m.getUploadedBy().getAccountId());
+                    return toMediaReadDTO(m);
                 });
+    }
+
+    private String toDownloadUrl(Media media) {
+        return baseUrl + "/api/media/download/" + media.getStorageKey();
+    }
+
+    private MediaReadDTO toMediaReadDTO(Media media) {
+        return new MediaReadDTO(media.getMediaId(), toDownloadUrl(media), media.getType().name(),
+                media.getMimeType(), media.getFileSize(), media.getCreatedAt(), media.getOwner().getAccountId());
+    }
+
+    private MediaType resolveMediaType(String mimeType) {
+        if (mimeType == null) return MediaType.FILE;
+        if (mimeType.startsWith("image/")) return MediaType.IMAGE;
+        if (mimeType.startsWith("video/")) return MediaType.VIDEO;
+        if (mimeType.startsWith("audio/")) return MediaType.AUDIO;
+        return MediaType.FILE;
+    }
+
+    private int nextPostMediaPosition(Long postId) {
+        return Math.toIntExact(postMediaRepository.countByPost_PostId(postId));
     }
 }

@@ -8,9 +8,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -22,13 +21,17 @@ import java.util.UUID;
 public class Post {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id", updatable = false, nullable = false)
-    private UUID postId;
+    private Long postId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
-    private Account owner;
+    private Account createdByAccount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private Event event;
 
     @Column(name = "content", columnDefinition = "TEXT")
     @Size(max = 700, message = "Post content should have up to 700 characters")
@@ -36,18 +39,15 @@ public class Post {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false, length = 20)
-    private PostVisibility visibility;
+    private PostVisibility postType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private PostStatus postStatus;
 
-    @Column(name = "event_id")
-    private Long eventId;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private Instant createAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)

@@ -2,6 +2,7 @@ package com.uet.VolunteerHub.service;
 
 import java.util.UUID;
 
+import com.uet.VolunteerHub.entity.Profile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,7 +20,6 @@ import com.uet.VolunteerHub.dto.Account.AccountUserRegisterDTO;
 import com.uet.VolunteerHub.dto.Account.UserProfileUpdateDTO;
 import com.uet.VolunteerHub.dto.Account.UserSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
-import com.uet.VolunteerHub.entity.UserInfo;
 import com.uet.VolunteerHub.enums.AccountStatus;
 import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.exception.ResourceAlreadyExistsException;
@@ -54,14 +54,14 @@ public class UserWriteService {
         this.emailVerificationService = emailVerificationService;
     }
 
-    private UserSearchDTO mapToUserSearchDTO(Account account, UserInfo userInfo) {
+    private UserSearchDTO mapToUserSearchDTO(Account account, Profile userInfo) {
         return UserSearchDTO.builder()
                 .accountID(account.getAccountId())
                 .username(account.getUsername())
                 .email(account.getEmail())
                 .status(account.getAccountStatus())
                 .role(account.getRole())
-                .createdAt(account.getCreateAt())
+                .createdAt(account.getCreatedAt())
                 .firstName(userInfo.getFirstName())
                 .lastName(userInfo.getLastName())
                 .dateOfBirth(userInfo.getDateOfBirth())
@@ -73,13 +73,13 @@ public class UserWriteService {
     }
 
     @Transactional
-    protected Pair<Account, UserInfo> findAccountAndUserInfo(UUID userID) {
+    protected Pair<Account, Profile> findAccountAndUserInfo(UUID userID) {
         Account account = accountRepository.findById(userID).orElseThrow(
                 () -> {
                     log.warning("Account with ID " + userID + " not found");
                     return new ResourceNotFoundException("Account with ID " + userID + " not found");
                 });
-        UserInfo userInfo = account.getUserInfo();
+        Profile userInfo = account.getUserInfo();
         if (userInfo == null) {
             throw new ResourceNotFoundException("User with ID " + userID + " not found");
         }
@@ -98,7 +98,7 @@ public class UserWriteService {
     @CacheEvict(value = "users", key = "#account.accountId")
     @Transactional
     public UserSearchDTO updateUserProfile(UserProfileUpdateDTO userProfileUpdateDTO, Account account) {
-        UserInfo userInfo = account.getUserInfo();
+        Profile userInfo = account.getUserInfo();
 
         if (userProfileUpdateDTO.getEmail() != null && !account.getEmail().equals(userProfileUpdateDTO.getEmail())) {
             if (!accountRepository.existsByEmail(userProfileUpdateDTO.getEmail())) {
@@ -164,7 +164,7 @@ public class UserWriteService {
     @CacheEvict(value = "users", key = "#accountId")
     @Transactional
     public UserSearchDTO changeAccountRole(UUID accountId, AccountRoleUpdateDTO accountRoleUpdateDTO, Account caller) {
-        Pair<Account, UserInfo> accountAndUserInfo = findAccountAndUserInfo(accountId);
+        Pair<Account, Profile> accountAndUserInfo = findAccountAndUserInfo(accountId);
         Account account = accountAndUserInfo.getFirst();
         if (caller == null) {
             throw new IllegalStateException("Caller account is null - authentication failed");
@@ -194,7 +194,7 @@ public class UserWriteService {
     @CacheEvict(value = "users", key = "#accountId")
     @Transactional
     public UserSearchDTO changeAccountStatus(UUID accountId, AccountStatusUpdateDTO accountStatusUpdateDTO, Account caller) {
-        Pair<Account, UserInfo> accountAndUserInfo = findAccountAndUserInfo(accountId);
+        Pair<Account, Profile> accountAndUserInfo = findAccountAndUserInfo(accountId);
         Account account = accountAndUserInfo.getFirst();
         if (caller == null) {
             throw new IllegalStateException("Caller account is null - authentication failed");
@@ -243,7 +243,7 @@ public class UserWriteService {
         accountBuilder.accountStatus(AccountStatus.INACTIVE);
         accountBuilder.role(UserRole.USER);
         Account account = accountBuilder.build();
-        UserInfo userInfo = new UserInfo();
+        Profile userInfo = new Profile();
         try {
             userInfo.setAccount(account);
             account.setUserInfo(userInfo);
@@ -293,7 +293,7 @@ public class UserWriteService {
             accountBuilder.accountStatus(accountAdminCreateDTO.getAccountStatus());
         }
         Account account = accountBuilder.build();
-        UserInfo userInfo = new UserInfo();
+        Profile userInfo = new Profile();
         try {
             userInfo.setAccount(account);
             account.setUserInfo(userInfo);
@@ -351,7 +351,7 @@ public class UserWriteService {
     public UserSearchDTO updateUserDetails(UUID accountId, UserProfileUpdateDTO userProfileUpdateDTO) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account with ID: " + accountId + " not found"));
-        UserInfo userInfo = account.getUserInfo();
+        Profile userInfo = account.getUserInfo();
         if (userProfileUpdateDTO.getEmail() != null && !account.getEmail().equals(userProfileUpdateDTO.getEmail())) {
             if (!accountRepository.existsByEmail(userProfileUpdateDTO.getEmail())) {
                 account.setEmail(userProfileUpdateDTO.getEmail());

@@ -19,5 +19,5 @@ public class PostLikeId implements Serializable {
     private UUID accountId;
 
     @Column(name = "post_id", nullable = false, updatable = false)
-    private UUID postId;
+    private Long postId;
 }

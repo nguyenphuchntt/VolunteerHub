@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.dto;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record MediaReadDTO(
@@ -9,6 +9,6 @@ public record MediaReadDTO(
         String fileType,
         String mimeType,
         Long sizeBytes,
-        OffsetDateTime uploadedAt,
+        Instant createdAt,
         UUID uploadedBy) {
 }

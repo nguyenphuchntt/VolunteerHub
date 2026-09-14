@@ -21,7 +21,7 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -40,7 +40,7 @@ public class EventWriteService {
                 .description(event.getDescription())
                 .status(event.getStatus())
                 .attendeeCount(event.getAttendeeCount())
-                .createAt(event.getCreateAt())
+                .createAt(event.getCreatedAt())
                 .startAt(event.getStartAt())
                 .endAt(event.getEndAt())
                 .category(event.getCategory())
@@ -99,12 +99,12 @@ public class EventWriteService {
         if (eventManagerCreateDTO.getStartAt() != null) {
             builder.startAt(eventManagerCreateDTO.getStartAt());
         } else {
-            builder.startAt(OffsetDateTime.now());
+            builder.startAt(Instant.now());
         }
         if (eventManagerCreateDTO.getEndAt() != null) {
             builder.endAt(eventManagerCreateDTO.getEndAt());
         } else {
-            builder.endAt(OffsetDateTime.now());
+            builder.endAt(Instant.now());
         }
         if (eventManagerCreateDTO.getCategory() != null) {
             builder.category(eventManagerCreateDTO.getCategory());
@@ -116,7 +116,7 @@ public class EventWriteService {
             builder.attendeeCount(eventManagerCreateDTO.getAttendeeCount());
         }
         builder.likeCount(0);
-        builder.status(EventStatus.PENDING);
+        builder.status(EventStatus.DRAFT);
         Event event = builder.build();
         // Generate slug from title
         event.setSlug(SlugUtils.generateSlug(event.getTitle()));
@@ -156,12 +156,12 @@ public class EventWriteService {
         if (eventAdminCreateDTO.getStartAt() != null) {
             builder.startAt(eventAdminCreateDTO.getStartAt());
         } else {
-            builder.startAt(OffsetDateTime.now());
+            builder.startAt(Instant.now());
         }
         if (eventAdminCreateDTO.getEndAt() != null) {
             builder.endAt(eventAdminCreateDTO.getEndAt());
         } else {
-            builder.endAt(OffsetDateTime.now());
+            builder.endAt(Instant.now());
         }
         if (eventAdminCreateDTO.getCategory() != null) {
             builder.category(eventAdminCreateDTO.getCategory());
@@ -175,7 +175,7 @@ public class EventWriteService {
         if (eventAdminCreateDTO.getStatus() != null) {
             builder.status(eventAdminCreateDTO.getStatus());
         } else {
-            builder.status(EventStatus.PENDING);
+            builder.status(EventStatus.DRAFT);
         }
         builder.likeCount(0);
         Event event = builder.build();
@@ -204,7 +204,7 @@ public class EventWriteService {
         EventStatus oldStatus = event.getStatus();
         EventStatus newStatus = eventStatusUpdateDTO.getStatus() != null
                 ? eventStatusUpdateDTO.getStatus()
-                : EventStatus.PENDING;
+                : EventStatus.DRAFT;
 
         event.setStatus(newStatus);
         eventRepository.save(event);
@@ -225,7 +225,7 @@ public class EventWriteService {
         if (eventStatusUpdateDTO.getStatus() != null) {
             event.setStatus(eventStatusUpdateDTO.getStatus());
         } else {
-            event.setStatus(EventStatus.PENDING);
+            event.setStatus(EventStatus.DRAFT);
         }
         eventRepository.save(event);
         return mapToEventSearchDTO(event, event.getCreatedBy());
@@ -233,16 +233,16 @@ public class EventWriteService {
 
     private void publishStatusChangeNotification(Event event, EventStatus oldStatus,
             EventStatus newStatus, Account admin, String reason) {
-        if (oldStatus == EventStatus.PENDING && newStatus == EventStatus.SCHEDULED) {
+        if (oldStatus == EventStatus.DRAFT && newStatus == EventStatus.PUBLISHED) {
             eventPublisher.publishEvent(new EventApprovedEvent(this, admin, event));
             // Push notification to event creator (manager)
             pushNotificationService.pushNotificationToUser(
                     event.getCreatedBy().getAccountId(),
                     "Sự kiện '" + event.getTitle() + "' của bạn đã được phê duyệt!");
-        } else if (oldStatus == EventStatus.PENDING &&
-                newStatus != EventStatus.SCHEDULED &&
-                newStatus != EventStatus.STARTED &&
-                newStatus != EventStatus.FINISHED) {
+        } else if (oldStatus == EventStatus.DRAFT &&
+                newStatus != EventStatus.PUBLISHED &&
+                newStatus != EventStatus.ONGOING &&
+                newStatus != EventStatus.COMPLETED) {
         } else if (newStatus == EventStatus.CANCELLED) {
             // Get all approved participants to notify them
             List<Account> participants = accountRepository.findApprovedParticipantsByEventId(event.getEventId());
@@ -267,7 +267,7 @@ public class EventWriteService {
     @Transactional
     public EventSearchDTO rejectEvent(Long eventId, Account admin, String reason) {
         Event event = findEvent(eventId);
-        if (event.getStatus() != EventStatus.PENDING) {
+        if (event.getStatus() != EventStatus.DRAFT) {
             throw new IllegalArgumentException("Only PENDING events can be rejected");
         }
         event.setStatus(EventStatus.CANCELLED);
@@ -311,7 +311,7 @@ public class EventWriteService {
             throw new IllegalArgumentException("Attendee count must be greater than or equal to 0.");
         }
         Event event = findEvent(eventId);
-        if (event.getStatus() == EventStatus.CANCELLED || event.getStatus() == EventStatus.FINISHED) {
+        if (event.getStatus() == EventStatus.CANCELLED || event.getStatus() == EventStatus.COMPLETED) {
             throw new IllegalArgumentException("Cannot update details of a CANCELLED or FINISHED event.");
         }
 

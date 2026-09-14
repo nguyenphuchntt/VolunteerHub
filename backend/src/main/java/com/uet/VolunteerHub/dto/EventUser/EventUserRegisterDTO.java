@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -14,8 +14,8 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class EventUserRegisterDTO {
     @FutureOrPresent(message = "Start date must be today or in the future")
-    private OffsetDateTime startAt;
+    private Instant startAt;
 
     @FutureOrPresent(message = "End date must be today or in the future")
-    private OffsetDateTime endAt;
+    private Instant endAt;
 }

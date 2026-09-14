@@ -17,7 +17,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +49,7 @@ public class AdminDashboardService {
         // Users Stats
         long totalUsers = accountRepository.count();
         long newUsers = accountRepository.countByCreateAtBetween(
-                OffsetDateTime.now().minusDays(30), OffsetDateTime.now());
+                Instant.now().minus(30, ChronoUnit.DAYS), Instant.now());
         long activeUsers = accountRepository.countByAccountStatus(AccountStatus.ACTIVE);
         long bannedUsers = accountRepository.countByAccountStatus(AccountStatus.BANNED);
         long inactiveUsers = accountRepository.countByAccountStatus(AccountStatus.INACTIVE);
@@ -71,11 +72,11 @@ public class AdminDashboardService {
 
         // Events Stats
         long totalEvents = eventRepository.count();
-        long pendingEvents = eventRepository.countByStatus(EventStatus.PENDING);
-        long ongoingEvents = eventRepository.countByStatus(EventStatus.STARTED);
-        long finishedEvents = eventRepository.countByStatus(EventStatus.FINISHED);
+        long pendingEvents = eventRepository.countByStatus(EventStatus.DRAFT);
+        long ongoingEvents = eventRepository.countByStatus(EventStatus.ONGOING);
+        long finishedEvents = eventRepository.countByStatus(EventStatus.COMPLETED);
         long cancelledEvents = eventRepository.countByStatus(EventStatus.CANCELLED);
-        long scheduledEvents = eventRepository.countByStatus(EventStatus.SCHEDULED);
+        long scheduledEvents = eventRepository.countByStatus(EventStatus.PUBLISHED);
 
         Long totalAttendeesLong = eventRepository.sumAttendeeCount();
         long totalAttendees = totalAttendeesLong != null ? totalAttendeesLong : 0;
@@ -134,7 +135,7 @@ public class AdminDashboardService {
      */
     @Cacheable(value = "adminDashboard", key = "'chart:' + #type")
     public ChartDataDTO getDashboardChart(String type) {
-        OffsetDateTime sevenDaysAgo = OffsetDateTime.now().minusDays(7);
+        Instant sevenDaysAgo = Instant.now().minus(7, ChronoUnit.DAYS);
         List<Object[]> data = new ArrayList<>();
 
         if ("new_events_last_7_days".equals(type)) {
@@ -226,11 +227,11 @@ public class AdminDashboardService {
      */
     @Transactional(readOnly = true)
     public List<com.uet.VolunteerHub.dto.Event.EventSearchDTO> getPendingEvents() {
-        List<Event> events = eventRepository.findAllByStatus(EventStatus.PENDING);
+        List<Event> events = eventRepository.findAllByStatus(EventStatus.DRAFT);
         return events.stream().map(event -> com.uet.VolunteerHub.dto.Event.EventSearchDTO.builder()
                 .eventId(event.getEventId())
                 .title(event.getTitle())
-                .createAt(event.getCreateAt())
+                .createAt(event.getCreatedAt())
                 .startAt(event.getStartAt())
                 .endAt(event.getEndAt())
                 .category(event.getCategory())
@@ -270,7 +271,7 @@ public class AdminDashboardService {
 
             // Send push notification to event creator (manager)
             if (event.getCreatedBy() != null && oldStatus != newStatus) {
-                if (newStatus == EventStatus.SCHEDULED && oldStatus == EventStatus.PENDING) {
+                if (newStatus == EventStatus.PUBLISHED && oldStatus == EventStatus.DRAFT) {
                     pushNotificationService.pushNotificationToUser(
                             event.getCreatedBy().getAccountId(),
                             "Sự kiện '" + event.getTitle() + "' của bạn đã được phê duyệt!");

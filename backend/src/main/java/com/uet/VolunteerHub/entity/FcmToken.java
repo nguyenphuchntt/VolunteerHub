@@ -23,7 +23,6 @@ public class FcmToken {
     @Column(name = "token", nullable = false, unique = true)
     private String token;
 
-    @NotNull
     @Column(name = "account_id", nullable = false)
     private UUID accountId;
 

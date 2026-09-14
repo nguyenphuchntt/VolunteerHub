@@ -2,11 +2,8 @@ package com.uet.VolunteerHub.service;
 
 import com.uet.VolunteerHub.dto.EventUser.EventUserSearchCriteriaDTO;
 import com.uet.VolunteerHub.dto.EventUser.EventUserSearchDTO;
-import com.uet.VolunteerHub.entity.Account;
-import com.uet.VolunteerHub.entity.Event;
-import com.uet.VolunteerHub.entity.EventMedia;
-import com.uet.VolunteerHub.entity.EventUser;
-import com.uet.VolunteerHub.entity.UserInfo;
+import com.uet.VolunteerHub.entity.*;
+import com.uet.VolunteerHub.entity.Profile;
 import com.uet.VolunteerHub.enums.EventUserStatus;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.EventMediaRepository;
@@ -52,7 +49,7 @@ public class EventUserSearchService {
         return mediaList.stream()
                 .collect(Collectors.toMap(
                         EventMedia::getEventId,
-                        em -> em.getMedia() != null ? em.getMedia().getUrl() : null,
+                        em -> em.getMedia() != null ? mediaDownloadUrl(em.getMedia()) : null,
                         (existing, replacement) -> existing // Keep first if duplicates
                 ));
     }
@@ -61,7 +58,7 @@ public class EventUserSearchService {
      * Map EventUser to DTO with pre-fetched cover image URL
      */
     private EventUserSearchDTO mapToEventUserSearchDTO(EventUser eventUser, Account account,
-            UserInfo userInfo, Event event, String coverImageUrl) {
+                                                       Profile userInfo, Event event, String coverImageUrl) {
         var builder = EventUserSearchDTO.builder()
                 .accountId(eventUser.getAccountId())
                 .eventId(eventUser.getEventId())
@@ -95,16 +92,20 @@ public class EventUserSearchService {
      */
     private String fetchSingleCoverImage(Long eventId) {
         return eventMediaRepository
-                .findFirstByEvent_EventIdOrderByMedia_UploadedAtAsc(eventId)
-                .map(em -> em.getMedia().getUrl())
+                .findFirstByEvent_EventIdOrderByMedia_CreatedAtAsc(eventId)
+                .map(em -> mediaDownloadUrl(em.getMedia()))
                 .orElse(null);
+    }
+
+    private String mediaDownloadUrl(Media media) {
+        return "/api/media/download/" + media.getStorageKey();
     }
 
     public EventUserSearchDTO findByAccountIdAndEventId(UUID accountId, Long eventId) {
         Optional<EventUser> eventUser = eventUserRepository.findByAccountIdAndEventId(accountId, eventId);
         return eventUser.map(value -> {
             Account account = value.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = value.getEvent();
             String coverImageUrl = event != null ? fetchSingleCoverImage(event.getEventId()) : null;
             return mapToEventUserSearchDTO(value, account, userInfo, event, coverImageUrl);
@@ -132,7 +133,7 @@ public class EventUserSearchService {
 
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             String coverImageUrl = event != null ? coverImageMap.get(event.getEventId()) : null;
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
@@ -147,7 +148,7 @@ public class EventUserSearchService {
 
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
         });
@@ -163,7 +164,7 @@ public class EventUserSearchService {
 
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
         });
@@ -183,7 +184,7 @@ public class EventUserSearchService {
 
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             String coverImageUrl = event != null ? coverImageMap.get(event.getEventId()) : null;
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
@@ -202,7 +203,7 @@ public class EventUserSearchService {
 
         return eventUsers.stream().map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             String coverImageUrl = event != null ? coverImageMap.get(event.getEventId()) : null;
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
@@ -217,7 +218,7 @@ public class EventUserSearchService {
 
         return eventUsers.stream().map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
         }).toList();
@@ -235,7 +236,7 @@ public class EventUserSearchService {
 
         return eventUsers.stream().map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             String coverImageUrl = event != null ? coverImageMap.get(event.getEventId()) : null;
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);
@@ -257,7 +258,7 @@ public class EventUserSearchService {
 
         return eventUserPage.map(eventUser -> {
             Account account = eventUser.getAccount();
-            UserInfo userInfo = (account != null) ? account.getUserInfo() : null;
+            Profile userInfo = (account != null) ? account.getUserInfo() : null;
             Event event = eventUser.getEvent();
             String coverImageUrl = event != null ? coverImageMap.get(event.getEventId()) : null;
             return mapToEventUserSearchDTO(eventUser, account, userInfo, event, coverImageUrl);

@@ -5,7 +5,6 @@ import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.Post;
 import com.uet.VolunteerHub.enums.PostStatus;
-import com.uet.VolunteerHub.enums.PostType;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.mapper.PostMapper;
 import com.uet.VolunteerHub.repository.AccountRepository;
@@ -45,7 +44,7 @@ public class PostWriteService {
         Post post = postMapper.toPostEntity(dto);
         
         // Set default postStatus for new posts
-        post.setPostStatus(PostStatus.CREATED);
+        post.setPostStatus(PostStatus.PUBLISHED);
         
         Event event = eventRepository.findById(dto.getEventId())
                 .orElseThrow(() -> new ResourceNotFoundException("Error: Event not found with id " + dto.getEventId()));

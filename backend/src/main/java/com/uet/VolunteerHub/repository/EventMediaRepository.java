@@ -21,7 +21,7 @@ public interface EventMediaRepository extends JpaRepository<EventMedia, EventMed
 
     // Get first media for an event (cover image)
     @EntityGraph(attributePaths = { "media" })
-    Optional<EventMedia> findFirstByEvent_EventIdOrderByMedia_UploadedAtAsc(Long eventId);
+    Optional<EventMedia> findFirstByEvent_EventIdOrderByMedia_CreatedAtAsc(Long eventId);
 
     /**
      * Batch fetch first media for multiple events (avoids N+1 query problem).
@@ -29,12 +29,12 @@ public interface EventMediaRepository extends JpaRepository<EventMedia, EventMed
      */
     @Query(value = """
             SELECT em.* FROM event_media em
-            INNER JOIN media m ON em.media_id = m.id
+            INNER JOIN media m ON em.media_id = m.media_id
             WHERE em.event_id IN :eventIds
-            AND m.uploaded_at = (
-                SELECT MIN(m2.uploaded_at)
+            AND m.created_at = (
+                SELECT MIN(m2.created_at)
                 FROM event_media em2
-                INNER JOIN media m2 ON em2.media_id = m2.id
+                INNER JOIN media m2 ON em2.media_id = m2.media_id
                 WHERE em2.event_id = em.event_id
             )
             """, nativeQuery = true)

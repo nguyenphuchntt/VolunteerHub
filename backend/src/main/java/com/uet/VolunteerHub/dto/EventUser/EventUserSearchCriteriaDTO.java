@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -17,14 +17,14 @@ import java.util.UUID;
 public class EventUserSearchCriteriaDTO {
     private Long eventId;
     private UUID accountId;
-    private OffsetDateTime registeredAtTo;
-    private OffsetDateTime registeredAtFrom;
+    private Instant registeredAtTo;
+    private Instant registeredAtFrom;
     private EventUserStatus status;
     private EventUserRole role;
-    private OffsetDateTime startAtFrom;
-    private OffsetDateTime startAtTo;
-    private OffsetDateTime endAtFrom;
-    private OffsetDateTime endAtTo;
+    private Instant startAtFrom;
+    private Instant startAtTo;
+    private Instant endAtFrom;
+    private Instant endAtTo;
     private String firstName;
     private String lastName;
     private String eventTitle;
