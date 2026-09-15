@@ -19,12 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Security configuration for the application
- */
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class WebSecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -37,53 +33,28 @@ public class WebSecurityConfig {
         this.accountRepository = accountRepository;
     }
 
-    /**
-     * Creates JWT authentication filter
-     * @return JWT filter instance
-     */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtTokenProvider, accountRepository);
     }
 
-    /**
-     * Creates password encoder bean
-     * @return BCrypt password encoder
-     */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder(12);
     }
 
-    /**
-     * Creates user details service for authentication
-     * @param accountRepository repository to load user data
-     * @return user details service
-     */
     @Bean
     public UserDetailsService userDetailsService(AccountRepository accountRepository) {
         return input -> accountRepository.findByUsernameOrEmail(input, input)
                 .orElseThrow(() -> new ResourceNotFoundException("Account " + input + " not found"));
     }
 
-    /**
-     * Creates authentication manager
-     * @param authenticationConfiguration configuration
-     * @return authentication manager
-     * @throws Exception if configuration fails
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
             throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    /**
-     * Configures security filter chain
-     * @param http HTTP security configuration
-     * @return configured filter chain
-     * @throws Exception if configuration fails
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

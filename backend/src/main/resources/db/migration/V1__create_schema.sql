@@ -169,7 +169,7 @@ CREATE TABLE refresh_token (
     CONSTRAINT uq_refresh_token_hash UNIQUE (token_hash)
 );
 
-CREATE INDEX idx_refresh_tokens_account ON refresh_tokens (account_id);
+CREATE INDEX idx_refresh_tokens_account ON refresh_token (account_id);
 
 CREATE TABLE notification (
     notification_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
