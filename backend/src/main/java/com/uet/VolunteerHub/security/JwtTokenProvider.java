@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -45,18 +44,17 @@ public class JwtTokenProvider {
         }
     }
 
-    public String generateAccessToken(Authentication authentication) {
-        return generateToken(authentication, accessTokenExpirationTime, "access");
+    public String generateAccessToken(Account account) {
+        return generateToken(account, accessTokenExpirationTime, "access");
     }
 
-    public String generateRefreshToken(Authentication authentication) {
-        return generateToken(authentication, refreshTokenExpirationTime, "refresh");
+    public String generateRefreshToken(Account account) {
+        return generateToken(account, refreshTokenExpirationTime, "refresh");
     }
 
-    private String generateToken(Authentication authentication, long expirationTime, String tokenType) {
-        if (authentication == null || !(authentication.getPrincipal() instanceof Account account)
-                || account.getAccountId() == null) {
-            throw new IllegalArgumentException("Authentication must contain an account with an ID");
+    private String generateToken(Account account, long expirationTime, String tokenType) {
+        if (account == null || account.getAccountId() == null) {
+            throw new IllegalArgumentException("Account must have an ID to generate a token");
         }
 
         Instant issuedAt = Instant.now();
@@ -74,6 +72,22 @@ public class JwtTokenProvider {
                 .expiration(Date.from(expiresAt))
                 .signWith(signingKey, Jwts.SIG.HS512)
                 .compact();
+    }
+
+    public Claims parseAccessToken(String token) {
+        Claims claims = parseJwtToken(token);
+        if (!"access".equals(claims.get("type", String.class))) {
+            throw new IllegalArgumentException("Access token required");
+        }
+        return claims;
+    }
+
+    public long getAccessTokenExpirationTime() {
+        return accessTokenExpirationTime;
+    }
+
+    public long getRefreshTokenExpirationTime() {
+        return refreshTokenExpirationTime;
     }
 
     public Claims parseJwtToken(String token) {

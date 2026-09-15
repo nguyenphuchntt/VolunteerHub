@@ -54,7 +54,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
             if (jwt != null) {
-                UUID accountId = UUID.fromString(jwtTokenProvider.parseJwtToken(jwt).getSubject());
+                UUID accountId = UUID.fromString(jwtTokenProvider.parseAccessToken(jwt).getSubject());
                 Account account = accountRepository.findByIdFresh(accountId)
                         .orElseThrow(() -> new EntityNotFoundException("Account with ID: " + accountId + " not found"));
                 // Check if account is BANNED
