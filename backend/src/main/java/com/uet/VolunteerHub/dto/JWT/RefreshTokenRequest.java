@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.JWT;
 
 import jakarta.validation.constraints.NotBlank;
 

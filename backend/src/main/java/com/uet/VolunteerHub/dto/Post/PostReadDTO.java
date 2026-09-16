@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Post;
 
 import com.uet.VolunteerHub.enums.PostStatus;
 import com.uet.VolunteerHub.enums.PostVisibility;

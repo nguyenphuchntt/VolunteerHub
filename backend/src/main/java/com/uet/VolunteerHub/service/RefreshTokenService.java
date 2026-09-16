@@ -40,7 +40,9 @@ public class RefreshTokenService {
         entity.setExpiresAt(expiresAt);
         refreshTokenRepository.save(entity);
 
-        return new IssuedTokens(jwtTokenProvider.generateAccessToken(account), refreshToken,
+        return new IssuedTokens(
+                jwtTokenProvider.generateAccessToken(account),
+                refreshToken,
                 jwtTokenProvider.getAccessTokenExpirationTime());
     }
 
@@ -66,6 +68,7 @@ public class RefreshTokenService {
         });
     }
 
+    // find valid refresh token in db
     private RefreshToken findActive(String rawRefreshToken) {
         if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
             throw invalidRefreshToken();

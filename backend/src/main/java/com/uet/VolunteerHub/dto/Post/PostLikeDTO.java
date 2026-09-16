@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Post;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;

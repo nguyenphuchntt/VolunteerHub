@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Media;
 
 import java.time.Instant;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.notification;
 
 import com.uet.VolunteerHub.enums.DestinationType;
 import com.uet.VolunteerHub.enums.NotificationType;

@@ -1,4 +1,4 @@
-package com.uet.VolunteerHub.dto;
+package com.uet.VolunteerHub.dto.Post;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

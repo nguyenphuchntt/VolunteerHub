@@ -12,9 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for email verification operations
- */
 @RestController
 @RequestMapping("/api/auth/email")
 @Tag(name = "Email Verification", description = "APIs for email verification functionality")
