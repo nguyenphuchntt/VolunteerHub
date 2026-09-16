@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
@@ -23,16 +23,18 @@ const fadeIn = keyframes`
 const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
 
-  const [status, setStatus] = useState("loading"); // loading, valid, success, error, no-token
+  const [status, setStatus] = useState("input"); // input, success, error
   const [message, setMessage] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [remainingAttempts, setRemainingAttempts] = useState(null);
 
   // Light green theme colors
   const colors = {
@@ -47,36 +49,17 @@ const ResetPassword = () => {
     border: "#a5d6a7",
   };
 
-  useEffect(() => {
-    const validateToken = async () => {
-      if (!token) {
-        setStatus("no-token");
-        setMessage("Không tìm thấy token đặt lại mật khẩu. Vui lòng kiểm tra lại link trong email.");
-        return;
-      }
-
-      try {
-        const response = await passwordService.validateToken(token);
-        if (response.success) {
-          setStatus("valid");
-        } else {
-          setStatus("error");
-          setMessage(response.message || "Token không hợp lệ hoặc đã hết hạn.");
-        }
-      } catch (err) {
-        setStatus("error");
-        const errorMsg = err.response?.data?.message || "Token không hợp lệ hoặc đã hết hạn.";
-        setMessage(errorMsg);
-      }
-    };
-
-    validateToken();
-  }, [token]);
-
   const handleResetPassword = async () => {
     setError("");
 
-    // Validation
+    if (!email) {
+      setError("Vui lòng nhập email.");
+      return;
+    }
+    if (!otp || otp.length !== 6) {
+      setError("Vui lòng nhập mã OTP 6 chữ số.");
+      return;
+    }
     if (newPassword.length < 8) {
       setError("Mật khẩu phải có ít nhất 8 ký tự.");
       return;
@@ -87,33 +70,26 @@ const ResetPassword = () => {
     }
 
     setLoading(true);
+    setRemainingAttempts(null);
     try {
-      const response = await passwordService.resetPassword(token, newPassword, confirmPassword);
+      const response = await passwordService.resetPassword(email, otp, newPassword, confirmPassword);
       if (response.success) {
         setStatus("success");
         setMessage(response.message || "Mật khẩu đã được đặt lại thành công!");
       } else {
         setError(response.message || "Không thể đặt lại mật khẩu. Vui lòng thử lại.");
+        setRemainingAttempts(response.remainingAttempts);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+      const responseData = err.response?.data;
+      setError(responseData?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+      setRemainingAttempts(responseData?.remainingAttempts);
     } finally {
       setLoading(false);
     }
   };
 
   const renderContent = () => {
-    if (status === "loading") {
-      return (
-        <Box sx={{ textAlign: "center" }}>
-          <CircularProgress size={60} sx={{ color: colors.primary, mb: 3 }} />
-          <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text }}>
-            Đang kiểm tra...
-          </Typography>
-        </Box>
-      );
-    }
-
     if (status === "success") {
       return (
         <Box sx={{ textAlign: "center" }}>
@@ -148,19 +124,19 @@ const ResetPassword = () => {
       );
     }
 
-    if (status === "error" || status === "no-token") {
+    if (status === "error") {
       return (
         <Box sx={{ textAlign: "center" }}>
           <Error sx={{ fontSize: 80, color: "#ef4444", mb: 3 }} />
           <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 2 }}>
-            Không hợp lệ
+            Không thể đặt lại mật khẩu
           </Typography>
           <Typography sx={{ color: colors.textSecondary, mb: 4, fontSize: 16 }}>
             {message}
           </Typography>
           <Button
             variant="contained"
-            onClick={() => navigate("/auth")}
+            onClick={() => navigate("/signin")}
             sx={{
               height: 48,
               borderRadius: "50px",
@@ -182,7 +158,6 @@ const ResetPassword = () => {
       );
     }
 
-    // Valid token - show password reset form
     return (
       <Box>
         <Box sx={{ textAlign: "center", mb: 4 }}>
@@ -191,15 +166,76 @@ const ResetPassword = () => {
             Đặt lại mật khẩu
           </Typography>
           <Typography sx={{ color: colors.textSecondary, fontSize: 15 }}>
-            Nhập mật khẩu mới cho tài khoản của bạn
+            Nhập email, mã xác nhận và mật khẩu mới
           </Typography>
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: "12px" }} onClose={() => setError("")}>
+          <Alert severity="error" sx={{ mb: 2, borderRadius: "12px" }} onClose={() => { setError(""); setRemainingAttempts(null); }}>
             {error}
+            {remainingAttempts !== null && remainingAttempts > 0 && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Còn {remainingAttempts} lần thử
+              </Typography>
+            )}
           </Alert>
         )}
+
+        <TextField
+          fullWidth
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          variant="outlined"
+          sx={{
+            mb: 2.5,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "12px",
+              backgroundColor: "#f8fdf8",
+              "& fieldset": { borderColor: colors.border },
+              "&:hover fieldset": { borderColor: colors.primary },
+              "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+            },
+            "& .MuiInputLabel-root": { color: colors.textSecondary },
+            "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+          }}
+        />
+
+        <TextField
+          fullWidth
+          label="Mã xác nhận (6 chữ số)"
+          value={otp}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, "");
+            if (value.length <= 6) {
+              setOtp(value);
+            }
+          }}
+          variant="outlined"
+          inputProps={{
+            maxLength: 6,
+            pattern: "\\d{6}",
+            style: {
+              fontSize: "20px",
+              letterSpacing: "6px",
+              textAlign: "center",
+              fontFamily: "'Courier New', monospace",
+            },
+          }}
+          sx={{
+            mb: 2.5,
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "12px",
+              backgroundColor: "#f8fdf8",
+              "& fieldset": { borderColor: colors.border },
+              "&:hover fieldset": { borderColor: colors.primary },
+              "&.Mui-focused fieldset": { borderColor: colors.primary, borderWidth: 2 },
+            },
+            "& .MuiInputLabel-root": { color: colors.textSecondary },
+            "& .MuiInputLabel-root.Mui-focused": { color: colors.primary },
+          }}
+        />
 
         <TextField
           fullWidth
@@ -238,7 +274,7 @@ const ResetPassword = () => {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && newPassword && confirmPassword && !loading) {
+            if (e.key === "Enter" && newPassword && confirmPassword) {
               handleResetPassword();
             }
           }}
@@ -269,21 +305,25 @@ const ResetPassword = () => {
         <Button
           variant="contained"
           fullWidth
-          disabled={!newPassword || !confirmPassword || loading}
+          disabled={!email || !otp || otp.length !== 6 || !newPassword || !confirmPassword || loading}
           onClick={handleResetPassword}
           sx={{
             height: 48,
             borderRadius: "50px",
-            background: newPassword && confirmPassword
+            background: (email && otp && otp.length === 6 && newPassword && confirmPassword)
               ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
               : "#e0e0e0",
-            color: newPassword && confirmPassword ? colors.white : "#9e9e9e",
+            color: (email && otp && otp.length === 6 && newPassword && confirmPassword)
+              ? colors.white
+              : "#9e9e9e",
             fontWeight: 700,
             fontSize: 15,
             textTransform: "none",
-            boxShadow: newPassword && confirmPassword ? "0 6px 20px rgba(67, 160, 71, 0.35)" : "none",
+            boxShadow: (email && otp && otp.length === 6 && newPassword && confirmPassword)
+              ? "0 6px 20px rgba(67, 160, 71, 0.35)"
+              : "none",
             "&:hover": {
-              background: newPassword && confirmPassword
+              background: (email && otp && otp.length === 6 && newPassword && confirmPassword)
                 ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
                 : "#e0e0e0",
             },
@@ -299,7 +339,7 @@ const ResetPassword = () => {
         <Button
           variant="text"
           fullWidth
-          onClick={() => navigate("/auth")}
+          onClick={() => navigate("/signin")}
           sx={{ mt: 2, color: colors.primary, fontWeight: 600, textTransform: "none" }}
         >
           Quay lại đăng nhập

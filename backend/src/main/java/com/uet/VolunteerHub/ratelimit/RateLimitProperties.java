@@ -12,6 +12,7 @@ public class RateLimitProperties {
     private LimitConfig publicEndpoint = new LimitConfig(50, 60);
     private LimitConfig forgotPassword = new LimitConfig(3, 60);
     private LimitConfig resendVerification = new LimitConfig(3, 60);
+    private LimitConfig otpVerify = new LimitConfig(10, 60);
 
     public boolean isEnabled() {
         return enabled;
@@ -67,6 +68,14 @@ public class RateLimitProperties {
 
     public void setResendVerification(LimitConfig resendVerification) {
         this.resendVerification = resendVerification;
+    }
+
+    public LimitConfig getOtpVerify() {
+        return otpVerify;
+    }
+
+    public void setOtpVerify(LimitConfig otpVerify) {
+        this.otpVerify = otpVerify;
     }
 
     public static class LimitConfig {

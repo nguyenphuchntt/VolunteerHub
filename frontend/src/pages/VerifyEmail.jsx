@@ -21,16 +21,18 @@ const fadeIn = keyframes`
 const VerifyEmail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const emailParam = searchParams.get("email");
 
-  const [status, setStatus] = useState("loading"); // loading, success, error, no-token
+  const [email, setEmail] = useState(emailParam || "");
+  const [otp, setOtp] = useState("");
+  const [status, setStatus] = useState("input"); // input, verifying, success, error
   const [message, setMessage] = useState("");
-  const [resendEmail, setResendEmail] = useState("");
+  const [remainingAttempts, setRemainingAttempts] = useState(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
-  
-  // Ref to prevent duplicate API calls (React StrictMode calls useEffect twice)
-  const verificationAttempted = useRef(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  const cooldownTimerRef = useRef(null);
 
   // Light green theme colors
   const colors = {
@@ -45,69 +47,87 @@ const VerifyEmail = () => {
   };
 
   useEffect(() => {
-    const verifyEmailToken = async () => {
-      // Prevent duplicate calls from React StrictMode
-      if (verificationAttempted.current) {
-        return;
-      }
-      
-      if (!token) {
-        setStatus("no-token");
-        setMessage("Không tìm thấy token xác nhận. Vui lòng kiểm tra lại link trong email.");
-        return;
-      }
-
-      // Mark as attempted before making the API call
-      verificationAttempted.current = true;
-
-      try {
-        const response = await emailService.verifyEmail(token);
-        if (response.success) {
-          setStatus("success");
-          setMessage(response.message || "Email đã được xác nhận thành công! Bạn có thể đăng nhập ngay bây giờ.");
-        } else {
-          setStatus("error");
-          setMessage(response.message || "Token không hợp lệ hoặc đã hết hạn.");
-        }
-      } catch (err) {
-        // Check if the error response contains success: true (e.g., "already verified" case)
-        const responseData = err.response?.data;
-        if (responseData?.success) {
-          setStatus("success");
-          setMessage(responseData.message || "Email đã được xác nhận thành công!");
-        } else {
-          setStatus("error");
-          const errorMsg = responseData?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
-          setMessage(errorMsg);
-        }
+    return () => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current);
       }
     };
+  }, []);
 
-    verifyEmailToken();
-  }, [token]);
+  const startCooldownTimer = (seconds) => {
+    setResendCooldown(seconds);
+    if (cooldownTimerRef.current) {
+      clearInterval(cooldownTimerRef.current);
+    }
+    cooldownTimerRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownTimerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
-  const handleResendEmail = async () => {
-    if (!resendEmail) return;
-    
+  const handleVerifyOtp = async () => {
+    if (!email || !otp) return;
+
+    setStatus("verifying");
+    setMessage("");
+    try {
+      const response = await emailService.verifyOtp(email, otp);
+      if (response.success) {
+        setStatus("success");
+        setMessage(response.message || "Email đã được xác nhận thành công!");
+      } else {
+        setStatus("error");
+        setMessage(response.message || "Mã xác nhận không hợp lệ.");
+        setRemainingAttempts(response.remainingAttempts);
+      }
+    } catch (err) {
+      const responseData = err.response?.data;
+      setStatus("error");
+      setMessage(responseData?.message || "Có lỗi xảy ra. Vui lòng thử lại.");
+      setRemainingAttempts(responseData?.remainingAttempts);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!email) return;
+
     setResendLoading(true);
     setResendMessage("");
     try {
-      const response = await emailService.resendVerificationEmail(resendEmail);
-      setResendMessage(response.message || "Đã gửi lại email xác nhận.");
+      const response = await emailService.resendOtp(email);
+      setResendMessage(response.message || "Đã gửi lại mã xác nhận.");
+      if (response.resendCooldownSeconds) {
+        startCooldownTimer(response.resendCooldownSeconds);
+      }
     } catch (err) {
-      setResendMessage(err.response?.data?.message || "Không thể gửi email. Vui lòng thử lại.");
+      const errorData = err.response?.data;
+      setResendMessage(errorData?.message || "Không thể gửi mã. Vui lòng thử lại.");
+      if (errorData?.resendCooldownSeconds) {
+        startCooldownTimer(errorData.resendCooldownSeconds);
+      }
     } finally {
       setResendLoading(false);
     }
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && email && otp && status !== "verifying") {
+      handleVerifyOtp();
+    }
+  };
+
   const renderContent = () => {
-    if (status === "loading") {
+    if (status === "verifying") {
       return (
         <Box sx={{ textAlign: "center" }}>
           <CircularProgress size={60} sx={{ color: colors.primary, mb: 3 }} />
           <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text }}>
-            Đang xác nhận email...
+            Đang xác nhận...
           </Typography>
         </Box>
       );
@@ -147,36 +167,31 @@ const VerifyEmail = () => {
       );
     }
 
-    // Error or no-token state
+    // Input or error state
     return (
       <Box sx={{ textAlign: "center" }}>
-        <Error sx={{ fontSize: 80, color: "#ef4444", mb: 3 }} />
+        <Email sx={{ fontSize: 80, color: colors.primary, mb: 3 }} />
         <Typography variant="h4" sx={{ fontWeight: 700, color: colors.text, mb: 2 }}>
-          Xác nhận thất bại
+          Xác nhận email
         </Typography>
         <Typography sx={{ color: colors.textSecondary, mb: 4, fontSize: 16 }}>
-          {message}
+          Nhập mã xác nhận đã được gửi tới email của bạn
         </Typography>
 
-        {/* Resend email section */}
-        <Box sx={{ 
-          mt: 4, 
-          p: 3, 
-          backgroundColor: "rgba(255, 255, 255, 0.8)", 
+        <Box sx={{
+          mt: 4,
+          p: 3,
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
           borderRadius: "16px",
           maxWidth: 400,
           mx: "auto"
         }}>
-          <Email sx={{ fontSize: 40, color: colors.primary, mb: 2 }} />
-          <Typography sx={{ fontWeight: 600, color: colors.text, mb: 2 }}>
-            Gửi lại email xác nhận
-          </Typography>
           <TextField
             fullWidth
             type="email"
-            label="Nhập email của bạn"
-            value={resendEmail}
-            onChange={(e) => setResendEmail(e.target.value)}
+            label="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             variant="outlined"
             sx={{
               mb: 2,
@@ -186,31 +201,95 @@ const VerifyEmail = () => {
               },
             }}
           />
+          <TextField
+            fullWidth
+            label="Mã xác nhận (6 chữ số)"
+            value={otp}
+            onChange={(e) => {
+              const value = e.target.value.replace(/\D/g, "");
+              if (value.length <= 6) {
+                setOtp(value);
+              }
+            }}
+            onKeyPress={handleKeyPress}
+            variant="outlined"
+            inputProps={{
+              maxLength: 6,
+              pattern: "\\d{6}",
+              style: {
+                fontSize: "24px",
+                letterSpacing: "8px",
+                textAlign: "center",
+                fontFamily: "'Courier New', monospace"
+              }
+            }}
+            sx={{
+              mb: 2,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "12px",
+                backgroundColor: "#f8fdf8",
+              },
+            }}
+          />
+          {message && status === "error" && (
+            <Alert
+              severity="error"
+              sx={{ mb: 2, borderRadius: "12px" }}
+            >
+              {message}
+              {remainingAttempts !== null && remainingAttempts > 0 && (
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Còn {remainingAttempts} lần thử
+                </Typography>
+              )}
+            </Alert>
+          )}
+          <Button
+            variant="contained"
+            fullWidth
+            disabled={!email || !otp || otp.length !== 6}
+            onClick={handleVerifyOtp}
+            sx={{
+              height: 48,
+              borderRadius: "50px",
+              background: (email && otp && otp.length === 6)
+                ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
+                : "#e0e0e0",
+              color: (email && otp && otp.length === 6) ? colors.white : "#9e9e9e",
+              fontWeight: 600,
+              textTransform: "none",
+              mb: 2,
+            }}
+          >
+            Xác nhận
+          </Button>
+
           {resendMessage && (
-            <Alert 
-              severity="info" 
+            <Alert
+              severity="info"
               sx={{ mb: 2, borderRadius: "12px" }}
             >
               {resendMessage}
             </Alert>
           )}
           <Button
-            variant="contained"
+            variant="text"
             fullWidth
-            disabled={!resendEmail || resendLoading}
-            onClick={handleResendEmail}
+            disabled={!email || resendLoading || resendCooldown > 0}
+            onClick={handleResendOtp}
             sx={{
-              height: 44,
-              borderRadius: "50px",
-              background: resendEmail
-                ? `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`
-                : "#e0e0e0",
-              color: resendEmail ? colors.white : "#9e9e9e",
+              color: colors.primary,
               fontWeight: 600,
-              textTransform: "none",
+              textTransform: "none"
             }}
           >
-            {resendLoading ? <CircularProgress size={24} color="inherit" /> : "Gửi lại email"}
+            {resendLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : resendCooldown > 0 ? (
+              `Gửi lại sau ${resendCooldown}s`
+            ) : (
+              "Gửi lại mã"
+            )}
           </Button>
         </Box>
 

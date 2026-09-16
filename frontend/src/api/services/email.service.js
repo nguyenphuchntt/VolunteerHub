@@ -1,21 +1,15 @@
 import api from '../api';
 
 export const emailService = {
-  // GET /api/auth/email/verify?token=
-  async verifyEmail(token) {
-    const response = await api.get('/auth/email/verify', { params: { token } });
+  // POST /api/auth/email/verify-otp
+  async verifyOtp(email, otp) {
+    const response = await api.post('/auth/email/verify-otp', { email, otp });
     return response.data;
   },
 
-  // GET /api/auth/email/validate-token?token=
-  async validateToken(token) {
-    const response = await api.get('/auth/email/validate-token', { params: { token } });
-    return response.data;
-  },
-
-  // POST /api/auth/email/resend
-  async resendVerificationEmail(email) {
-    const response = await api.post('/auth/email/resend', { email });
+  // POST /api/auth/email/resend-otp
+  async resendOtp(email) {
+    const response = await api.post('/auth/email/resend-otp', { email });
     return response.data;
   },
 };

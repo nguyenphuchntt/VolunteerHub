@@ -60,7 +60,7 @@ public class Account implements UserDetails, CredentialsContainer {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "account", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Profile userInfo;
 
     @Override

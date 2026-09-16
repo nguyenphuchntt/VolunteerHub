@@ -64,17 +64,6 @@ public class UserController {
     }
 
     /**
-     * Register new user account
-     * @param accountUserRegisterDTO registration data
-     * @return created user
-     */
-    @PostMapping("/register")
-    public ResponseEntity<UserSearchDTO> registerAccount(@Valid @RequestBody AccountUserRegisterDTO accountUserRegisterDTO) {
-        UserSearchDTO userSearchDTO = userWriteService.registerAccount(accountUserRegisterDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userSearchDTO);
-    }
-
-    /**
      * Get followers count
      * @param accountId account ID
      * @return number of followers

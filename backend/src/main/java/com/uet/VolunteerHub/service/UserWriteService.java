@@ -16,17 +16,13 @@ import com.uet.VolunteerHub.dto.Account.AccountPasswordChangeDTO;
 import com.uet.VolunteerHub.dto.Account.AccountPasswordDTO;
 import com.uet.VolunteerHub.dto.Account.AccountRoleUpdateDTO;
 import com.uet.VolunteerHub.dto.Account.AccountStatusUpdateDTO;
-import com.uet.VolunteerHub.dto.Account.AccountUserRegisterDTO;
 import com.uet.VolunteerHub.dto.Account.UserProfileUpdateDTO;
 import com.uet.VolunteerHub.dto.Account.UserSearchDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.enums.AccountStatus;
-import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.exception.ResourceAlreadyExistsException;
 import com.uet.VolunteerHub.exception.ResourceNotFoundException;
 import com.uet.VolunteerHub.repository.AccountRepository;
-import com.uet.VolunteerHub.repository.EventRepository;
-import com.uet.VolunteerHub.repository.EventUserRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.java.Log;
@@ -38,20 +34,13 @@ import lombok.extern.java.Log;
 @Service
 public class UserWriteService {
     private final AccountRepository accountRepository;
-    private final EventRepository eventRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EventUserRepository eventUserRepository;
-    private final EmailVerificationService emailVerificationService;
 
     @Autowired
-    public UserWriteService(AccountRepository accountRepository, EventRepository eventRepository,
-                            PasswordEncoder passwordEncoder, EventUserRepository eventUserRepository,
-                            EmailVerificationService emailVerificationService) {
+    public UserWriteService(AccountRepository accountRepository,
+                            PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
-        this.eventRepository = eventRepository;
         this.passwordEncoder = passwordEncoder;
-        this.eventUserRepository = eventUserRepository;
-        this.emailVerificationService = emailVerificationService;
     }
 
     private UserSearchDTO mapToUserSearchDTO(Account account, Profile userInfo) {
@@ -210,59 +199,6 @@ public class UserWriteService {
         accountRepository.save(account);
         return mapToUserSearchDTO(account, accountAndUserInfo.getSecond());
     }
-
-    /**
-     * Registers a new user account with USER role and INACTIVE status.
-     * Sends verification email and validates username/email uniqueness.
-     * 
-     * @param accountUserRegisterDTO registration data including credentials
-     * @return UserSearchDTO with created account details
-     * @throws IllegalArgumentException if passwords don't match
-     * @throws ResourceAlreadyExistsException if username/email already exists
-     */
-    @Transactional
-    public UserSearchDTO registerAccount(AccountUserRegisterDTO accountUserRegisterDTO) {
-        if (!accountUserRegisterDTO.getConfirmPassword().equals(accountUserRegisterDTO.getPassword())) {
-            throw new IllegalArgumentException("Password does not match");
-        }
-        
-        // Explicit validation BEFORE save to prevent email being sent for duplicate accounts
-        // This is important because @Transactional delays constraint violations until commit,
-        // which happens AFTER sendVerificationEmail() is called
-        if (accountRepository.existsByUsername(accountUserRegisterDTO.getUsername())) {
-            throw new ResourceAlreadyExistsException("Username " + accountUserRegisterDTO.getUsername() + " is already in use");
-        }
-        if (accountRepository.existsByEmail(accountUserRegisterDTO.getEmail())) {
-            throw new ResourceAlreadyExistsException("Email " + accountUserRegisterDTO.getEmail() + " is already in use");
-        }
-        
-        Account.AccountBuilder accountBuilder = Account.builder();
-        accountBuilder.email(accountUserRegisterDTO.getEmail());
-        accountBuilder.username(accountUserRegisterDTO.getUsername());
-        accountBuilder.password(passwordEncoder.encode(accountUserRegisterDTO.getPassword()));
-        accountBuilder.accountStatus(AccountStatus.INACTIVE);
-        accountBuilder.role(UserRole.USER);
-        Account account = accountBuilder.build();
-        Profile userInfo = new Profile();
-        try {
-            userInfo.setAccount(account);
-            account.setUserInfo(userInfo);
-            accountRepository.save(account);
-        } catch (DataIntegrityViolationException e) {
-            // Fallback for race conditions - in case another request creates the same account
-            // between our check and save
-            String error = e.getMessage();
-            if (error.contains("uk_account_email")) {
-                throw new ResourceAlreadyExistsException("Email " + accountUserRegisterDTO.getEmail() + " is already in use");
-            }
-            if (error.contains("uk_account_username")) {
-                throw new ResourceAlreadyExistsException("Username " + accountUserRegisterDTO.getUsername() + " is already in use");
-            } else throw new RuntimeException("Error: " + error);
-        }
-        emailVerificationService.sendVerificationEmail(account);
-        return mapToUserSearchDTO(account, userInfo);
-    }
-
 
     /**
      * Creates a new account by admin with custom role and status.

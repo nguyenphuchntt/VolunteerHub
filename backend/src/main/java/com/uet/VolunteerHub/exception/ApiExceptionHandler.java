@@ -164,6 +164,26 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 java.util.Map.of("message", "Your account has been banned"),
                 new HttpHeaders(), HttpStatus.FORBIDDEN, request);
     }
+
+    /**
+     * Handles OTP verification failures (invalid, expired, locked, cooldown, quota).
+     * The HTTP status is carried by the exception so callers map it directly.
+     *
+     * @param ex the exception
+     * @param request web request
+     * @return response with the machine-readable OTP error code
+     */
+    @ExceptionHandler(OtpException.class)
+    ResponseEntity<Object> handleOtpException(OtpException ex, WebRequest request) {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("success", false);
+        body.put("code", ex.getCode());
+        body.put("message", ex.getMessage());
+        if (ex.getRemainingAttempts() != null) {
+            body.put("remainingAttempts", ex.getRemainingAttempts());
+        }
+        return super.handleExceptionInternal(ex, body, new HttpHeaders(), ex.getStatus(), request);
+    }
 }
 
 
