@@ -1,7 +1,7 @@
 package com.uet.VolunteerHub.mapper;
 
-import com.uet.VolunteerHub.dto.CommentCreateDTO;
-import com.uet.VolunteerHub.dto.CommentReadDTO;
+import com.uet.VolunteerHub.dto.Post.CommentCreateDTO;
+import com.uet.VolunteerHub.dto.Post.CommentReadDTO;
 import com.uet.VolunteerHub.entity.Comment;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

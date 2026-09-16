@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.controller.notification;
 
-import com.uet.VolunteerHub.dto.FcmTokenDTO;
+import com.uet.VolunteerHub.dto.FCM.FcmTokenDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.PushNotificationService;
 import jakarta.validation.Valid;

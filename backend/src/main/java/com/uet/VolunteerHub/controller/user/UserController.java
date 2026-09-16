@@ -1,7 +1,6 @@
 package com.uet.VolunteerHub.controller.user;
 
 import com.uet.VolunteerHub.dto.Account.*;
-import com.uet.VolunteerHub.dto.FollowUserDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.FollowUserService;
 import com.uet.VolunteerHub.service.UserSearchService;

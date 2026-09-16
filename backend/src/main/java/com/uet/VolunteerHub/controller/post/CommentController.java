@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.controller.post;
 
-import com.uet.VolunteerHub.dto.CommentReadDTO;
+import com.uet.VolunteerHub.dto.Post.CommentReadDTO;
 import com.uet.VolunteerHub.dto.Post.CreateCommentRequest;
 import com.uet.VolunteerHub.dto.Post.CreateCommentResponse;
 import com.uet.VolunteerHub.service.CommentService;
@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
-import com.uet.VolunteerHub.dto.CommentCreateDTO;
+import com.uet.VolunteerHub.dto.Post.CommentCreateDTO;
 
 /**
  * REST controller for comment operations
@@ -96,7 +96,7 @@ public class CommentController {
     @PatchMapping("/{commentId}/content")
     public ResponseEntity<CommentReadDTO> updateCommentContent(
             @PathVariable Long commentId,
-            @RequestBody @Valid com.uet.VolunteerHub.dto.CommentUpdateContentDTO dto) {
+            @RequestBody @Valid com.uet.VolunteerHub.dto.Post.CommentUpdateContentDTO dto) {
         CommentReadDTO updatedComment = commentService.updateCommentContent(commentId, dto);
         return ResponseEntity.ok(updatedComment);
     }

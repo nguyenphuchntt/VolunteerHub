@@ -1,10 +1,6 @@
 package com.uet.VolunteerHub.controller.user;
 
-import com.uet.VolunteerHub.dto.Account.AccountPasswordChangeDTO;
-import com.uet.VolunteerHub.dto.Account.AccountPasswordDTO;
-import com.uet.VolunteerHub.dto.Account.UserProfileUpdateDTO;
-import com.uet.VolunteerHub.dto.Account.UserSearchDTO;
-import com.uet.VolunteerHub.dto.FollowUserDTO;
+import com.uet.VolunteerHub.dto.Account.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.FollowUserService;
 import com.uet.VolunteerHub.service.UserSearchService;

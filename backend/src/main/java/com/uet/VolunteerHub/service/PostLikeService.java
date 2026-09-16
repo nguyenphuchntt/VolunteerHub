@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.PostLikeDTO;
+import com.uet.VolunteerHub.dto.Post.PostLikeDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.PostLikeId;
 import com.uet.VolunteerHub.entity.Post;

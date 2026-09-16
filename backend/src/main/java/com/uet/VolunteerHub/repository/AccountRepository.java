@@ -47,7 +47,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
 
     long countByAccountStatus(AccountStatus status);
 
-    long countByCreateAtBetween(Instant start, Instant end);
+    long countByCreatedAtBetween(Instant start, Instant end);
 
     @Query(value = "SELECT CAST(a.account_id AS TEXT) as account_id, a.username, a.email, " +
             "(COALESCE((SELECT COUNT(*) FROM comment c WHERE c.created_by_account_id = a.account_id), 0) + " +
@@ -58,7 +58,7 @@ public interface AccountRepository extends JpaRepository<Account, UUID>, JpaSpec
             "LIMIT 5", nativeQuery = true)
     List<Object[]> findTopInteractiveUsers();
 
-    @Query("SELECT DATE(a.createAt) as date, COUNT(a) as count FROM Account a WHERE a.createAt >= :startDate GROUP BY DATE(a.createAt) ORDER BY date ASC")
+    @Query("SELECT DATE(a.createdAt) as date, COUNT(a) as count FROM Account a WHERE a.createdAt >= :startDate GROUP BY DATE(a.createdAt) ORDER BY date ASC")
     List<Object[]> countNewUsersByDate(java.time.Instant startDate);
 
     List<Account> findAllByRoleNot(UserRole role);

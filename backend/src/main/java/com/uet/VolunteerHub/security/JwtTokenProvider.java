@@ -8,6 +8,8 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import java.util.Date;
 
 @Component
 @Validated
+@Setter
+@Getter
 @ConfigurationProperties(prefix = "spring.security.jwt")
 public class JwtTokenProvider {
 
@@ -80,14 +84,6 @@ public class JwtTokenProvider {
             throw new IllegalArgumentException("Access token required");
         }
         return claims;
-    }
-
-    public long getAccessTokenExpirationTime() {
-        return accessTokenExpirationTime;
-    }
-
-    public long getRefreshTokenExpirationTime() {
-        return refreshTokenExpirationTime;
     }
 
     public Claims parseJwtToken(String token) {

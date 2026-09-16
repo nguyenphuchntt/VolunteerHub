@@ -1,8 +1,8 @@
 package com.uet.VolunteerHub.controller.media;
 
-import com.uet.VolunteerHub.dto.MediaDeleteResponse;
-import com.uet.VolunteerHub.dto.MediaReadDTO;
-import com.uet.VolunteerHub.dto.MediaUploadResponse;
+import com.uet.VolunteerHub.dto.Media.MediaDeleteResponse;
+import com.uet.VolunteerHub.dto.Media.MediaReadDTO;
+import com.uet.VolunteerHub.dto.Media.MediaUploadResponse;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.FileStorageService;
 import com.uet.VolunteerHub.service.MediaService;

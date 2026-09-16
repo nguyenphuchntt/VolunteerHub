@@ -1,16 +1,16 @@
 package com.uet.VolunteerHub.controller.post;
 
-import com.uet.VolunteerHub.dto.*;
-import com.uet.VolunteerHub.dto.CommentReadDTO;
+import com.uet.VolunteerHub.dto.Post.*;
+import com.uet.VolunteerHub.dto.Post.CommentReadDTO;
 import com.uet.VolunteerHub.dto.Post.CommentCountResponse;
 import com.uet.VolunteerHub.dto.Post.LikeCountResponse;
-import com.uet.VolunteerHub.dto.PostContentUpdateDTO;
-import com.uet.VolunteerHub.dto.PostCreateDTO;
-import com.uet.VolunteerHub.dto.PostEventUpdateDTO;
-import com.uet.VolunteerHub.dto.PostLikeDTO;
-import com.uet.VolunteerHub.dto.PostReadDTO;
-import com.uet.VolunteerHub.dto.PostStatusUpdateDTO;
-import com.uet.VolunteerHub.dto.PostTypeUpdateDTO;
+import com.uet.VolunteerHub.dto.Post.PostContentUpdateDTO;
+import com.uet.VolunteerHub.dto.Post.PostCreateDTO;
+import com.uet.VolunteerHub.dto.Post.PostEventUpdateDTO;
+import com.uet.VolunteerHub.dto.Post.PostLikeDTO;
+import com.uet.VolunteerHub.dto.Post.PostReadDTO;
+import com.uet.VolunteerHub.dto.Post.PostStatusUpdateDTO;
+import com.uet.VolunteerHub.dto.Post.PostTypeUpdateDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.CommentService;
 import com.uet.VolunteerHub.service.PostLikeService;

@@ -48,7 +48,7 @@ public class AdminDashboardService {
     public DashboardOverviewDTO getDashboardOverview() {
         // Users Stats
         long totalUsers = accountRepository.count();
-        long newUsers = accountRepository.countByCreateAtBetween(
+        long newUsers = accountRepository.countByCreatedAtBetween(
                 Instant.now().minus(30, ChronoUnit.DAYS), Instant.now());
         long activeUsers = accountRepository.countByAccountStatus(AccountStatus.ACTIVE);
         long bannedUsers = accountRepository.countByAccountStatus(AccountStatus.BANNED);

@@ -184,8 +184,8 @@ CREATE TABLE notification (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_notifications_account         ON notifications (account_id);
-CREATE INDEX idx_notifications_account_unread  ON notifications (account_id, is_read) WHERE is_read = false;
+CREATE INDEX idx_notifications_account         ON notification (account_id);
+CREATE INDEX idx_notifications_account_unread  ON notification (account_id, is_read) WHERE is_read = false;
 
 CREATE TABLE event (
     event_id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

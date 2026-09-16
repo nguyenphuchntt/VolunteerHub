@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.FollowUserDTO;
+import com.uet.VolunteerHub.dto.Account.FollowUserDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Follow;
 import com.uet.VolunteerHub.entity.FollowId;

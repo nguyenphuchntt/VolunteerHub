@@ -1,8 +1,8 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.CommentCreateDTO;
-import com.uet.VolunteerHub.dto.CommentReadDTO;
-import com.uet.VolunteerHub.dto.CommentUpdateContentDTO;
+import com.uet.VolunteerHub.dto.Post.CommentCreateDTO;
+import com.uet.VolunteerHub.dto.Post.CommentReadDTO;
+import com.uet.VolunteerHub.dto.Post.CommentUpdateContentDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Comment;
 import com.uet.VolunteerHub.entity.Post;

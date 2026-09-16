@@ -1,7 +1,7 @@
 package com.uet.VolunteerHub.mapper;
 
-import com.uet.VolunteerHub.dto.PostCreateDTO;
-import com.uet.VolunteerHub.dto.PostReadDTO;
+import com.uet.VolunteerHub.dto.Post.PostCreateDTO;
+import com.uet.VolunteerHub.dto.Post.PostReadDTO;
 import com.uet.VolunteerHub.entity.Post;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

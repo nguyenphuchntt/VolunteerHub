@@ -1,6 +1,7 @@
 package com.uet.VolunteerHub.controller.user;
 
-import com.uet.VolunteerHub.dto.PostReadDTO;
+import com.uet.VolunteerHub.dto.Account.*;
+import com.uet.VolunteerHub.dto.Post.PostReadDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.service.PostReadService;
 import org.springframework.beans.factory.annotation.Autowired;
