@@ -69,8 +69,8 @@ const EventDetail = () => {
   // Event media for cover image
   const [eventMedia, setEventMedia] = useState([]);
 
-  // Posts pagination states
-  const [postsPage, setPostsPage] = useState(0);
+  // Posts pagination states (cursor-based: no page numbers, just the opaque nextCursor)
+  const [postsCursor, setPostsCursor] = useState(null);
   const [hasMorePosts, setHasMorePosts] = useState(true);
   const [loadingMorePosts, setLoadingMorePosts] = useState(false);
   const POSTS_PAGE_SIZE = 10;
@@ -105,28 +105,27 @@ const EventDetail = () => {
     }
   }, [eventId, isAuthenticated]);
 
-  // Fetch event posts with pagination
-  const fetchPosts = useCallback(async (pageIndex = 0, reset = false) => {
-    if (pageIndex > 0) {
+  // Fetch event posts with cursor pagination.
+  // Pass no cursor (or reset = true) to reload the first page.
+  const fetchPosts = useCallback(async (cursor = null, reset = false) => {
+    if (cursor) {
       setLoadingMorePosts(true);
     }
     try {
       const response = await postService.getPostsByEvent(eventId, {
-        page: pageIndex,
-        size: POSTS_PAGE_SIZE
+        size: POSTS_PAGE_SIZE,
+        ...(cursor ? { cursor } : {})
       });
       const newPosts = response.content || [];
 
-      if (reset || pageIndex === 0) {
+      if (reset || !cursor) {
         setPosts(newPosts);
       } else {
         setPosts(prev => [...prev, ...newPosts]);
       }
 
-      // Match EventFeed logic exactly
-      const isEndOfPage = newPosts.length === 0 || response.last;
-      setHasMorePosts(!isEndOfPage);
-      setPostsPage(pageIndex);
+      setHasMorePosts(Boolean(response.hasNext));
+      setPostsCursor(response.nextCursor || null);
     } catch (err) {
       console.error("Failed to fetch posts:", err);
     } finally {
@@ -211,7 +210,7 @@ const EventDetail = () => {
 
   // Handle post update - refresh the first page
   const handlePostUpdated = () => {
-    fetchPosts(0, true);
+    fetchPosts(null, true);
   };
 
   // Infinite scroll for posts - IntersectionObserver
@@ -227,7 +226,7 @@ const EventDetail = () => {
       entries => {
         if (entries[0].isIntersecting) {
           if (!loading && !loadingMorePosts && hasMorePosts) {
-            fetchPosts(postsPage + 1);
+            fetchPosts(postsCursor);
           }
         }
       },
@@ -243,7 +242,7 @@ const EventDetail = () => {
         observer.unobserve(currentTarget);
       }
     };
-  }, [activeTab, loading, loadingMorePosts, hasMorePosts, postsPage, fetchPosts]);
+  }, [activeTab, loading, loadingMorePosts, hasMorePosts, postsCursor, fetchPosts]);
 
 
   // Handle register click - open dialog

@@ -166,6 +166,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
+     * Handles invalid cursor exceptions
+     * @param ex the exception
+     * @param request web request
+     * @return 400 response
+     */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidCursorException.class)
+    ResponseEntity<Object> handleInvalidCursorException(InvalidCursorException ex, WebRequest request) {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("error", "INVALID_CURSOR");
+        body.put("message", ex.getMessage());
+        return super.handleExceptionInternal(ex, body, new HttpHeaders(), HttpStatus.BAD_REQUEST, request);
+    }
+
+    /**
      * Handles OTP verification failures (invalid, expired, locked, cooldown, quota).
      * The HTTP status is carried by the exception so callers map it directly.
      *

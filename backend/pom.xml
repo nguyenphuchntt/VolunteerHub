@@ -55,6 +55,23 @@
             <version>3.4.2</version>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/com.bucket4j/bucket4j_jdk17-redis -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-redis</artifactId>
+            <version>8.14.0</version>
+            <type>pom</type>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Source: https://mvnrepository.com/artifact/com.bucket4j/bucket4j_jdk17-lettuce -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-lettuce</artifactId>
+            <version>8.17.0</version>
+            <scope>compile</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -136,11 +153,12 @@
             <version>1.6.3</version>
         </dependency>
 
-        <!-- Rate Limiting with Bucket4j -->
+        <!-- Source: https://mvnrepository.com/artifact/com.bucket4j/bucket4j_jdk17-core -->
         <dependency>
             <groupId>com.bucket4j</groupId>
-            <artifactId>bucket4j-core</artifactId>
-            <version>8.10.1</version>
+            <artifactId>bucket4j_jdk17-core</artifactId>
+            <version>8.17.0</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Flyway migrations for PostgreSQL -->

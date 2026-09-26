@@ -7,21 +7,24 @@ export const postService = {
     return response.data;
   },
 
-  // GET /api/posts/search?content&ownerUsername&eventId
+  // GET /api/posts/search?content&ownerUsername&eventId&cursor&size
+  // Cursor-paginated — returns { content, nextCursor, hasNext, size }. Always newest-first;
+  // the backend no longer accepts page/sort here.
   async searchPosts(params = {}) {
     const response = await api.get('/posts/search', { params });
     return response.data;
   },
 
-  // GET /api/posts/by-event/{eventId}
+  // GET /api/posts/by-event/{eventId}?cursor&size
+  // Cursor-paginated — returns { content, nextCursor, hasNext, size }. Always newest-first.
   async getPostsByEvent(eventId, params = {}) {
-    const defaultParams = { sort: 'createAt,desc', ...params };
-    const response = await api.get(`/posts/by-event/${eventId}`, { params: defaultParams });
+    const response = await api.get(`/posts/by-event/${eventId}`, { params });
     return response.data;
   },
 
 
-  // GET /api/posts/by-account/{username}
+  // GET /api/posts/by-account/{username}?cursor&size
+  // Cursor-paginated — returns { content, nextCursor, hasNext, size }. Always newest-first.
   async getPostsByOwner(username, params = {}) {
     const response = await api.get(`/posts/by-account/${username}`, { params });
     return response.data;

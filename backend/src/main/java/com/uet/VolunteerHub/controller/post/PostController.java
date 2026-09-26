@@ -1,5 +1,7 @@
 package com.uet.VolunteerHub.controller.post;
 
+import com.uet.VolunteerHub.common.pagination.CursorPage;
+import com.uet.VolunteerHub.common.pagination.CursorPageRequest;
 import com.uet.VolunteerHub.dto.Post.*;
 import com.uet.VolunteerHub.dto.Post.CommentReadDTO;
 import com.uet.VolunteerHub.dto.Post.CommentCountResponse;
@@ -61,49 +63,61 @@ public class PostController {
     }
 
     /**
-     * Search posts with filters
+     * Search posts with filters, newest first, using cursor pagination.
+     *
      * @param content filter by content
      * @param ownerUsername filter by owner
      * @param eventId filter by event
-     * @param pageable pagination
-     * @return page of posts
+     * @param cursor opaque cursor from the previous page; omit for the first page
+     * @param size page size, 1-100
+     * @return one page of posts plus {@code nextCursor} and {@code hasNext}
      */
     @GetMapping("/search")
-    public ResponseEntity<Page<PostReadDTO>> searchPosts(
+    public ResponseEntity<CursorPage<PostReadDTO>> searchPosts(
             @RequestParam(required = false) String content,
             @RequestParam(required = false) String ownerUsername,
             @RequestParam(required = false) Long eventId,
-            Pageable pageable) {
-        Page<PostReadDTO> postsPage = postReadService.searchPost(content, ownerUsername, eventId, pageable);
-        return ResponseEntity.ok(postsPage);
-    }
-
-    /**
-     * Get posts by event
-     * @param eventId event ID
-     * @param pageable pagination
-     * @return page of posts
-     */
-    @GetMapping("/by-event/{eventId}")
-    public ResponseEntity<Page<PostReadDTO>> getPostByEvent(
-            @PathVariable Long eventId,
-            Pageable pageable) {
-        Page<PostReadDTO> posts = postReadService.findPostByEvent(eventId, pageable);
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        CursorPage<PostReadDTO> posts = postReadService.searchPostsAfter(
+                content, ownerUsername, eventId, CursorPageRequest.of(cursor, size));
         return ResponseEntity.ok(posts);
     }
 
     /**
-     * Get posts by owner username
+     * Get posts by event, newest first, using cursor pagination.
+     *
+     * @param eventId event ID
+     * @param cursor opaque cursor from the previous page; omit for the first page
+     * @param size page size, 1-100
+     * @return one page of posts plus {@code nextCursor} and {@code hasNext}
+     */
+    @GetMapping("/by-event/{eventId}")
+    public ResponseEntity<CursorPage<PostReadDTO>> getPostByEvent(
+            @PathVariable Long eventId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        CursorPage<PostReadDTO> posts = postReadService.findPostsByEventAfter(
+                eventId, CursorPageRequest.of(cursor, size));
+        return ResponseEntity.ok(posts);
+    }
+
+    /**
+     * Get posts by owner username, newest first, using cursor pagination.
+     *
      * @param username owner username
-     * @param pageable pagination
-     * @return page of posts
+     * @param cursor opaque cursor from the previous page; omit for the first page
+     * @param size page size, 1-100
+     * @return one page of posts plus {@code nextCursor} and {@code hasNext}
      */
     @GetMapping("/by-account/{username}")
-    public ResponseEntity<Page<PostReadDTO>> getPostsByOwner(
+    public ResponseEntity<CursorPage<PostReadDTO>> getPostsByOwner(
             @PathVariable String username,
-            Pageable pageable) {
-        Page<PostReadDTO> postsPage = postReadService.findPostByOwner(username, pageable);
-        return ResponseEntity.ok(postsPage);
+            @RequestParam(required = false) String cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        CursorPage<PostReadDTO> posts = postReadService.findPostsByOwnerAfter(
+                username, CursorPageRequest.of(cursor, size));
+        return ResponseEntity.ok(posts);
     }
 
     /**
