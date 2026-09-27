@@ -1,21 +1,21 @@
 # VolunteerHub
 
-VolunteerHub là một nền tảng quản lý tình nguyện viên, được thiết kế để kết nối tình nguyện viên với các sự kiện cộng đồng một cách hiệu quả và thuận tiện.
+VolunteerHub is a volunteer management platform designed to connect volunteers with community events efficiently and conveniently.
 
-## Mục lục
+## Table of Contents
 
-- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
-- [Cách tính năng chính ](#các-tính-năng-chính)
-- [Cài đặt](#cài-đặt)
-- [Cấu trúc dự án](#cấu-trúc-dự-án)
+- [Tech Stack](#tech-stack)
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
 
 ---
 
-## Công nghệ sử dụng
+## Tech Stack
 
 ### Backend
 - **Java 17**, **Spring Boot 3.5.6**, Spring Security, Spring Data JPA
-- **MySQL** (Database), **Redis** (Cache, Rate Limiting)
+- **PostgreSQL 16** with Flyway migrations (Database), **Redis** (Cache, Rate Limiting)
 - JWT Authentication, MapStruct, Lombok
 - Firebase Admin (Push Notifications), Thymeleaf (Email Templates)
 - SpringDoc OpenAPI, Docker
@@ -27,57 +27,57 @@ VolunteerHub là một nền tảng quản lý tình nguyện viên, được th
 
 ---
 
-## Các tính năng chính
+## Key Features
 
-### Quản lý người dùng
-- Đăng ký và đăng nhập với JWT Authentication
-- Xác thực email (Email Verification)
-- Đặt lại mật khẩu (Password Reset)
-- Quản lý hồ sơ cá nhân
-- Phân quyền theo role: User, Manager, Admin
-- Theo dõi (follow) người dùng
+### User Management
+- Sign up and sign in with JWT Authentication
+- Email Verification
+- Password Reset
+- Personal profile management
+- Role-based authorization: User, Manager, Admin
+- Follow other users
 
-### Quản lý sự kiện
-- Tìm kiếm và lọc sự kiện theo nhiều tiêu chí (lastest, hotest, newest, v.v)
-- Đăng ký và hủy đăng ký tham gia sự kiện
-- Quản lý trạng thái sự kiện, chỉnh sửa thông tin sự kiện
-- Duyệt và quản lý người tham gia sự kiện 
-- Like/Unlike sự kiện
+### Event Management
+- Search and filter events by multiple criteria (latest, hottest, newest, etc.)
+- Register for and cancel registration from events
+- Manage event status and edit event details
+- Review and manage event participants
+- Like/Unlike events
 
-### Bài viết và tương tác
-- Đăng bài viết
-- Bình luận
-- Like bài viết
-- Upload media (ảnh, video)
+### Posts and Interactions
+- Create posts
+- Comment
+- Like posts
+- Upload media (images, videos)
 
-### Thông báo
-- Hệ thống thông báo trong ứng dụng
-- Push Notifications qua Firebase Cloud Messaging
-- Thông báo phân loại theo vai trò (Admin, Manager, User)
+### Notifications
+- In-app notification system
+- Push Notifications via Firebase Cloud Messaging
+- Notifications categorized by role (Admin, Manager, User)
 
-### Dashboard và thống kê
-- Dashboard Admin với thống kê tổng quan toàn bộ hệ thống 
-- Dashboard Manager cho quản lý sự kiện mà Event manager quản lý
-- Biểu đồ trực quan 
-- Bảng xếp hạng sự kiện và người dùng
-- Xuất dữ liệu thống kê 
+### Dashboard and Statistics
+- Admin dashboard with system-wide overview statistics
+- Manager dashboard for the events an event manager is responsible for
+- Visual charts
+- Event and user leaderboards
+- Export statistical data
 
-### Bảo mật
+### Security
 - JWT Token Authentication
-- Rate Limiting để chống spam và tấn công
-- Phân quyền chi tiết theo role
-- Validation input đầu vào
+- Rate Limiting to prevent spam and attacks
+- Fine-grained role-based authorization
+- Input validation
 
-## Cài đặt
+## Installation
 
-### Yêu cầu hệ thống
+### Requirements
 - Docker / Docker Desktop
-### Cấu hình file .env tại thư mục gốc
+
+### Configure the .env file at the project root
 ```
-# MySQL Configuration
-MYSQL_ROOT_PASSWORD=
-MYSQL_USER=
-MYSQL_PASSWORD=
+# PostgreSQL Configuration
+POSTGRES_USER=volunteer
+POSTGRES_PASSWORD=volunteerpass
 
 # Email Configuration
 MAIL_HOST=smtp.gmail.com
@@ -90,67 +90,66 @@ PASSWORD_RESET_FRONTEND_URL=http://localhost:5173/reset-password
 EMAIL_VERIFICATION_FRONTEND_URL=http://localhost:5173/verify-email
 ```
 
-### Hướng dẫn cài đặt sử dụng Docker
-**Yêu cầu:** Máy tính đã cài đặt Docker
+### Installing with Docker
+**Requirement:** Docker installed on your machine
 
-
-1. Mở terminal tại thư mục gốc của dự án (chứa thư mục `frontend/`, `backend/` và file <br> `docker-compose.yml` )
-2. Chạy lệnh khởi động:
+1. Open a terminal at the project root (the directory containing `frontend/`, `backend/`, and `docker-compose.yml`)
+2. Start the stack:
 
 
     ```bash
     docker compose up --build
     ```
-3. Truy cập:
+3. Open:
     - **Frontend:** `http://localhost:5173`
     - **Backend:** `http://localhost:8080`
 
 
-Hiện tại trong database đã cài đặt có người dùng như `user1`, `manager1` và `admin1` với quyền truy cập giống username, mật khẩu là `password123`.
+The bundled database already contains the users `user1`, `manager1`, and `admin1`, each with the password `password123` — the username is also the role name.
 
 
 
 
-### Hướng dẫn cài đặt thủ công
-#### Cài đặt cơ sở dữ liệu:
-1. Chạy các lệnh sau để tạo database và user:
+### Manual Installation
+#### Set up the database:
+1. Run the following statements to create the database and user:
 ```
--- 1. Tạo Database
+-- 1. Create the Database
 CREATE DATABASE IF NOT EXISTS volunteer_hub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
--- 2. Tạo User
+-- 2. Create the User
 CREATE USER IF NOT EXISTS 'volunteer'@'localhost' IDENTIFIED BY 'volunteerpass';
 GRANT ALL PRIVILEGES ON volunteer_hub.* TO 'volunteer'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
 
-2. Import dữ liệu: Ở thư mục gốc của dự án, chạy các lệnh sau:
+2. Import the data: from the project root, run:
 ```
 mysql -u <YOUR_ADMIN_USER> -p volunteer_hub < backend/src/main/resources/schema.sql
 mysql -u <YOUR_ADMIN_USER> -p volunteer_hub < backend/src/main/resources/seed.sql
 ```
 
 
-3. Cấu hình backend: Sửa file `backend/src/main/resources/application.properties` và cập nhật cấu hình database phù hợp để khớp với user vừa tạo ở trên:
+3. Configure the backend: edit `backend/src/main/resources/application.properties` and update the database settings to match the user created above:
 ```
-# Sửa thành user 'volunteer' vừa tạo (hoặc user khác tùy người dùng)
+# Change to the 'volunteer' user created above (or another user of your choice)
 spring.datasource.username=${DB_USERNAME:volunteer}
 spring.datasource.password=${DB_PASSWORD:volunteerpass}
 ```
 
 
-4. Ngoài ra cần đảm bảo Redis Server đang chạy
+4. You also need to make sure a Redis server is running
 #### Backend
-Mở terminal tại thư mục backend, chạy các lệnh sau:
+Open a terminal in the `backend` directory and run:
 ```
 chmod +x mvnw
 ./mvnw spring-boot:run
 ```
-Sau khi chạy thành công, Backend sẽ hoạt động tại `http://localhost:8080`.
+Once it starts successfully, the backend is available at `http://localhost:8080`.
 
 
 ### Frontend
-Mở terminal tại thư mục frontend, chạy các lệnh sau:
+Open a terminal in the `frontend` directory and run:
 
 
 ```bash
@@ -158,19 +157,19 @@ npm install
 npm run build
 npm run preview -- --port 5173
 ```
-Frontend sẽ hoạt động tại `http://localhost:5173`.
-Hiện tại trong database đã cài đặt có người dùng như `user1`, `manager1` và `admin1` với quyền truy cập giống username, mật khẩu là `password123`.
+The frontend is available at `http://localhost:5173`.
+The bundled database already contains the users `user1`, `manager1`, and `admin1`, each with the password `password123` — the username is also the role name.
 
 ### API Documentation
 
-Sau khi khởi động backend, truy cập Swagger UI tại:
+After starting the backend, open Swagger UI at:
 ```
 http://localhost:8080/swagger-ui.html
 ```
 
 ---
 
-## Cấu trúc dự án
+## Project Structure
 
 ```
 VolunteerHub/
@@ -203,14 +202,12 @@ VolunteerHub/
 
 ---
 
-## Thành viên nhóm
+## Team Members
 
-Lớp học phần: Phát triển ứng dụng Web - INT3306_2
+Course: Web Application Development - INT3306_2
 
-| Tên             | MSSV | Vai trò      |
-|-----------------|--------------|--------------|
-| Nguyễn Anh Sơn  | 23021684     | Backend Dev  |
-| Nguyễn Văn Phúc | 23021664     | Backend Dev  |
-| Thái Khắc Mạnh  | 23021620     | Frontend Dev |
-
-
+| Name             | Student ID | Role         |
+|------------------|------------|--------------|
+| Nguyễn Anh Sơn   | 23021684   | Backend Dev  |
+| Nguyễn Văn Phúc  | 23021664   | Backend Dev  |
+| Thái Khắc Mạnh   | 23021620   | Frontend Dev |

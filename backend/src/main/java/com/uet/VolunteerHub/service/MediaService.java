@@ -1,8 +1,8 @@
 package com.uet.VolunteerHub.service;
 
-import com.uet.VolunteerHub.dto.MediaDeleteResponse;
-import com.uet.VolunteerHub.dto.MediaReadDTO;
-import com.uet.VolunteerHub.dto.MediaUploadResponse;
+import com.uet.VolunteerHub.dto.Media.MediaDeleteResponse;
+import com.uet.VolunteerHub.dto.Media.MediaReadDTO;
+import com.uet.VolunteerHub.dto.Media.MediaUploadResponse;
 import com.uet.VolunteerHub.entity.*;
 import com.uet.VolunteerHub.enums.UserRole;
 import com.uet.VolunteerHub.enums.MediaStatus;

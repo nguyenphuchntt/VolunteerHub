@@ -1,62 +1,70 @@
 package com.uet.VolunteerHub.service;
 
+import com.uet.VolunteerHub.configuration.OtpProperties;
 import com.uet.VolunteerHub.dto.password.ForgotPasswordRequestDTO;
 import com.uet.VolunteerHub.dto.password.PasswordResetResponseDTO;
-import com.uet.VolunteerHub.dto.password.ResetPasswordRequestDTO;
+import com.uet.VolunteerHub.dto.password.VerifyPasswordResetOtpDTO;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.enums.AccountStatus;
+import com.uet.VolunteerHub.enums.OtpErrorCode;
+import com.uet.VolunteerHub.exception.OtpException;
 import com.uet.VolunteerHub.repository.AccountRepository;
+import com.uet.VolunteerHub.service.otp.OtpGenerator;
+import com.uet.VolunteerHub.service.otp.OtpScope;
+import com.uet.VolunteerHub.service.otp.VerificationCodeEntry;
+import com.uet.VolunteerHub.service.otp.VerificationCodeStore;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
+/**
+ * Password reset via OTP. Reuses the same verification infrastructure as email verification.
+ */
 @Slf4j
 @Service
 public class PasswordResetService {
 
-    private static final String PASSWORD_RESET_TOKEN_PREFIX = "password_reset:";
+    private static final String PASSWORD_RESET_TEMPLATE = "password-reset-email-otp";
+    private static final String PASSWORD_RESET_SUBJECT = "Password Reset Request";
     private static final String GENERIC_SUCCESS_MESSAGE =
-            "If an account exists with this email, you will receive a password reset link shortly.";
+            "If an account exists with this email, you will receive a password reset code shortly.";
 
     private final AccountRepository accountRepository;
-    private final StringRedisTemplate redisTemplate;
+    private final VerificationCodeStore codeStore;
+    private final OtpGenerator otpGenerator;
+    private final OtpProperties otpProperties;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-    @Value("${app.password-reset.frontend-url}")
-    private String frontendResetUrl;
-    @Value("${app.password-reset.token-expiry-minutes}")
-    private int tokenExpiryMinutes;
 
-    @Autowired
     public PasswordResetService(
             AccountRepository accountRepository,
-            StringRedisTemplate redisTemplate,
+            VerificationCodeStore codeStore,
+            OtpGenerator otpGenerator,
+            OtpProperties otpProperties,
             EmailService emailService,
             PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
-        this.redisTemplate = redisTemplate;
+        this.codeStore = codeStore;
+        this.otpGenerator = otpGenerator;
+        this.otpProperties = otpProperties;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
     }
 
     /**
-     * Initiates password reset by generating token and sending email.
+     * Initiates password reset by generating OTP and sending email.
      * Returns generic message to prevent email enumeration attacks.
-     * 
-     * @param request forgot password request with email
-     * @return PasswordResetResponseDTO with generic success message
      */
     public PasswordResetResponseDTO initiatePasswordReset(ForgotPasswordRequestDTO request) {
-        String email = request.getEmail().toLowerCase().trim();
+        String email = normalize(request.getEmail());
         Optional<Account> accountOptional = accountRepository.findByUsernameOrEmail(email, email);
+
         if (accountOptional.isPresent()) {
             Account account = accountOptional.get();
             if (account.getAccountStatus() != AccountStatus.ACTIVE) {
@@ -67,23 +75,12 @@ public class PasswordResetService {
                 }
                 return PasswordResetResponseDTO.success(GENERIC_SUCCESS_MESSAGE);
             }
-            
-            // Generate unique token
-            String token = generateToken();
-            String redisKey = PASSWORD_RESET_TOKEN_PREFIX + token;
-            redisTemplate.opsForValue().set(
-                    redisKey,
-                    account.getAccountId().toString(),
-                    Duration.ofMinutes(tokenExpiryMinutes)
-            );
-            String resetLink = frontendResetUrl + "?token=" + token;
-            emailService.sendPasswordResetEmail(
-                    account.getEmail(),
-                    resetLink,
-                    account.getUsername(),
-                    tokenExpiryMinutes
-            );
-            log.info("Password reset initiated for email: {}", email);
+            try {
+                issueAndSendOtp(account);
+                log.info("Password reset OTP initiated for email: {}", email);
+            } catch (OtpException e) {
+                log.warn("Failed to send password reset OTP for {}: {}", email, e.getMessage());
+            }
         } else {
             log.debug("Password reset requested for non-existent email: {}", email);
         }
@@ -91,69 +88,89 @@ public class PasswordResetService {
     }
 
     /**
-     * Validates password reset token from Redis cache.
-     * 
-     * @param token the password reset token to validate
-     * @return PasswordResetResponseDTO indicating if token is valid
-     */
-    public PasswordResetResponseDTO validateToken(String token) {
-        String redisKey = PASSWORD_RESET_TOKEN_PREFIX + token;
-        String accountId = redisTemplate.opsForValue().get(redisKey);
-        
-        if (accountId == null) {
-            return PasswordResetResponseDTO.error("Invalid or expired password reset token.");
-        }
-        
-        return PasswordResetResponseDTO.success("Token is valid.");
-    }
-
-    /**
-     * Resets user password using valid token (single-use).
-     * Deletes token after use and sends confirmation email.
-     * 
-     * @param request reset password request with token and new password
-     * @return PasswordResetResponseDTO with success or error message
+     * Resets user password using valid OTP (single-use).
+     * Deletes OTP after use and sends confirmation email.
      */
     @Transactional
-    public PasswordResetResponseDTO resetPassword(ResetPasswordRequestDTO request) {
+    public PasswordResetResponseDTO resetPassword(VerifyPasswordResetOtpDTO request) {
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
             return PasswordResetResponseDTO.error("New password and confirmation password do not match.");
         }
-        String token = request.getToken();
-        String redisKey = PASSWORD_RESET_TOKEN_PREFIX + token;
-        // Get account ID from Redis
-        String accountIdStr = redisTemplate.opsForValue().get(redisKey);
-        if (accountIdStr == null) {
-            log.warn("Password reset attempted with invalid or expired token");
-            return PasswordResetResponseDTO.error("Invalid or expired password reset token.");
+
+        String email = normalize(request.getEmail());
+        Account account = accountRepository.findByUsernameOrEmail(email, email)
+                .orElseThrow(() -> new OtpException(
+                        OtpErrorCode.ACCOUNT_NOT_FOUND,
+                        HttpStatus.NOT_FOUND,
+                        "No account found with this email address"));
+
+        if (account.getAccountStatus() == AccountStatus.BANNED) {
+            throw new OtpException(OtpErrorCode.ACCOUNT_BANNED, HttpStatus.FORBIDDEN,
+                    "Your account has been banned. Please contact support.");
         }
-        try {
-            UUID accountId = UUID.fromString(accountIdStr);
-            Optional<Account> accountOptional = accountRepository.findById(accountId);
-            if (accountOptional.isEmpty()) {
-                log.error("Account not found for password reset. Account ID: {}", accountId);
-                redisTemplate.delete(redisKey);
-                return PasswordResetResponseDTO.error("Account not found.");
-            }
-            Account account = accountOptional.get();
-            // Update password
-            String encodedPassword = passwordEncoder.encode(request.getNewPassword());
-            account.setPassword(encodedPassword);
-            accountRepository.save(account);
-            // Delete token immediately after use (single-use token)
-            redisTemplate.delete(redisKey);
-            // Send confirmation email
-            emailService.sendPasswordResetConfirmationEmail(account.getEmail(), account.getUsername());
-            log.info("Password reset successful for account: {}", account.getUsername());
-            return PasswordResetResponseDTO.success("Password has been reset successfully. You can now login with your new password.");
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid UUID format in Redis for password reset token: {}", accountIdStr);
-            redisTemplate.delete(redisKey);
-            return PasswordResetResponseDTO.error("Invalid or expired password reset token.");
+
+        VerificationCodeEntry entry = codeStore.find(OtpScope.PASSWORD_RESET, email)
+                .orElseThrow(() -> new OtpException(OtpErrorCode.OTP_EXPIRED, HttpStatus.BAD_REQUEST,
+                        "Invalid or expired password reset code. Please request a new one."));
+
+        int maxAttempts = otpProperties.getVerification().getMaxAttempts();
+        if (entry.attempts() >= maxAttempts) {
+            codeStore.delete(OtpScope.PASSWORD_RESET, email);
+            throw new OtpException(OtpErrorCode.OTP_LOCKED, HttpStatus.BAD_REQUEST,
+                    "Too many incorrect attempts. Please request a new code.");
         }
+
+        if (!otpGenerator.matches(request.getOtp(), entry.codeHash())) {
+            codeStore.incrementAttempts(OtpScope.PASSWORD_RESET, email);
+            int remaining = maxAttempts - entry.attempts() - 1;
+            throw new OtpException(OtpErrorCode.OTP_INVALID, HttpStatus.BAD_REQUEST,
+                    "Incorrect password reset code.", remaining);
+        }
+
+        // Update password
+        String encodedPassword = passwordEncoder.encode(request.getNewPassword());
+        account.setPassword(encodedPassword);
+        accountRepository.save(account);
+
+        // Delete OTP immediately after use (single-use)
+        codeStore.delete(OtpScope.PASSWORD_RESET, email);
+
+        // Send confirmation email
+        emailService.sendPasswordResetConfirmationEmail(account.getEmail(), account.getUsername());
+
+        log.info("Password reset successful for account: {}", account.getUsername());
+        return PasswordResetResponseDTO.success(
+                "Password has been reset successfully. You can now login with your new password.");
     }
 
-    private String generateToken() {
-        return UUID.randomUUID().toString();
+    private void issueAndSendOtp(Account account) {
+        String email = normalize(account.getEmail());
+        OtpProperties.VerificationConfig config = otpProperties.getVerification();
+
+        if (!codeStore.tryAcquireCooldown(OtpScope.PASSWORD_RESET, email, config.getResendCooldown())) {
+            throw new OtpException(OtpErrorCode.OTP_COOLDOWN, HttpStatus.TOO_MANY_REQUESTS,
+                    "Please wait " + config.getResendCooldownSeconds()
+                            + " seconds before requesting a new code.");
+        }
+
+        long sendCount = codeStore.incrementSendCount(
+                OtpScope.PASSWORD_RESET, email, Duration.ofHours(1));
+        if (sendCount > config.getMaxSendsPerHour()) {
+            throw new OtpException(OtpErrorCode.OTP_QUOTA_EXCEEDED, HttpStatus.TOO_MANY_REQUESTS,
+                    "Too many password reset codes requested. Please try again later.");
+        }
+
+        String otp = otpGenerator.generate(config.getLength());
+        codeStore.save(OtpScope.PASSWORD_RESET, email,
+                new VerificationCodeEntry(otpGenerator.hash(otp), 0, Instant.now()),
+                config.getExpiry());
+
+        emailService.sendOtp(account.getEmail(), otp, account.getUsername(),
+                config.getExpiryMinutes(), PASSWORD_RESET_TEMPLATE, PASSWORD_RESET_SUBJECT);
+        log.info("Password reset OTP issued for account: {}", account.getUsername());
+    }
+
+    private String normalize(String email) {
+        return email == null ? "" : email.toLowerCase().trim();
     }
 }

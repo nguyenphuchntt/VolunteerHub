@@ -10,5 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface MediaRepository extends JpaRepository<Media, UUID> {
-    Page<Media> findAllByUploadedBy_AccountId(UUID accountId, Pageable pageable);
+    Page<Media> findAllByOwner_AccountId(UUID accountId, Pageable pageable);
 }

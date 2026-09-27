@@ -1,6 +1,6 @@
 package com.uet.VolunteerHub.mapper;
 
-import com.uet.VolunteerHub.dto.NotificationReadDTO;
+import com.uet.VolunteerHub.dto.notification.NotificationReadDTO;
 import com.uet.VolunteerHub.entity.Notification;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

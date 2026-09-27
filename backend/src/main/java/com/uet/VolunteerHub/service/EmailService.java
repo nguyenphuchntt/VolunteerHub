@@ -33,91 +33,42 @@ public class EmailService {
         this.templateEngine = templateEngine;
     }
 
-    /**
-     * Sends password reset email with reset link asynchronously.
-     * Uses Thymeleaf template to generate HTML email content.
-     * 
-     * @param toEmail recipient email address
-     * @param resetLink the password reset URL with token
-     * @param username recipient's username for personalization
-     * @param expiryMinutes token expiry time in minutes
-     */
     @Async
-    public void sendPasswordResetEmail(String toEmail, String resetLink, String username, int expiryMinutes) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name()
-            );
-            // Prepare Thymeleaf context
-            Context context = new Context();
-            context.setVariable("username", username);
-            context.setVariable("resetLink", resetLink);
-            context.setVariable("expiryMinutes", expiryMinutes);
-            context.setVariable("senderName", senderName);
-            // Process the email template
-            String htmlContent = templateEngine.process("password-reset-email", context);
-            helper.setTo(toEmail);
-            helper.setSubject("[" + senderName + "] Password Reset Request");
-            helper.setFrom(fromEmail, senderName);
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
-            log.info("Password reset email sent successfully to: {}", toEmail);
-        } catch (MessagingException e) {
-            log.error("Failed to send password reset email to: {}. Error: {}", toEmail, e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error while sending password reset email to: {}. Error: {}", toEmail, e.getMessage());
-        }
+    public void sendOtp(String toEmail, String otp, String username,
+                        int expiryMinutes, String templateName, String subject) {
+        Context context = new Context();
+        context.setVariable("otp", otp);
+        context.setVariable("username", username);
+        context.setVariable("expiryMinutes", expiryMinutes);
+        context.setVariable("senderName", senderName);
+        sendHtml(toEmail, subject, templateName, context, "OTP");
     }
 
     /**
      * Sends password reset confirmation email after successful password change.
-     * Notifies user that their password has been changed successfully.
-     * 
+     * The template receives {@code username} and {@code senderName}.
+     *
      * @param toEmail recipient email address
      * @param username recipient's username for personalization
      */
     @Async
     public void sendPasswordResetConfirmationEmail(String toEmail, String username) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(
-                    message,
-                    MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
-                    StandardCharsets.UTF_8.name()
-            );
-            // Prepare Thymeleaf context
-            Context context = new Context();
-            context.setVariable("username", username);
-            context.setVariable("senderName", senderName);
-            // Process the email template
-            String htmlContent = templateEngine.process("password-reset-confirmation-email", context);
-            helper.setTo(toEmail);
-            helper.setSubject("[" + senderName + "] Password Changed Successfully");
-            helper.setFrom(fromEmail, senderName);
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
-            log.info("Password reset confirmation email sent successfully to: {}", toEmail);
-        } catch (MessagingException e) {
-            log.error("Failed to send password reset confirmation email to: {}. Error: {}", toEmail, e.getMessage());
-        } catch (Exception e) {
-            log.error("Unexpected error while sending confirmation email to: {}. Error: {}", toEmail, e.getMessage());
-        }
+        Context context = new Context();
+        context.setVariable("username", username);
+        context.setVariable("senderName", senderName);
+        sendHtml(toEmail, "Password Changed Successfully", "password-reset-confirmation-email", context,
+                "Password reset confirmation");
     }
 
     /**
-     * Sends email verification email after registration asynchronously.
-     * User must click verification link to activate their account.
+     * Renders the template, applies the sender identity and hands the message to the mail server.
+     * Failures are logged rather than propagated: callers are async flows whose main
+     * transaction must not fail because a mail server is unreachable.
      *
-     * @param toEmail recipient's email address
-     * @param verifyLink the verification URL containing token
-     * @param username user's username for personalization
-     * @param expiryMinutes token expiry time in minutes
+     * @param description short label used in log messages, e.g. "OTP"
      */
-    @Async
-    public void sendVerificationEmail(String toEmail, String verifyLink, String username, int expiryMinutes) {
+    private void sendHtml(String toEmail, String subject, String templateName,
+                          Context context, String description) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(
@@ -125,29 +76,17 @@ public class EmailService {
                     MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED,
                     StandardCharsets.UTF_8.name()
             );
-
-            // Prepare Thymeleaf context
-            Context context = new Context();
-            context.setVariable("username", username);
-            context.setVariable("verifyLink", verifyLink);
-            context.setVariable("expiryMinutes", expiryMinutes);
-            context.setVariable("senderName", senderName);
-
-            // Process the email template
-            String htmlContent = templateEngine.process("email-verification", context);
-
+            String htmlContent = templateEngine.process(templateName, context);
             helper.setTo(toEmail);
-            helper.setSubject("[" + senderName + "] Verify Your Email Address");
+            helper.setSubject("[" + senderName + "] " + subject);
             helper.setFrom(fromEmail, senderName);
             helper.setText(htmlContent, true);
-
             mailSender.send(message);
-            log.info("Verification email sent successfully to: {}", toEmail);
-
+            log.info("{} email sent successfully to: {}", description, toEmail);
         } catch (MessagingException e) {
-            log.error("Failed to send verification email to: {}. Error: {}", toEmail, e.getMessage());
+            log.error("Failed to send {} email to: {}. Error: {}", description, toEmail, e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error while sending verification email to: {}. Error: {}", toEmail, e.getMessage());
+            log.error("Unexpected error while sending {} email to: {}. Error: {}", description, toEmail, e.getMessage());
         }
     }
 }

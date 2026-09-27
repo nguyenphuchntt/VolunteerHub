@@ -57,27 +57,30 @@
             margin-bottom: 30px;
         }
 
-        .button-container {
+        .otp-container {
             text-align: center;
             margin: 30px 0;
         }
 
-        .verify-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #28a745 0%, #20903c 100%);
-            color: #ffffff !important;
-            text-decoration: none;
-            padding: 15px 40px;
-            border-radius: 25px;
-            font-weight: bold;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-            transition: all 0.3s ease;
+        .otp-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888888;
+            margin-bottom: 10px;
         }
 
-        .verify-button:hover {
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
-            transform: translateY(-2px);
+        .otp-code {
+            display: inline-block;
+            background-color: #f0f9f2;
+            border: 2px dashed #28a745;
+            border-radius: 10px;
+            padding: 18px 28px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 10px;
+            color: #20903c;
         }
 
         .info-box {
@@ -120,17 +123,6 @@
             margin: 0;
         }
 
-        .link-text {
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-            padding: 10px;
-            word-break: break-all;
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 20px;
-        }
-
         .footer {
             text-align: center;
             padding-top: 30px;
@@ -166,37 +158,32 @@
 
             <p class="message">
                 Thank you for registering with <span th:text="${senderName}">VolunteerHub</span>!
-                To complete your registration and activate your account, please verify your email address by clicking
-                the button below:
+                To complete your registration and activate your account, enter the verification code below:
             </p>
 
-            <div class="button-container">
-                <a th:href="${verifyLink}" class="verify-button">Verify My Email</a>
+            <div class="otp-container">
+                <div class="otp-label">Your verification code</div>
+                <div class="otp-code" th:text="${otp}">123456</div>
             </div>
 
             <div class="info-box">
                 <p class="info-title">✨ What happens next?</p>
                 <p class="info-text">
-                    After verification, you'll be able to login and access all features of <span
-                        th:text="${senderName}">VolunteerHub</span>.
+                    Enter this code on the verification page. After verification, you'll be able to login and access
+                    all features of <span th:text="${senderName}">VolunteerHub</span>.
                 </p>
             </div>
 
             <div class="warning">
-                <p class="warning-title">⏰ Link Expiration</p>
+                <p class="warning-title">⏰ Code Expiration</p>
                 <p class="warning-text">
-                    This verification link will expire in <strong th:text="${expiryMinutes}">30</strong> minutes.
+                    This code will expire in <strong th:text="${expiryMinutes}">5</strong> minutes.
                 </p>
             </div>
 
             <p class="message">
                 If you didn't create an account with us, you can safely ignore this email.
             </p>
-
-            <div class="link-text">
-                <strong>Can't click the button?</strong> Copy and paste this link into your browser:<br>
-                <span th:text="${verifyLink}">Verification Link</span>
-            </div>
         </div>
 
         <div class="footer">

@@ -1,6 +1,7 @@
 package com.uet.VolunteerHub.service;
 
 import com.uet.VolunteerHub.dto.*;
+import com.uet.VolunteerHub.dto.Post.*;
 import com.uet.VolunteerHub.entity.Account;
 import com.uet.VolunteerHub.entity.Event;
 import com.uet.VolunteerHub.entity.Post;

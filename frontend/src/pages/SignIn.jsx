@@ -259,11 +259,11 @@ const SignIn = () => {
     setResendMessage("");
 
     try {
-      await emailService.resendVerificationEmail(signInData.username);
-      setResendMessage("Email xác minh đã được gửi lại! Vui lòng kiểm tra hộp thư của bạn.");
+      await emailService.resendOtp(signInData.username);
+      setResendMessage("Mã xác minh đã được gửi lại! Vui lòng kiểm tra hộp thư của bạn.");
       setNeedsActivation(false);
     } catch (err) {
-      setResendMessage(err.response?.data?.message || "Không thể gửi email. Vui lòng thử lại sau.");
+      setResendMessage(err.response?.data?.message || "Không thể gửi mã. Vui lòng thử lại sau.");
     } finally {
       setResendLoading(false);
     }
@@ -840,29 +840,50 @@ const SignIn = () => {
                 </Alert>
               )}
 
-              {/* Resend activation email button */}
+              {/* Activation actions: go enter the OTP, or ask for a new code */}
               {needsActivation && (
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  onClick={handleResendActivationEmail}
-                  disabled={resendLoading}
-                  sx={{
-                    mb: 2,
-                    height: 44,
-                    borderRadius: "12px",
-                    border: `2px solid ${colors.primary}`,
-                    color: colors.primary,
-                    fontWeight: 600,
-                    textTransform: "none",
-                    "&:hover": {
-                      backgroundColor: "rgba(67, 160, 71, 0.08)",
-                      border: `2px solid ${colors.primaryDark}`,
-                    },
-                  }}
-                >
-                  {resendLoading ? <CircularProgress size={20} color="inherit" /> : "Gửi lại email xác minh"}
-                </Button>
+                <>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={() =>
+                      navigate(`/verify-email?email=${encodeURIComponent(signInData.username)}`)
+                    }
+                    sx={{
+                      mb: 1.5,
+                      height: 44,
+                      borderRadius: "12px",
+                      background: `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.primary} 100%)`,
+                      color: colors.white,
+                      fontWeight: 600,
+                      textTransform: "none",
+                      boxShadow: "0 6px 20px rgba(67, 160, 71, 0.35)",
+                    }}
+                  >
+                    Nhập mã xác minh
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={handleResendActivationEmail}
+                    disabled={resendLoading}
+                    sx={{
+                      mb: 2,
+                      height: 44,
+                      borderRadius: "12px",
+                      border: `2px solid ${colors.primary}`,
+                      color: colors.primary,
+                      fontWeight: 600,
+                      textTransform: "none",
+                      "&:hover": {
+                        backgroundColor: "rgba(67, 160, 71, 0.08)",
+                        border: `2px solid ${colors.primaryDark}`,
+                      },
+                    }}
+                  >
+                    {resendLoading ? <CircularProgress size={20} color="inherit" /> : "Gửi lại mã xác minh"}
+                  </Button>
+                </>
               )}
 
               {/* Resend success/error message */}

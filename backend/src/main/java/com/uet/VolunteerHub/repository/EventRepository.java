@@ -42,7 +42,7 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
     @Query("SELECT e.category, COUNT(e) FROM Event e GROUP BY e.category")
     List<Object[]> countEventsByCategory();
 
-    @Query("SELECT DATE(e.createAt) as date, COUNT(e) as count FROM Event e WHERE e.createAt >= :startDate GROUP BY DATE(e.createAt) ORDER BY date ASC")
+    @Query("SELECT DATE(e.createdAt) as date, COUNT(e) as count FROM Event e WHERE e.createdAt >= :startDate GROUP BY DATE(e.createdAt) ORDER BY date ASC")
     List<Object[]> countNewEventsByDate(java.time.Instant startDate);
 
     @Query("SELECT SUM(e.attendeeCount) FROM Event e")
@@ -54,8 +54,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
                 SELECT e FROM Event e
                 WHERE e.status IN ('SCHEDULED', 'STARTED')
                 ORDER BY (
-                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5 +
-                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5
+                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createdAt AS date)))) * 0.5 +
+                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createdAt AS date)))) * 0.5
                 ) DESC
             """, countQuery = """
                 SELECT COUNT(e) FROM Event e
@@ -69,8 +69,8 @@ public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecific
                 WHERE e.status IN ('SCHEDULED', 'STARTED')
                 AND e.category = :category
                 ORDER BY (
-                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5 +
-                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createAt AS date)))) * 0.5
+                    (CAST(e.likeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createdAt AS date)))) * 0.5 +
+                    (CAST(e.attendeeCount AS double) / GREATEST(1, FUNCTION('DATE_PART', 'day', CURRENT_DATE - CAST(e.createdAt AS date)))) * 0.5
                 ) DESC
             """, countQuery = """
                 SELECT COUNT(e) FROM Event e

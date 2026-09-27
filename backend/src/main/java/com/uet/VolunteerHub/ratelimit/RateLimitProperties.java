@@ -1,99 +1,47 @@
 package com.uet.VolunteerHub.ratelimit;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
+@Component
 @ConfigurationProperties(prefix = "ratelimit")
+@Getter
 public class RateLimitProperties {
 
-    private boolean enabled = true;
+    private final boolean enabled = true;
+
     private LimitConfig defaultLimit = new LimitConfig(100, 60);
+    @Setter
     private LimitConfig login = new LimitConfig(5, 60);
+    @Setter
     private LimitConfig register = new LimitConfig(3, 60);
+    @Setter
     private LimitConfig publicEndpoint = new LimitConfig(50, 60);
+    @Setter
     private LimitConfig forgotPassword = new LimitConfig(3, 60);
+    @Setter
     private LimitConfig resendVerification = new LimitConfig(3, 60);
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public LimitConfig getDefaultLimit() {
-        return defaultLimit;
-    }
+    @Setter
+    private LimitConfig otpVerify = new LimitConfig(10, 60);
 
     public void setDefault(LimitConfig defaultLimit) {
         this.defaultLimit = defaultLimit;
     }
 
-    public LimitConfig getLogin() {
-        return login;
-    }
-
-    public void setLogin(LimitConfig login) {
-        this.login = login;
-    }
-
-    public LimitConfig getRegister() {
-        return register;
-    }
-
-    public void setRegister(LimitConfig register) {
-        this.register = register;
-    }
-
-    public LimitConfig getPublic() {
-        return publicEndpoint;
-    }
-
-    public void setPublic(LimitConfig publicEndpoint) {
-        this.publicEndpoint = publicEndpoint;
-    }
-
-    public LimitConfig getForgotPassword() {
-        return forgotPassword;
-    }
-
-    public void setForgotPassword(LimitConfig forgotPassword) {
-        this.forgotPassword = forgotPassword;
-    }
-
-    public LimitConfig getResendVerification() {
-        return resendVerification;
-    }
-
-    public void setResendVerification(LimitConfig resendVerification) {
-        this.resendVerification = resendVerification;
-    }
-
+    @Getter
+    @Setter
     public static class LimitConfig {
-        private int limit;
+
+        private int capacity;
         private int durationSeconds;
 
         public LimitConfig() {
         }
 
-        public LimitConfig(int limit, int durationSeconds) {
-            this.limit = limit;
-            this.durationSeconds = durationSeconds;
-        }
-
-        public int getLimit() {
-            return limit;
-        }
-
-        public void setLimit(int limit) {
-            this.limit = limit;
-        }
-
-        public int getDurationSeconds() {
-            return durationSeconds;
-        }
-
-        public void setDurationSeconds(int durationSeconds) {
+        public LimitConfig(int capacity, int durationSeconds) {
+            this.capacity = capacity;
             this.durationSeconds = durationSeconds;
         }
     }

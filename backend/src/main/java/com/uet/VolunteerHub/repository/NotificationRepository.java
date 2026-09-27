@@ -43,7 +43,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "WHERE n.receiverAccount.accountId = :managerId " +
             "AND n.notificationType IN :types " +
             "AND n.isDeleted = false " +
-            "ORDER BY n.createAt DESC")
+            "ORDER BY n.createdAt DESC")
     Page<Notification> findManagerEventNotifications(
             @Param("managerId") UUID managerId,
             @Param("types") List<NotificationType> types,
@@ -63,7 +63,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             "WHERE n.receiverAccount.accountId = :userId " +
             "AND n.notificationType IN :types " +
             "AND n.isDeleted = false " +
-            "ORDER BY n.createAt DESC")
+            "ORDER BY n.createdAt DESC")
     Page<Notification> findUserRoleRequestNotifications(
             @Param("userId") UUID userId,
             @Param("types") List<NotificationType> types,
