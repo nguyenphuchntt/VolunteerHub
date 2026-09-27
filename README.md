@@ -64,7 +64,7 @@ VolunteerHub is a volunteer management platform designed to connect volunteers w
 
 ### Security
 - JWT Token Authentication
-- Rate Limiting to prevent spam and attacks
+- Rate limiting to prevent spam and attacks
 - Fine-grained role-based authorization
 - Input validation
 
@@ -106,9 +106,6 @@ EMAIL_VERIFICATION_FRONTEND_URL=http://localhost:5173/verify-email
 
 
 The bundled database already contains the users `user1`, `manager1`, and `admin1`, each with the password `password123` — the username is also the role name.
-
-
-
 
 ### Manual Installation
 #### Set up the database:
@@ -167,47 +164,3 @@ After starting the backend, open Swagger UI at:
 http://localhost:8080/swagger-ui.html
 ```
 
----
-
-## Project Structure
-
-```
-VolunteerHub/
-├── backend/
-│   ├── src/main/java/com/uet/VolunteerHub/
-│   │   ├── controller/       # REST Controllers
-│   │   ├── service/          # Business Logic
-│   │   ├── repository/       # Data Access Layer
-│   │   ├── entity/           # JPA Entities
-│   │   ├── dto/              # Data Transfer Objects
-│   │   ├── security/         # Security Configuration
-│   │   ├── ratelimit/        # Rate Limiting
-│   │   ├── events/           # Event-driven components
-│   │   ├── exception/        # Exception Handling
-│   │   └── configuration/    # App Configuration
-│   ├── docker-compose.yml
-│   └── pom.xml
-│
-├── frontend/
-│   ├── src/
-│   │   ├── api/              # API calls
-│   │   ├── components/       # Reusable components
-│   │   ├── pages/            # Page components
-│   │   ├── contexts/         # React contexts
-│   │   ├── hooks/            # Custom hooks
-│   │   └── utils/            # Utility functions
-│   └── package.json
-└── README.md
-```
-
----
-
-## Team Members
-
-Course: Web Application Development - INT3306_2
-
-| Name             | Student ID | Role         |
-|------------------|------------|--------------|
-| Nguyễn Anh Sơn   | 23021684   | Backend Dev  |
-| Nguyễn Văn Phúc  | 23021664   | Backend Dev  |
-| Thái Khắc Mạnh   | 23021620   | Frontend Dev |
